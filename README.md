@@ -1,6 +1,8 @@
-# ⚔️ Mistral Quest
+# ⚔️ Task Quest
 
-Un gestionnaire de tâches gamifié façon Microsoft Planner, mais dans une vibe rétro pixel art aux couleurs de Mistral : chaque tâche accomplie fait gagner de l'XP et de l'or à ton héros, qui monte de niveau et s'achète du stuff.
+*(anciennement Mistral Quest)*
+
+Un gestionnaire de tâches gamifié façon Microsoft Planner, dans une vibe rétro pixel art : chaque tâche accomplie fait gagner de l'XP et de l'or à ton héros, qui monte de niveau et s'achète du stuff.
 
 ## Lancer l'app
 
@@ -27,8 +29,9 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 
 - **Board Kanban** (À faire / En cours / Terminé) avec glisser-déposer
 - **Création de héros** : nom, genre (homme / femme), classes (magicien, guerrier, chasseur, assassin) et couleur de peau — modifiable à tout moment en double-cliquant sur le héros ; en sous-vêtements tant qu'il n'a rien équipé
-- **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP), 2–3 → Moyenne (+25), 4–7 → Difficile (+50), 8 et plus → Boss (+120)
-- **Barre de progression sur chaque quête** : verte puis jaune puis orange, elle se remplit à chaque étape cochée (0 → N)
+- **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP · 2 🪙), 2–3 → Moyenne (+25 · 5 🪙), 4–7 → Difficile (+50 · 8 🪙), 8 et plus → Boss (+120 · 12 🪙)
+- **Barre de progression verte** sur chaque quête : elle se remplit à chaque étape cochée (0 → N)
+- **Boss (8 étapes et plus)** : conservent leur barre de PV rouge qui tombe à chaque étape cochée ; la quête ne bascule jamais toute seule — tu cliques sur « Terminer » et tu racontes ta victoire
 - **Modale de quête** : checklist, étapes renommables (double-clic), libellés ajoutables/retirables, échéance modifiable, boutons « Fermer la fenêtre » (gauche) et « Terminer » (droite)
 - **Échéances** : la tuile passe entièrement rouge avec texte blanc quand la date est dépassée
 - **Libellés personnalisés** : création libre, attribution aux quêtes, code couleur

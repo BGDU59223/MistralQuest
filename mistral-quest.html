@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Mistral Quest — Suivi de tâches RPG</title>
+<title>Task Quest — Suivi de tâches RPG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
@@ -178,10 +178,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .quest-progress { margin: 8px 0 4px; }
 .quest-progress-label { font-size: 14px; color: var(--muted); margin-bottom: 3px; }
 .quest-bar { height: 12px; background: #171a20; border: 2px solid #3c4657; border-radius: 9px; overflow: hidden; }
-.quest-fill { height: 100%; transition: width 0.25s; border-radius: 6px; }
-.quest-fill.quest-low { background: #6fdc8c; }
-.quest-fill.quest-mid { background: #ffd54a; }
-.quest-fill.quest-high { background: #ff9d42; }
+.quest-fill { height: 100%; background: #6fdc8c; transition: width 0.25s; border-radius: 6px; }
+.boss-hp { margin: 8px 0 4px; }
+.boss-hp-label { font-size: 14px; color: #ff4d4d; }
+.hp-bar { height: 12px; background: #3a0a0a; border: 2px solid #ff4d4d; border-radius: 9px; overflow: hidden; }
+.hp-fill { height: 100%; background: #ff4d4d; transition: width 0.25s; border-radius: 6px; }
 .subtasks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .subtask { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: 17px; }
 .subtask input { width: auto; }
@@ -284,7 +285,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   <header class="topbar">
     <div class="brand">
       <span id="logo"></span>
-      <span class="brand-name">MISTRAL <em>QUEST</em></span>
+      <span class="brand-name">TASK <em>QUEST</em></span>
     </div>
     <div class="hud">
       <span class="hud-badge" id="hud-level"></span>
@@ -296,7 +297,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   <nav class="tabs" id="tabs"></nav>
   <main id="main"></main>
   <footer class="footer">
-    Mistral Quest — tes données restent dans ce navigateur (localStorage) · pense à 💾 Sauvegarde de temps en temps !
+    Task Quest — tes données restent dans ce navigateur (localStorage) · pense à 💾 Sauvegarde de temps en temps !
   </footer>
 </div>
 <div class="modal-overlay hidden" id="modal-overlay">
@@ -307,12 +308,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 (function () {
   "use strict";
   var SAVE_KEY = "mistral-quest-save-v1";
-  var SUBTASK_REWARD = { xp: 18, gold: 9 };
+  var SUBTASK_REWARD = { xp: 18, gold: 2 };
   var DIFFS = {
-    facile:    { label: "Facile",    xp: 10,  gold: 5,  icon: "🌱", badge: "diff-b-facile",  edge: "diff-facile" },
-    moyenne:   { label: "Moyenne",   xp: 25,  gold: 12, icon: "⚔️", badge: "diff-b-moyenne", edge: "diff-moyenne" },
-    difficile: { label: "Difficile", xp: 50,  gold: 25, icon: "🔥", badge: "diff-b-difficile", edge: "diff-difficile" },
-    boss:      { label: "Boss",      xp: 120, gold: 60, icon: "💀", badge: "diff-b-boss", edge: "diff-boss", boss: true }
+    facile:    { label: "Facile",    xp: 10,  gold: 2,  icon: "🌱", badge: "diff-b-facile",  edge: "diff-facile" },
+    moyenne:   { label: "Moyenne",   xp: 25,  gold: 5,  icon: "⚔️", badge: "diff-b-moyenne", edge: "diff-moyenne" },
+    difficile: { label: "Difficile", xp: 50,  gold: 8,  icon: "🔥", badge: "diff-b-difficile", edge: "diff-difficile" },
+    boss:      { label: "Boss",      xp: 120, gold: 12, icon: "💀", badge: "diff-b-boss", edge: "diff-boss", boss: true }
   };
   var COLUMNS = { todo: "À faire 📌", doing: "En cours 🏃", done: "Terminé 🏁" };
   var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
@@ -331,10 +332,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function stepsToTierAndXP(n) {
     if (!n || n <= 0) return { key: "libre", xp: 0, gold: 0 };
-    if (n === 1) return { key: "facile", xp: 10, gold: 5 };
-    if (n <= 3) return { key: "moyenne", xp: 25, gold: 12 };
-    if (n <= 7) return { key: "difficile", xp: 50, gold: 25 };
-    return { key: "boss", xp: 120, gold: 60 };
+    if (n === 1) return { key: "facile", xp: 10, gold: 2 };
+    if (n <= 3) return { key: "moyenne", xp: 25, gold: 5 };
+    if (n <= 7) return { key: "difficile", xp: 50, gold: 8 };
+    return { key: "boss", xp: 120, gold: 12 };
   }
   function autoTierBadgeHTML() {
     var d = DIFFS[stepsToTierAndXP(countStepLines(drafts.steps)).key];
@@ -406,29 +407,29 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     "......SSSS......",
     "....SSSSSSSS....",
     "...SSSSSSSSSS...",
-    "..SSSSSSSSSSSS..",
-    "..SSSSSSSSSSSS..",
-    "..SSSSSSSSSSSS..",
-    "..SSSSSSSSSSSS..",
-    "...SSSSSSSSSS...",
+    "...S.SSSSSS.S...",
+    "...S.SSSSSS.S...",
+    "...S.SSSSSS.S...",
+    "...S.SSSSSS.S...",
     "....nnnnnnnn....",
+    "....SS....SS....",
     "....SS....SS....",
     "...SSS....SSS..."
   ];
   var BODY_F = [
-    "....HHSSSSHH....",
-    "....HHSSSSHH....",
-    "...HSSSSSSSSH...",
-    "...HSSkSSkSSH...",
-    "...HHSSSSSSHH...",
-    "...H..SSSS..H...",
-    "...SSrrrrrrSS...",
-    "...SSrrrrrrSS...",
-    "..SSSSSSSSSSSS..",
-    "..SSSSSSSSSSSS..",
-    ".SSSSSSSSSSSSSS.",
-    ".SSSSSSSSSSSSSS.",
+    ".....HHHHHH.....",
+    "....HHHHHHHH....",
+    "....HSSSSSSH....",
+    "....SSkSSkSS....",
+    ".....SSSSSS.....",
+    "......SSSS......",
+    "....SSSSSSSS....",
     "...SSSSSSSSSS...",
+    "...S.kkkkkk.S...",
+    "...S.kkkkkk.S...",
+    "...S.SSSSSS.S...",
+    "...S.SSSSSS.S...",
+    "....SSSSSSSS....",
     "....nnnnnnnn....",
     "....SS....SS....",
     "...SSS....SSS..."
@@ -614,11 +615,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     showToast._t = setTimeout(function () { el.classList.add("hidden"); }, 2600);
   }
   function grantReward(s, xp, gold) {
-    var next = { ...s, xp: s.xp + xp, gold: s.gold + gold };
+    var next = { ...s, xp: Math.round(s.xp + xp), gold: s.gold + gold };
     while (next.xp >= xpNeeded(next.level)) {
       next.xp -= xpNeeded(next.level);
       next.level += 1;
-      next.gold += 25;
+      next.gold += 10;
     }
     if (next.level % 3 === 0 && next.level > 0 && levelChanged(s, next)) {
       next.pendingLoot = (next.pendingLoot || 0) + 1;
@@ -716,10 +717,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var n = (t.subtasks || []).length;
     if (!n) return "";
     var done = t.subtasks.filter(function (st) { return st.done; }).length;
+    if (DIFFS[t.diff] && DIFFS[t.diff].boss) return bossHPHTML(t);
     var pct = Math.round((done / n) * 100);
-    var cls = pct < 40 ? "quest-low" : (pct < 75 ? "quest-mid" : "quest-high");
     return '<div class="quest-progress"><div class="quest-progress-label">☑ ' + done + "/" + n + " étapes accomplies</div>" +
-      '<div class="quest-bar"><div class="quest-fill ' + cls + '" style="width:' + pct + '%"></div></div></div>';
+      '<div class="quest-bar"><div class="quest-fill" style="width:' + pct + '%"></div></div></div>';
+  }
+  function bossHPHTML(t) {
+    var n = (t.subtasks || []).length;
+    if (!n) return "";
+    var done = t.subtasks.filter(function (st) { return st.done; }).length;
+    var pct = Math.round((done / n) * 100);
+    return '<div class="boss-hp"><div class="boss-hp-label">💀 PV du boss : ' + (n - done) + "/" + n + '</div><div class="hp-bar"><div class="hp-fill" style="width:' + (100 - pct) + '%"></div></div></div>';
   }
   function taskCardHTML(t) {
     var d = DIFFS[t.diff] || DIFFS.facile;
@@ -1017,7 +1025,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     state.lastCompletedDay = day;
     var streakBonus = Math.min(state.streak, 7) * 5;
-    var baseXp = Math.round((d.xp + streakBonus) * xpMultiplier() * 10) / 10;
+    var baseXp = Math.round((d.xp + streakBonus) * xpMultiplier());
     var beforeLevel = state.level;
     state = grantReward(state, baseXp, d.gold);
     t.gain = { xp: Math.round(baseXp), gold: d.gold };
@@ -1104,15 +1112,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     st.done = !st.done;
     if (st.done) {
       state = grantReward(state, SUBTASK_REWARD.xp, SUBTASK_REWARD.gold);
-      showToast("☑ Étape validée : +18 XP · +9 🪙");
-      var d = DIFFS[t.diff] || DIFFS.facile;
-      if (d.boss && t.subtasks.every(function (x) { return x.done; })) {
-        if (t.status !== "done" && completeTask(t)) {
-          closeModal();
-          renderAll();
-          return true;
-        }
-      }
+      showToast("☑ Étape validée : +18 XP · +2 🪙");
     }
     saveState();
     return true;
@@ -1397,7 +1397,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
               renderAll();
               showToast("♻️ Sauvegarde restaurée : niveau " + state.level + " · " + state.tasks.length + " quêtes");
             } catch (err) {
-              showToast("❌ Fichier invalide : pas une sauvegarde Mistral Quest");
+              showToast("❌ Fichier invalide : pas une sauvegarde Task Quest");
             }
           };
           reader.readAsText(file);
