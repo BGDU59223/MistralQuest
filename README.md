@@ -32,7 +32,7 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 - **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP · 2 🪙), 2–3 → Moyenne (+25 · 5 🪙), 4–7 → Difficile (+50 · 8 🪙), 8 et plus → Boss (+120 · 12 🪙)
 - **Barre de progression verte** sur chaque quête : elle se remplit à chaque étape cochée (0 → N)
 - **Boss (8 étapes et plus)** : conservent leur barre de PV rouge qui tombe à chaque étape cochée ; la quête ne bascule jamais toute seule — tu cliques sur « Terminer » et tu racontes ta victoire
-- **Modale de quête** : checklist, étapes renommables (double-clic), libellés ajoutables/retirables, échéance modifiable, boutons « Fermer la fenêtre » (gauche) et « Terminer » (droite)
+- **Modale de quête en double écran** : à gauche la checklist (étapes renommables au double-clic, libellés, échéance) ; à droite le journal de combat — commentaires datés, liens nommés, pièces jointes (Excel, Word, PDF, 15 Mo max par fichier) — avec « Fermer la fenêtre » (gauche) et « Terminer » (droite)
 - **Échéances** : la tuile passe entièrement rouge avec texte blanc quand la date est dépassée
 - **Libellés personnalisés** : création libre, attribution aux quêtes, code couleur
 - **Progression** : barre d'XP, niveaux, titres (Novice → Légende du Mistral)
@@ -43,7 +43,7 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 - **10 succès** à débloquer
 - **Stats hebdo** : graphique des 7 derniers jours
 - **Archive** : les quêtes terminées peuvent être archivées par lot ou une à une, avec leur phrase RP
-- **Sauvegarde locale** (localStorage) + export/import JSON, aucun compte requis
+- **Sauvegarde locale** (localStorage) + export/import JSON, aucun compte requis ; les pièces jointes sont stockées à part, sur ton appareil (IndexedDB)
 
 ## Stack
 

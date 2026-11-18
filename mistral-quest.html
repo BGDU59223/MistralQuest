@@ -203,6 +203,26 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   color: var(--muted); font-size: 20px; cursor: pointer;
 }
 .modal-close:hover { color: var(--danger); }
+#modal.modal-wide { width: 980px; width: min(980px, 94vw); }
+.task-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; margin-top: 12px; align-items: start; }
+@media (max-width: 820px) { #modal.modal-wide { width: 94vw; } .task-split { grid-template-columns: 1fr; } }
+.pane { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; }
+.pane h3 { margin: 2px 0 8px; font-size: 14px; color: var(--accent); }
+.pane-right { text-align: left; }
+.pane-right .form-row { margin-bottom: 10px; }
+.note-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; max-height: 220px; overflow-y: auto; }
+.note-entry { font-size: 13px; line-height: 1.45; padding: 6px 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; position: relative; padding-right: 26px; word-break: break-word; }
+.note-date { color: var(--muted); font-size: 11px; display: block; }
+.note-entry .step-del { position: absolute; right: 6px; top: 6px; }
+.link-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.08); }
+.link-row:last-of-type { border-bottom: none; }
+.task-link { color: var(--accent); text-decoration: none; }
+.task-link:hover { text-decoration: underline; }
+.link-host { color: var(--muted); font-size: 11px; }
+.attach-btn { display: inline-block; margin-top: 6px; cursor: pointer; position: relative; overflow: hidden; }
+.attach-btn input[type=file] { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
+.mini-inputs { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.chip-create input { min-width: 0; }
 .checklist { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .hero-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 @media (max-width: 800px) { .hero-panel { grid-template-columns: 1fr; } }
@@ -866,10 +886,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (state.view === "theme") return themeView();
     return boardView();
   }
-  function openModal(html) {
-    document.getElementById("modal").innerHTML = html;
+  function openModal(html, wide) {
+    var el = document.getElementById("modal");
+    el.className = "modal panel" + (wide ? " modal-wide" : "");
+    el.innerHTML = html;
     document.getElementById("modal-overlay").classList.remove("hidden");
-    var inp = document.getElementById("modal").querySelector("input, textarea");
+    var inp = el.querySelector("input, textarea");
     if (inp) inp.focus();
   }
   function closeModal() {
@@ -918,6 +940,154 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var d = DIFFS[t.diff] || DIFFS.facile;
     return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>";
   }
+  var fileStore = (function () {
+    var db = null;
+    var mem = {};
+    function ready(cb) {
+      if (db || !window.indexedDB) return cb();
+      try {
+        var rq = window.indexedDB.open("task-quest-files", 1);
+        rq.onupgradeneeded = function (ev) { ev.target.result.createObjectStore("files"); };
+        rq.onsuccess = function (ev) { db = ev.target.result; cb(); };
+        rq.onerror = function () { cb(); };
+      } catch (err) { cb(); }
+    }
+    return {
+      put: function (key, blob, cb) {
+        ready(function () {
+          if (!db) { mem[key] = blob; return cb(true); }
+          try {
+            var tx = db.transaction("files", "readwrite");
+            tx.objectStore("files").put(blob, key);
+            tx.oncomplete = function () { cb(true); };
+            tx.onerror = function () { cb(false); };
+          } catch (err) { cb(false); }
+        });
+      },
+      get: function (key, cb) {
+        ready(function () {
+          if (!db) return cb(mem[key] || null);
+          try {
+            var rq = db.transaction("files", "readonly").objectStore("files").get(key);
+            rq.onsuccess = function () { cb(rq.result || null); };
+            rq.onerror = function () { cb(null); };
+          } catch (err) { cb(null); }
+        });
+      },
+      del: function (key, cb) {
+        ready(function () {
+          if (!db) { delete mem[key]; return cb(); }
+          try {
+            var tx = db.transaction("files", "readwrite");
+            tx.objectStore("files").delete(key);
+            tx.oncomplete = function () { cb(); };
+            tx.onerror = function () { cb(); };
+          } catch (err) { cb(); }
+        });
+      }
+    };
+  })();
+  var MAX_FILE_BYTES = 15 * 1024 * 1024;
+  function fmtSize(n) {
+    if (n < 1024) return n + " o";
+    if (n < 1048576) return Math.round(n / 1024) + " Ko";
+    return Math.round(n / 1048576 * 10) / 10 + " Mo";
+  }
+  function stamp() {
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function addTaskNote(tid, text) {
+    var t = taskById(tid);
+    if (!t || !text) return;
+    t.notes = t.notes || [];
+    t.notes.unshift({ id: uid(), date: stamp(), text: text });
+    saveState();
+    openTaskModal(tid, true);
+    renderAll();
+    showToast("📓 Entrée ajoutée au journal de combat");
+  }
+  function addTaskLink(tid, label, url) {
+    var t = taskById(tid);
+    if (!t) return;
+    if (!/^(https?:\/\/|mailto:)/i.test(url)) {
+      showToast("❌ Lien invalide — commence par http:// ou https://");
+      return;
+    }
+    t.links = t.links || [];
+    t.links.push({ id: uid(), label: label, url: url, date: stamp() });
+    saveState();
+    openTaskModal(tid, true);
+    renderAll();
+    showToast("🔗 Lien ajouté");
+  }
+  function addAttachment(tid, file) {
+    var t = taskById(tid);
+    if (!t || !file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      showToast("❌ Fichier trop lourd (max 15 Mo)");
+      return;
+    }
+    var id = uid();
+    t.attachments = t.attachments || [];
+    t.attachments.push({ id: id, name: file.name, size: file.size, type: file.type || "", date: stamp() });
+    saveState();
+    if (t.status !== "done") openTaskModal(tid, true);
+    renderAll();
+    showToast("📎 " + file.name + " joint directement");
+    fileStore.put(tid + " " + id, file, function (okPut) {
+      if (!okPut) {
+        t.attachments = t.attachments.filter(function (a) { return a.id !== id; });
+        saveState();
+        showToast("❌ Stockage impossible pour " + file.name);
+        if (t.status !== "done") openTaskModal(tid, true);
+        renderAll();
+      }
+    });
+  }
+  function downloadAttachment(tid, aid) {
+    var t = taskById(tid);
+    var a = t && t.attachments && t.attachments.filter(function (x) { return x.id === aid; })[0];
+    if (!a) return;
+    fileStore.get(tid + " " + aid, function (blob) {
+      if (!blob) { showToast("❌ Fichier introuvable"); return; }
+      var url = URL.createObjectURL(blob);
+      var el = document.createElement("a");
+      el.href = url;
+      el.download = a.name;
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    });
+  }
+  function removeAttachment(tid, aid) {
+    var t = taskById(tid);
+    if (!t) return;
+    t.attachments = (t.attachments || []).filter(function (x) { return x.id !== aid; });
+    saveState();
+    fileStore.del(tid + " " + aid, function () {});
+    if (t.status !== "done") openTaskModal(tid, true);
+    renderAll();
+    showToast("📎 Pièce jointe retirée");
+  }
+  function removeTaskNote(tid, nid) {
+    var t = taskById(tid);
+    if (!t) return;
+    t.notes = (t.notes || []).filter(function (x) { return x.id !== nid; });
+    saveState();
+    if (t.status !== "done") openTaskModal(tid, true);
+    renderAll();
+  }
+  function removeTaskLink(tid, lid) {
+    var t = taskById(tid);
+    if (!t) return;
+    t.links = (t.links || []).filter(function (x) { return x.id !== lid; });
+    saveState();
+    if (t.status !== "done") openTaskModal(tid, true);
+    renderAll();
+  }
   function openTaskModal(id, keepEdit) {
     var t = taskById(id);
     if (!t) return;
@@ -944,19 +1114,54 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return '<button type="button" class="chip" data-action="add-task-label" data-task="' + t.id + '" data-label="' + l.id + '">+ ' + esc(l.name) + "</button>";
       }).join(" ")
       + (!state.labels.length ? '<span class="lootbox-hint">Aucun libellé — crées-en via le bouton 🏷️ du board.</span>' : "");
+    var noteAdd = '<form class="chip-create" data-form="add-task-note" data-task="' + t.id + '">' +
+      '<input name="note-text" placeholder="Ex : relancé Marcel à la date du 12…" /><button type="submit" class="btn btn-accent">📓 Écrire</button></form>';
+    var noteEntries = (t.notes || []).map(function (n) {
+      return '<div class="note-entry"><span class="note-date">🕰️ ' + esc(n.date) + '</span> ' + esc(n.text) +
+        '<button type="button" class="task-btn step-del" data-action="remove-note" data-task="' + t.id + '" data-note="' + n.id + '" title="Supprimer l\'entrée">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucune entrée. Ton journal de combat t\'attend 👇</p>';
+    var linkRows = (t.links || []).map(function (l) {
+      var host = l.url.replace(/^https?:\/\//i, "").split("/")[0];
+      return '<div class="link-row"><a class="task-link" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">'+ "🔗 " + esc(l.label) + "</a>" +
+        '<span class="link-host">' + esc(host) + "</span>" +
+        '<button type="button" class="task-btn step-del" style="margin-left:auto" data-action="remove-link" data-task="' + t.id + '" data-link="' + l.id + '" title="Supprimer le lien">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucun lien. Colle ici tes docs (tableur, wiki…)</p>';
+    var linkAdd = '<form class="mini-inputs" data-form="add-task-link" data-task="' + t.id + '">' +
+      '<input name="link-label" placeholder="Nom du lien (ex : Tableau frais de personnel)" required />' +
+      '<div style="display:flex;gap:6px"><input name="link-url" placeholder="https://…" required style="flex:1" /><button type="submit" class="btn btn-accent">🔗 Ajouter</button></div></form>';
+    var attachRows = (t.attachments || []).map(function (a) {
+      return '<div class="link-row"><button type="button" class="btn btn-action" data-action="download-attachment" data-task="' + t.id + '" data-att="' + a.id + '" title="Télécharger">⬇ ' + esc(a.name) + "</button>" +
+        '<span class="link-host">' + fmtSize(a.size) + '</span>' +
+        '<button type="button" class="task-btn step-del" style="margin-left:auto" data-action="remove-attachment" data-task="' + t.id + '" data-att="' + a.id + '" title="Retirer">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucun document joint (Excel, Word, PDF…)</p>';
+    var attachAdd = '<label class="btn btn-accent btn-big attach-btn">🧳 Ajouter un document' +
+      '<input type="file" hidden data-action="upload-attachment" data-task="' + t.id + '" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx" /></label>';
     var body = '<span class="modal-close" data-action="close-modal">✖</span>' +
       '<h2 class="panel-title">CHECKLIST DE QUÊTE</h2>' +
       '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
       '<div class="task-meta">' + difficultyHTML(t) +
       (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">📅 ' + fmtDate(t.dueDate) + (isOverdue(t) ? " ☠ en retard" : "") + "</span>" : "") + "</div>" +
       questProgressBarHTML(t) +
-      '<div class="form-row" style="margin-top:10px"><label class="form-label">🏷️ Libellés (✖ pour retirer, + pour ajouter)</label>' +
+      '<div class="task-split">' +
+      '<div class="pane pane-left">' +
+      '<h3>🗺️ La quête</h3>' +
+      '<div class="form-row" style="margin-top:0"><label class="form-label">🏷️ Libellés (✖ pour retirer, + pour ajouter)</label>' +
       '<div class="label-picker">' + labelEditor + "</div></div>" +
       '<div class="form-row"><label class="form-label">📅 Échéance (vide = aucune)</label>' +
       '<input type="date" data-edit-due data-task="' + t.id + '" value="' + (t.dueDate || "") + '" /></div>' +
       '<div class="checklist">' + (steps || '<p class="lootbox-hint">Aucune étape. Ajoute-en une 👇</p>') + "</div>" +
       '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '">' +
-      '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>';
+      '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>' +
+      "</div>" +
+      '<div class="pane pane-right">' +
+      '<h3>📓 Journal de combat</h3>' +
+      '<div class="note-list">' + noteEntries + "</div>" + noteAdd +
+      '<h3 style="margin-top:14px">🔗 Liens</h3>' +
+      '<div class="note-list">' + linkRows + "</div>" + linkAdd +
+      '<h3 style="margin-top:14px">📎 Pièces jointes</h3>' +
+      '<div class="note-list">' + attachRows + "</div>" + attachAdd +
+      "</div>" +
+      "</div>";
     if (t.status !== "done") {
       body += '<div class="task-actions" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px">' +
         '<button type="button" class="btn" data-action="close-modal">✖ Fermer la fenêtre</button>' +
@@ -970,7 +1175,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<button class="btn" data-action="archive-task" data-task="' + t.id + '">🗄️ Archiver</button></div>' +
         (t.comment ? '<p class="lootbox-hint" style="margin-top:10px">« ' + esc(t.comment) + ' »</p>' : "");
     }
-    openModal(body);
+    openModal(body, true);
   }
   function refreshTaskModal() {
     if (openTaskId) {
@@ -1421,6 +1626,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         renderAll();
         return;
       }
+      if (act === "remove-note") { removeTaskNote(el.getAttribute("data-task"), el.getAttribute("data-note")); return; }
+      if (act === "remove-link") { removeTaskLink(el.getAttribute("data-task"), el.getAttribute("data-link")); return; }
+      if (act === "remove-attachment") { removeAttachment(el.getAttribute("data-task"), el.getAttribute("data-att")); return; }
+      if (act === "download-attachment") { downloadAttachment(el.getAttribute("data-task"), el.getAttribute("data-att")); return; }
       if (act === "toggle-subtask") {
         var changed = toggleSubtask(el.getAttribute("data-task"), parseInt(el.getAttribute("data-index"), 10));
         if (changed) { renderAll(); refreshTaskModal(); }
@@ -1535,6 +1744,25 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
       return;
     }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-task-note") {
+      e.preventDefault();
+      var noteInput = f.querySelector("input[name=note-text]");
+      var noteTxt = (noteInput.value || "").trim();
+      if (noteTxt) {
+        noteInput.value = "";
+        addTaskNote(f.getAttribute("data-task"), noteTxt);
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-task-link") {
+      e.preventDefault();
+      var linkLabel = f.querySelector("input[name=link-label]");
+      var linkUrl = f.querySelector("input[name=link-url]");
+      var lbl = (linkLabel.value || "").trim();
+      var url = (linkUrl.value || "").trim();
+      if (lbl && url) addTaskLink(f.getAttribute("data-task"), lbl, url);
+      return;
+    }
     if (f.getAttribute && f.getAttribute("data-form") === "create-label") {
       e.preventDefault();
       var name = f.querySelector("input[name=label-name]").value;
@@ -1556,6 +1784,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   document.addEventListener("change", function (e) {
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "upload-attachment") {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (file) addAttachment(e.target.getAttribute("data-task"), file);
+      return;
+    }
     if (e.target.hasAttribute && e.target.hasAttribute("data-edit-due")) {
       var td = taskById(e.target.getAttribute("data-task"));
       if (td) {
