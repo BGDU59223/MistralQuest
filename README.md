@@ -26,15 +26,21 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 ## Fonctionnalités
 
 - **Board Kanban** (À faire / En cours / Terminé) avec glisser-déposer
-- **4 difficultés de tâches** : Facile (+10 XP), Moyenne (+25), Difficile (+55), Boss (+140)
+- **Création de héros** : nom, genre (homme / femme), classes (magicien, guerrier, chasseur, assassin) et couleur de peau — modifiable à tout moment en double-cliquant sur le héros ; en sous-vêtements tant qu'il n'a rien équipé
+- **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP), 2–3 → Moyenne (+25), 4–7 → Difficile (+50), 8 et plus → Boss (+120)
+- **Barre de progression sur chaque quête** : verte puis jaune puis orange, elle se remplit à chaque étape cochée (0 → N)
+- **Modale de quête** : checklist, étapes renommables (double-clic), libellés ajoutables/retirables, échéance modifiable, boutons « Fermer la fenêtre » (gauche) et « Terminer » (droite)
+- **Échéances** : la tuile passe entièrement rouge avec texte blanc quand la date est dépassée
+- **Libellés personnalisés** : création libre, attribution aux quêtes, code couleur
 - **Progression** : barre d'XP, niveaux, titres (Novice → Légende du Mistral)
-- **Or & boutique** : chapeaux, capes, familiers (dont le renard pixel 🦊) et thèmes de couleurs, avec raretés commun / rare / épique / légendaire
-- **Boss fights** : un gros projet = un boss avec des PV ; chaque sous-tâche terminée lui inflige des dégâts
+- **Or & boutique** : armes, armures, casques, bottes, familiers et thèmes de couleurs, avec raretés commun / rare / épique / légendaire
+- **Retour en arrière** : bouton Retour depuis En cours vers À faire, et annulation d'une quête terminée (l'XP est rendue, perte de niveau possible)
 - **Streak quotidien** : bonus d'XP croissant si tu complètes au moins une tâche par jour
 - **Loot boxes** : 1 offerte tous les 3 niveaux, ou achetable pour 60 pièces d'or
 - **10 succès** à débloquer
 - **Stats hebdo** : graphique des 7 derniers jours
-- **Sauvegarde locale** (localStorage), aucun compte requis
+- **Archive** : les quêtes terminées peuvent être archivées par lot ou une à une, avec leur phrase RP
+- **Sauvegarde locale** (localStorage) + export/import JSON, aucun compte requis
 
 ## Stack
 

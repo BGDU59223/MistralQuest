@@ -175,10 +175,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .subtask span[data-step-index] { cursor: text; }
 .task-overdue .btn-action.act-doing,
 .task-overdue .btn-action.act-done { color: #fff; }
-.boss-hp { margin: 8px 0; }
-.boss-hp-label { font-size: 15px; color: #ff4d4d; }
-.hp-bar { height: 10px; background: #3a0a0a; border: 2px solid #ff4d4d; border-radius: 4px; }
-.hp-fill { height: 100%; background: #ff4d4d; transition: width 0.2s; border-radius: 2px; }
+.quest-progress { margin: 8px 0 4px; }
+.quest-progress-label { font-size: 14px; color: var(--muted); margin-bottom: 3px; }
+.quest-bar { height: 12px; background: #171a20; border: 2px solid #3c4657; border-radius: 9px; overflow: hidden; }
+.quest-fill { height: 100%; transition: width 0.25s; border-radius: 6px; }
+.quest-fill.quest-low { background: #6fdc8c; }
+.quest-fill.quest-mid { background: #ffd54a; }
+.quest-fill.quest-high { background: #ff9d42; }
 .subtasks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .subtask { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: 17px; }
 .subtask input { width: auto; }
@@ -322,6 +325,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ["theme", "🎨 Apparence"]
   ];
   var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🪖 Casque"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Bottes"]];
+  var DIFFS = Object.assign(DIFFS, { libre: { label: "Libre", xp: 0, gold: 0, icon: "✨", badge: "diff-b-libre", edge: "diff-libre" } });
+  function countStepLines(txt) {
+    return (txt || "").split("\n").filter(function (l) { return l.trim().length; }).length;
+  }
+  function stepsToTierAndXP(n) {
+    if (!n || n <= 0) return { key: "libre", xp: 0, gold: 0 };
+    if (n === 1) return { key: "facile", xp: 10, gold: 5 };
+    if (n <= 3) return { key: "moyenne", xp: 25, gold: 12 };
+    if (n <= 7) return { key: "difficile", xp: 50, gold: 25 };
+    return { key: "boss", xp: 120, gold: 60 };
+  }
+  function autoTierBadgeHTML() {
+    var d = DIFFS[stepsToTierAndXP(countStepLines(drafts.steps)).key];
+    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " \uD83E\uDE99</span>";
+  }
   var CLASSES = {
     magicien: { name: "Magicien", icon: "🧙", title: "Archimage du vent", robe: "#8f6cff", cape: "#5a3aa8" },
     guerrier: { name: "Guerrier", icon: "⚔️", title: "Bastion d'acier", robe: "#ff7000", cape: "#a83a20" },
@@ -360,44 +378,132 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     lagon:  { name: "Lagon",  vars: { "--bg": "#071518", "--panel": "#0e2226", "--card": "#142d31", "--accent": "#35d0c0", "--accent-dark": "#1a8f84", "--text": "#ddf6f2", "--muted": "#7aa8a2", "--danger": "#e05545" } },
     aurore: { name: "Aurore", vars: { "--bg": "#120b1f", "--panel": "#1c1330", "--card": "#261a40", "--accent": "#b58cff", "--accent-dark": "#7a4fd8", "--text": "#efe6ff", "--muted": "#9a84c4", "--danger": "#e05545" } }
   };
-  var PAL = { S: "#f2c199", k: "#231207", H: "#7a4a1e", O: "#ff7000", D: "#c25400", Y: "#ffd54a", C: "#a83a20", W: "#f5ede0", B: "#8c5a2b", L: "#6fd8ff", G: "#6fdc8c", P: "#ff9db5", U: "#8f6cff" };
-  var HERO_BASE = [
+  var PAL = { S: "#f2c199", k: "#231207", H: "#5c3b16", O: "#ff7000", D: "#c25400", Y: "#ffd54a", C: "#a83a20", W: "#f5ede0", B: "#8c5a2b", L: "#6fd8ff", G: "#6fdc8c", P: "#ff9db5", U: "#8f6cff", n: "#3c4657", r: "#c2557f", M: "#8d99ae", m: "#6b7487" };
+  var HERO_CAPE = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "...CCCCCCCCCC...",
+    "..CCCCCCCCCCCC..",
+    ".CCCCCCCCCCCCCC.",
+    ".CCDCCCCCCCCDCC.",
+    ".CCDCCCCCCCCDCC.",
+    ".CCDCCCCCCCCDCC.",
+    ".CDDCCCCCCCCDDC.",
+    ".CDDDDDDDDDDDDC.",
+    "..DDDDDDDDDDDD..",
+    "................",
+    "................"
+  ];
+  var BODY_M = [
     "................",
     ".....SSSSSS.....",
     "....SSSSSSSS....",
     "....SSkSSkSS....",
     ".....SSSSSS.....",
     "......SSSS......",
+    "....SSSSSSSS....",
+    "...SSSSSSSSSS...",
+    "..SSSSSSSSSSSS..",
+    "..SSSSSSSSSSSS..",
+    "..SSSSSSSSSSSS..",
+    "..SSSSSSSSSSSS..",
+    "...SSSSSSSSSS...",
+    "....nnnnnnnn....",
+    "....SS....SS....",
+    "...SSS....SSS..."
+  ];
+  var BODY_F = [
+    "....HHSSSSHH....",
+    "....HHSSSSHH....",
+    "...HSSSSSSSSH...",
+    "...HSSkSSkSSH...",
+    "...HHSSSSSSHH...",
+    "...H..SSSS..H...",
+    "...SSrrrrrrSS...",
+    "...SSrrrrrrSS...",
+    "..SSSSSSSSSSSS..",
+    "..SSSSSSSSSSSS..",
+    ".SSSSSSSSSSSSSS.",
+    ".SSSSSSSSSSSSSS.",
+    "...SSSSSSSSSS...",
+    "....nnnnnnnn....",
+    "....SS....SS....",
+    "...SSS....SSS..."
+  ];
+  var ARMOR_L = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
     "....OOOOOOOO....",
     "...OOOOOOOOOO...",
-    "..OOODOOOODOOO..",
+    "..OODDOOOODDOO..",
     "..OOOOOOOOOOOO..",
-    ".YOOOOOOOOOOOOY.",
     "..OOOOOOOOOOOO..",
-    "...OOOOOOOOOO...",
-    "...BBB....BBB...",
-    "...BBB....BBB...",
-    "..BBB......BBB.."
+    "..OODDOOOODDOO..",
+    "...DOOOOOOOOD...",
+    "................",
+    "................",
+    "................"
   ];
-  var HERO_HAT = [
-    "........Y......",
-    "........Y......",
-    ".......OYO.....",
-    ".......OOO.....",
-    "......OOOOO....",
-    ".....OOOOOOO...",
-    "....OOOOOOOOO..",
-    "...OOOOOOOOOOO."
+  var HELMET_L = [
+    ".....MMMMMM.....",
+    "....MMMMMMMM....",
+    "....MMmmmMMM....",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................"
   ];
-  var HERO_CAPE = [
-    "..C..........C..",
-    "..CC........CC..",
-    "..CCC......CCC..",
-    "..CCCC....CCCC..",
-    "..CCCCCCCCCCCC..",
-    "...CCCCCCCCCC...",
-    "...CCCCCCCCCCC..",
-    "....CCCCCCCCC..."
+  var BOOTS_L = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "....BB....BB....",
+    "...BBBB..BBBB..."
+  ];
+  var WEAPON_L = [
+    "................",
+    "................",
+    "................",
+    "................",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    ".............WW.",
+    "............DDDD",
+    ".............BB.",
+    "................",
+    "................"
   ];
   var PET = [
     "...LL...",
@@ -406,6 +512,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".LLLLLL.",
     "..L..L.."
   ];
+
   function initialState() {
     return {
       v: 1, tasks: [], labels: [],
@@ -454,7 +561,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var existingImportInput = null;
   var openTaskId = null;
   var editStepIdx = null;
-  var heroDraft = { name: "", cls: "guerrier", skin: "#f2c199" };
+  var heroDraft = { name: "", cls: "guerrier", skin: "#f2c199", gender: "homme" };
   var drafts = { title: "", due: "", steps: "", diff: "facile", labels: [], taskId: null };
   function esc(x) {
     return String(x === null || x === undefined ? "" : x)
@@ -557,11 +664,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function heroHTML() {
     var pal = heroPal();
+    var fem = state.hero && state.hero.gender === "femme";
     var stage = '<div class="hero-stage hero-bob" title="Double-clique pour éditer ton héros">'
       + '<div class="hero-layer" style="z-index:0;bottom:10px">' + spriteHTML(HERO_CAPE, "6px", pal) + "</div>"
-      + '<div class="hero-layer" style="z-index:1;bottom:0">' + spriteHTML(HERO_BASE, "6px", pal) + "</div>"
-      + '<div class="hero-layer" style="z-index:2;bottom:92px">' + spriteHTML(HERO_HAT, "6px", pal) + "</div>"
-      + '<div class="hero-layer hero-pet" style="z-index:3">' + spriteHTML(PET, "4px", pal) + "</div>"
+      + '<div class="hero-layer" style="z-index:1;bottom:0">' + spriteHTML(fem ? BODY_F : BODY_M, "6px", pal) + "</div>"
+      + (state.equipment.pieds ? '<div class="hero-layer" style="z-index:2;bottom:0">' + spriteHTML(BOOTS_L, "6px", pal) + "</div>" : "")
+      + (state.equipment.armure ? '<div class="hero-layer" style="z-index:3;bottom:0">' + spriteHTML(ARMOR_L, "6px", pal) + "</div>" : "")
+      + (state.equipment.arme ? '<div class="hero-layer" style="z-index:3;bottom:0">' + spriteHTML(WEAPON_L, "6px", pal) + "</div>" : "")
+      + (state.equipment.tete ? '<div class="hero-layer" style="z-index:4;bottom:0">' + spriteHTML(HELMET_L, "6px", pal) + "</div>" : "")
+      + '<div class="hero-layer hero-pet" style="z-index:5">' + spriteHTML(PET, "4px", pal) + "</div>"
       + "</div>";
     var pct = Math.min(100, Math.round((state.xp / xpNeeded(state.level)) * 100));
     var slots = EQUIP_SLOTS.map(function (sl) {
@@ -601,17 +712,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       return '<span class="label-chip label-dot" style="background:' + esc(l.color) + '">' + esc(l.name) + "</span>";
     }).join(" ");
   }
-  function subtasksProgressHTML(t) {
-    if (t.diff === "boss") return "";
-    if (!t.subtasks || !t.subtasks.length) return "";
+  function questProgressBarHTML(t) {
+    var n = (t.subtasks || []).length;
+    if (!n) return "";
     var done = t.subtasks.filter(function (st) { return st.done; }).length;
-    return '<div class="task-progress">☑ ' + done + "/" + t.subtasks.length + " étapes</div>";
-  }
-  function bossHPHTML(t) {
-    if (t.diff !== "boss" || !t.subtasks.length) return "";
-    var done = t.subtasks.filter(function (st) { return st.done; }).length;
-    var pct = Math.round(((t.subtasks.length - done) / t.subtasks.length) * 100);
-    return '<div class="boss-hp"><div class="boss-hp-label">💀 PV du boss : ' + (t.subtasks.length - done) + "/" + t.subtasks.length + '</div><div class="hp-bar"><div class="hp-fill" style="width:' + pct + '%"></div></div></div>';
+    var pct = Math.round((done / n) * 100);
+    var cls = pct < 40 ? "quest-low" : (pct < 75 ? "quest-mid" : "quest-high");
+    return '<div class="quest-progress"><div class="quest-progress-label">☑ ' + done + "/" + n + " étapes accomplies</div>" +
+      '<div class="quest-bar"><div class="quest-fill ' + cls + '" style="width:' + pct + '%"></div></div></div>';
   }
   function taskCardHTML(t) {
     var d = DIFFS[t.diff] || DIFFS.facile;
@@ -631,7 +739,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
       '<button class="task-btn task-delete" data-action="delete-task" data-task="' + t.id + '" title="Supprimer">✖</button></div>' +
       '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + labelChipsHTML(t) + "</div>" +
-      bossHPHTML(t) + subtasksProgressHTML(t) +
+      questProgressBarHTML(t) +
       (t.dueDate ? '<div class="due-date' + (overdue ? " overdue" : "") + '">📅 Échéance : ' + fmtDate(t.dueDate) + (overdue ? " ☠ EN RETARD" : "") + "</div>" : "") +
       (actions ? '<div class="task-actions">' + actions + "</div>" : "") +
       "</div>";
@@ -767,11 +875,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<form id="quest-form">' +
       '<div class="form-row"><label class="form-label">🎯 Que faut-il accomplir ?</label>' +
       '<input name="add-title" id="add-title" placeholder="Ex : Finir la recette paye" value="' + esc(drafts.title) + '" required /></div>' +
-      '<div class="form-row"><label class="form-label">⚔️ Niveau de la quête (XP)</label><div class="diff-picker">' +
-      Object.keys(DIFFS).map(function (k) {
-        var d = DIFFS[k];
-        return '<button type="button" class="diff-btn ' + d.badge + (drafts.diff === k ? " diff-active" : "") + '" data-action="set-diff" data-diff="' + k + '">' + d.icon + " " + d.label + "<small>+" + d.xp + " XP</small></button>";
-      }).join("") + "</div></div>" +
+      '<div class="form-row"><label class="form-label">⚔️ Niveau de la quête (calculé automatiquement selon le nombre de points à cocher)</label>' +
+      '<div id="auto-tier" class="task-meta">' + autoTierBadgeHTML() + "</div></div>" +
       '<div class="form-row"><label class="form-label">🏷️ Libellés</label><div class="label-picker">' +
       (state.labels.map(function (l) {
         var on = drafts.labels.indexOf(l.id) !== -1;
@@ -836,7 +941,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
       '<div class="task-meta">' + difficultyHTML(t) +
       (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">📅 ' + fmtDate(t.dueDate) + (isOverdue(t) ? " ☠ en retard" : "") + "</span>" : "") + "</div>" +
-      bossHPHTML(t) +
+      questProgressBarHTML(t) +
       '<div class="form-row" style="margin-top:10px"><label class="form-label">🏷️ Libellés (✖ pour retirer, + pour ajouter)</label>' +
       '<div class="label-picker">' + labelEditor + "</div></div>" +
       '<div class="form-row"><label class="form-label">📅 Échéance (vide = aucune)</label>' +
@@ -845,11 +950,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '">' +
       '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>';
     if (t.status !== "done") {
-      body += '<div class="task-actions" style="margin-top:14px">' +
+      body += '<div class="task-actions" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px">' +
+        '<button type="button" class="btn" data-action="close-modal">✖ Fermer la fenêtre</button>' +
         (t.status === "todo"
           ? '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🏃 En cours</button>'
-          : '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>') +
-        " </div>";
+          : '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminer</button>') +
+        "</div>";
     } else {
       body += '<div class="task-actions" style="margin-top:14px">' +
         '<button class="btn btn-action act-cancel" data-action="cancel-quest" data-task="' + t.id + '">↩ Annuler (rend l\'XP)</button>' +
@@ -968,8 +1074,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function openHeroModal(seed) {
     var h = state.hero;
-    if (h && seed !== false) heroDraft = { name: h.name, cls: h.cls, skin: h.skin };
+    if (h && seed !== false) heroDraft = { name: h.name, cls: h.cls, skin: h.skin, gender: h.gender || "homme" };
     var cl = CLASSES[heroDraft.cls] || CLASSES.guerrier;
+    var genderBtns = [["homme", "👨 Homme"], ["femme", "👩 Femme"]].map(function (g) {
+      return '<button type="button" class="diff-btn' + (heroDraft.gender === g[0] ? " diff-active" : "") + '" data-action="set-gender" data-gender="' + g[0] + '">' + g[1] + "</button>";
+    }).join("")
     var classBtns = Object.keys(CLASSES).map(function (k) {
       var c = CLASSES[k];
       return '<button type="button" class="diff-btn' + (heroDraft.cls === k ? " diff-active" : "") + '" data-action="set-class" data-class="' + k + '">' + c.icon + " " + c.name + "<small>" + esc(c.title) + "</small></button>";
@@ -982,6 +1091,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<form id="hero-form">' +
       '<div class="form-row"><label class="form-label">🛡️ Nom de ton héros</label>' +
       '<input id="hero-name" placeholder="Ex : Gabri val le boss" value="' + esc(heroDraft.name) + '" required /></div>' +
+      '<div class="form-row"><label class="form-label">⚧ Ton héros est…</label><div class="diff-picker">' + genderBtns + "</div></div>" +
       '<div class="form-row"><label class="form-label">⚔️ Classe (cosmétique pour l\'instant)</label><div class="diff-picker">' + classBtns + "</div></div>" +
       '<div class="form-row"><label class="form-label">🎨 Couleur de peau</label><div class="label-picker">' + skinBtns + "</div></div>" +
       '<button type="submit" class="btn btn-accent btn-big" style="width:100%">' + (h ? "💾 Enregistrer" : "⚔️ Commencer l'aventure") + "</button>" +
@@ -1011,7 +1121,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var t = taskById(id);
     if (!t || !t.subtasks || !t.subtasks[idx]) return;
     t.subtasks.splice(idx, 1);
+    t.diff = stepsToTierAndXP(t.subtasks.length).key;
     saveState();
+  }
+  function recomputeLevel(taskId) {
+    var t = taskById(taskId);
+    if (t) t.diff = stepsToTierAndXP((t.subtasks || []).length).key;
   }
   function deleteTask(id) {
     state.tasks = state.tasks.filter(function (t) { return t.id !== id; });
@@ -1143,6 +1258,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         var hn2 = document.getElementById("hero-name");
         if (hn2) heroDraft.name = hn2.value;
         renderAll();
+        openHeroModal(false);
+        return;
+      }
+      if (act === "set-gender") {
+        heroDraft.gender = el.getAttribute("data-gender");
+        var hn3 = document.getElementById("hero-name");
+        if (hn3) heroDraft.name = hn3.value;
         openHeroModal(false);
         return;
       }
@@ -1342,7 +1464,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var subtasks = (tx && tx.value || "").split("\n").map(function (s) { return s.trim(); })
         .filter(Boolean).map(function (s) { return { text: s, done: false }; });
       var t = {
-        id: uid(), title: title, diff: drafts.diff, status: "todo",
+        id: uid(), title: title, diff: stepsToTierAndXP(subtasks.length).key, status: "todo",
         subtasks: subtasks, createdAt: todayKey(),
         dueDate: (dueEl && dueEl.value) || null,
         labels: drafts.labels.slice(), doneAt: null
@@ -1359,10 +1481,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       e.preventDefault();
       var hname = (document.getElementById("hero-name").value || "").trim() || "Héros sans nom";
       var isNew = !state.hero;
-      state.hero = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin };
+      state.hero = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin, gender: heroDraft.gender || "homme" };
       closeModal();
       saveState();
-      heroDraft = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin };
+      heroDraft = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin, gender: heroDraft.gender || "homme" };
       renderAll();
       showToast(isNew ? "⚔️ Bienvenue, " + hname + " ! Que l'aventure commence." : "💾 Héros mis à jour");
       return;
@@ -1405,6 +1527,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         var task = taskById(f.getAttribute("data-task"));
         if (task) {
           task.subtasks.push({ text: txt, done: false });
+          recomputeLevel(task.id);
           saveState();
           openTaskModal(task.id);
           renderAll();
@@ -1426,7 +1549,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   document.addEventListener("input", function (e) {
     if (e.target.id === "add-title") drafts.title = e.target.value;
     if (e.target.id === "add-due") drafts.due = e.target.value;
-    if (e.target.name === "steps-text") drafts.steps = e.target.value;
+    if (e.target.name === "steps-text") {
+      drafts.steps = e.target.value;
+      var at = document.getElementById("auto-tier");
+      if (at) at.innerHTML = autoTierBadgeHTML();
+    }
   });
   document.addEventListener("change", function (e) {
     if (e.target.hasAttribute && e.target.hasAttribute("data-edit-due")) {
