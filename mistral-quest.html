@@ -149,10 +149,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   border-radius: 6px;
 }
 .task-card:active { cursor: grabbing; }
-.diff-facile { border-left-color: #6fdc8c; }
-.diff-moyenne { border-left-color: #ffc46b; }
-.diff-difficile { border-left-color: #ff7000; }
-.diff-boss { border-left-color: #ff4d4d; }
+.task-card { box-shadow: 0 0 0 2px rgba(160, 138, 104, 0.18); }
+.diff-facile { border-left-color: #6fdc8c; box-shadow: 0 0 0 2px rgba(111, 216, 140, 0.25); }
+.diff-moyenne { border-left-color: #ffc46b; box-shadow: 0 0 0 2px rgba(255, 196, 107, 0.25); }
+.diff-difficile { border-left-color: #ff7000; box-shadow: 0 0 0 2px rgba(255, 112, 0, 0.25); }
+.diff-boss { border-left-color: #ff4d4d; box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.25); }
 .task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .task-diff { font-size: 8px; color: var(--muted); }
 .task-reward { margin-left: auto; font-size: 15px; color: var(--accent); }
