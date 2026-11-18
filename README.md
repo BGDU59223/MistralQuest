@@ -27,7 +27,8 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 
 ## Fonctionnalités
 
-- **Board Kanban** (À faire / En cours / Terminé) avec glisser-déposer
+- **Board Kanban** (À faire / En cours / Terminé) avec glisser-déposer, et fiche héros compacte sur la droite : le board profite de toute la largeur pour tes quêtes
+- **Quêtes renommables** : le nom d'une quête se change à tout moment dans sa fenêtre (double-clic sur la tuile)
 - **Création de héros** : nom, genre (homme / femme), classes (magicien, guerrier, chasseur, assassin) et couleur de peau — modifiable à tout moment en double-cliquant sur le héros ; en sous-vêtements tant qu'il n'a rien équipé
 - **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP · 2 🪙), 2–3 → Moyenne (+25 · 5 🪙), 4–7 → Difficile (+50 · 8 🪙), 8 et plus → Boss (+120 · 12 🪙)
 - **Barre de progression verte** sur chaque quête : elle se remplit à chaque étape cochée (0 → N)
