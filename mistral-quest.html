@@ -165,6 +165,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   color: #ffffff;
 }
 .task-overdue .label-chip { color: #161005; }
+.chip-x {
+  border: none; background: rgba(0, 0, 0, 0.22); color: #161005; cursor: pointer;
+  font-family: inherit; font-size: 13px; line-height: 1; padding: 1px 5px; border-radius: 999px;
+}
+.chip-x:hover { background: #161005; color: #fff; }
+.btn-action.act-cancel, .btn-action.act-back { border-color: #c0c8d8; color: #c0c8d8; }
+.btn-action.act-cancel:hover, .btn-action.act-back:hover { background: #c0c8d8; color: #16181f; }
+.subtask span[data-step-index] { cursor: text; }
 .task-overdue .btn-action.act-doing,
 .task-overdue .btn-action.act-done { color: #fff; }
 .boss-hp { margin: 8px 0; }
@@ -195,12 +203,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .hero-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 @media (max-width: 800px) { .hero-panel { grid-template-columns: 1fr; } }
 .hero-card { text-align: center; }
-.hero-stage { position: relative; display: inline-block; padding-top: 40px; }
-.hero-base { position: relative; z-index: 1; }
-.hero-layer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+.hero-stage { position: relative; display: inline-block; width: 96px; height: 152px; margin-top: 4px; }
+.hero-layer { position: absolute; left: 50%; transform: translateX(-50%); }
 .hero-bob { animation: bob 1.6s steps(2) infinite; }
 @keyframes bob { 0%, 100% { margin-top: 0; } 50% { margin-top: -3px; } }
-.hero-pet { left: auto; right: -60px; top: auto; bottom: 0; transform: none; }
+.hero-pet { left: auto; right: -36px; top: auto; bottom: 0; transform: none; }
 .hero-name { font-size: 12px; margin-top: 12px; }
 .hero-title { color: var(--accent); font-size: 10px; }
 .xp-bar {
@@ -311,9 +318,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ["achievements", "🏆 Exploits"],
     ["shop", "🛒 Boutique"],
     ["stats", "📊 Stats"],
+    ["archive", "🗄️ Archive"],
     ["theme", "🎨 Apparence"]
   ];
-  var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🎩 Tête"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Pieds"], ["familier", "🐾 Familier"]];
+  var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🪖 Casque"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Bottes"]];
+  var CLASSES = {
+    magicien: { name: "Magicien", icon: "🧙", title: "Archimage du vent", robe: "#8f6cff", cape: "#5a3aa8" },
+    guerrier: { name: "Guerrier", icon: "⚔️", title: "Bastion d'acier", robe: "#ff7000", cape: "#a83a20" },
+    chasseur: { name: "Chasseur", icon: "🏹", title: "Traqueur du large", robe: "#6fdc8c", cape: "#2f7a4d" },
+    assassin: { name: "Assassin", icon: "🗡️", title: "Ombre du crépuscule", robe: "#8a93a6", cape: "#4a5160" }
+  };
+  var SKINS = ["#f2c199", "#e0a97b", "#c9906b", "#9c6644", "#6f4626"];
   var SHOP_ITEMS = [
     { id: "pomme",    name: "Pomme scintillante", desc: "+8 XP immédiatement",              cost: 15,  rarity: "commun",     type: "consumable", xp: 8 },
     { id: "potion",   name: "Potion d'XP",        desc: "+15 XP immédiatement",             cost: 25,  rarity: "commun",     type: "consumable", xp: 15 },
@@ -321,13 +336,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "bouclier", name: "Bouclier pixel",     desc: "Armure · +5% XP gagné",            cost: 40,  rarity: "commun",     type: "gear", slot: "armure", bonus: 5 },
     { id: "plume",    name: "Plume du vent",      desc: "Accessoire · +7% XP gagné",        cost: 60,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 7 },
     { id: "botte",    name: "Bottes de vitesse",  desc: "Pieds · +8% XP gagné",             cost: 80,  rarity: "rare",       type: "gear", slot: "pieds", bonus: 8 },
-    { id: "chapeau",  name: "Chapeau pointu",     desc: "Tête · +8% XP gagné",              cost: 70,  rarity: "rare",       type: "gear", slot: "tete", bonus: 8 },
-    { id: "chat",     name: "Chat boulon",        desc: "Familier · +5% XP gagné",          cost: 120, rarity: "rare",       type: "gear", slot: "familier", bonus: 5 },
+    { id: "chapeau",  name: "Casque de bataille", desc: "Casque · +8% XP gagné",            cost: 70,  rarity: "rare",       type: "gear", slot: "tete", bonus: 8 },
     { id: "amulette", name: "Amulette solaire",   desc: "Accessoire · +10% XP gagné",       cost: 90,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 10 },
     { id: "dragon",   name: "Insigne dragon",     desc: "Armure · +12% XP gagné",           cost: 140, rarity: "epique",     type: "gear", slot: "armure", bonus: 12 },
     { id: "anneau",   name: "Anneau du vent",     desc: "Accessoire · +12% XP gagné",       cost: 160, rarity: "epique",     type: "gear", slot: "accessoire", bonus: 12 },
-    { id: "lame",     name: "Lame légendaire",    desc: "Arme · +15% XP gagné",             cost: 180, rarity: "epique",     type: "gear", slot: "arme", bonus: 15 },
-    { id: "dragonnet", name: "Dragonnet",         desc: "Familier légendaire · +20% XP",    cost: 300, rarity: "legendaire", type: "gear", slot: "familier", bonus: 20 }
+    { id: "lame",     name: "Lame légendaire",    desc: "Arme · +15% XP gagné",             cost: 180, rarity: "epique",     type: "gear", slot: "arme", bonus: 15 }
   ];
   var ACHIEVEMENTS = [
     { id: "first",   name: "Première quête",  desc: "Terminer 1 quête",                 icon: "🌱", check: function (s) { return s.stats.totalCompleted >= 1; }, gold: 10 },
@@ -400,7 +413,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       streak: 0, lastCompletedDay: null,
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
-      theme: "nuit", view: "board"
+      theme: "nuit", view: "board", hero: null
     };
   }
   function migrate(s) {
@@ -414,12 +427,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.labels = out.labels || [];
     out.equipment = out.equipment || {};
     out.achievements = out.achievements || [];
+    out.hero = (s && s.hero !== undefined) ? s.hero : null;
     out.tasks = (out.tasks || []).map(function (t) {
       return {
         id: t.id, title: t.title, diff: t.diff || "facile", status: t.status || "todo",
         subtasks: t.subtasks || [], createdAt: t.createdAt || "",
         dueDate: t.dueDate !== undefined ? t.dueDate : null,
-        labels: t.labels || [], doneAt: t.doneAt || null
+        labels: t.labels || [], doneAt: t.doneAt || null,
+        comment: t.comment || null, gain: t.gain || null, archived: t.archived || false
       };
     });
     return out;
@@ -438,6 +453,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var draggedId = null;
   var existingImportInput = null;
   var openTaskId = null;
+  var editStepIdx = null;
+  var heroDraft = { name: "", cls: "guerrier", skin: "#f2c199" };
   var drafts = { title: "", due: "", steps: "", diff: "facile", labels: [], taskId: null };
   function esc(x) {
     return String(x === null || x === undefined ? "" : x)
@@ -517,30 +534,43 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var vars = theme.vars;
     for (var k in vars) { document.documentElement.style.setProperty(k, vars[k]); }
   }
-  function spriteHTML(grid, cell) {
+  function spriteHTML(grid, cell, pal) {
+    pal = pal || PAL;
     var h = grid.length, w = grid[0].length;
     var s = '<div class="pixel-sprite" style="grid-template-columns:repeat(' + w + ',' + cell + ');grid-auto-rows:' + cell + '">';
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         var c = grid[y][x];
-        s += (c === "." || !PAL[c]) ? "<i></i>" : '<i style="background:' + PAL[c] + '"></i>';
+        s += (c === "." || !pal[c]) ? "<i></i>" : '<i style="background:' + pal[c] + '"></i>';
       }
     }
     return s + "</div>";
   }
+  function heroPal() {
+    var p = {}, k;
+    for (k in PAL) p[k] = PAL[k];
+    var cl = CLASSES[(state.hero && state.hero.cls) || "guerrier"];
+    p.S = (state.hero && state.hero.skin) || PAL.S;
+    p.O = cl.robe;
+    p.C = cl.cape;
+    return p;
+  }
   function heroHTML() {
-    var stage = '<div class="hero-stage hero-bob">'
-      + '<div class="hero-layer" style="z-index:0;top:6px">' + spriteHTML(HERO_CAPE, "6px") + "</div>"
-      + '<div class="hero-layer hero-base" style="z-index:1;top:auto;bottom:0;transform:none">' + spriteHTML(HERO_BASE, "6px") + "</div>"
-      + '<div class="hero-layer" style="z-index:2;top:-2px">' + spriteHTML(HERO_HAT, "6px") + "</div>"
-      + '<div class="hero-layer hero-pet" style="z-index:3">' + spriteHTML(PET, "4px") + "</div>"
+    var pal = heroPal();
+    var stage = '<div class="hero-stage hero-bob" title="Double-clique pour éditer ton héros">'
+      + '<div class="hero-layer" style="z-index:0;bottom:10px">' + spriteHTML(HERO_CAPE, "6px", pal) + "</div>"
+      + '<div class="hero-layer" style="z-index:1;bottom:0">' + spriteHTML(HERO_BASE, "6px", pal) + "</div>"
+      + '<div class="hero-layer" style="z-index:2;bottom:92px">' + spriteHTML(HERO_HAT, "6px", pal) + "</div>"
+      + '<div class="hero-layer hero-pet" style="z-index:3">' + spriteHTML(PET, "4px", pal) + "</div>"
       + "</div>";
     var pct = Math.min(100, Math.round((state.xp / xpNeeded(state.level)) * 100));
     var slots = EQUIP_SLOTS.map(function (sl) {
       var it = state.equipment[sl[0]] ? shopById(state.equipment[sl[0]]) : null;
       return '<span class="hud-badge">' + sl[1] + " : " + (it ? esc(it.name) : '<span style="color:var(--muted)">vide</span>') + "</span>";
     }).join("");
-    var mult = Math.round(xpMultiplier() * 100);
+    var cl = CLASSES[(state.hero && state.hero.cls) || "guerrier"];
+    var hName = state.hero ? esc(state.hero.name) : '<span style="color:var(--muted)">Héros anonyme</span>';
+    var hTitle = state.hero ? esc(cl.title) : '<span style="color:var(--muted)">double-clique pour te créer</span>';
     var loot = "";
     if (state.pendingLoot > 0) {
       loot = '<div class="lootbox-row"><button class="btn btn-accent" data-action="open-lootbox">🎁 Ouvrir une loot box (' + state.pendingLoot + ')</button><span class="lootbox-hint">Gagne des loot boxes tous les 3 niveaux !</span></div>';
@@ -548,14 +578,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       loot = '<div class="lootbox-row"><span class="lootbox-hint">🎁 Loot box au niveau ' + (Math.floor(state.level / 3) + 1) * 3 + '</span></div>';
     }
     return '<div class="panel">' +
-      '<h2 class="panel-title">HERO</h2>' +
+      '<h2 class="panel-title">HEROS</h2>' +
       '<div class="hero-panel">' +
       '<div class="hero-card">' + stage +
-      '<div class="hero-name">Héros</div>' +
-      '<div class="hero-title">Vagabond du pixel</div>' +
+      '<div class="hero-name">' + hName + '</div>' +
+      '<div class="hero-title">' + cl.icon + " " + hTitle + "</div>" +
       '<div class="xp-bar"><div class="xp-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="xp-label">XP ' + state.xp + " / " + xpNeeded(state.level) + "</div>" +
-      '<div class="hero-stats"><span>⭐ Niveau ' + state.level + "</span><span class=\"gold-text\">🪙 " + state.gold + "</span><span>🔥 Série " + state.streak + "</span><span>📈 Bonus XP x" + mult + "%</span></div>" +
+      '<div class="hero-stats"><span>⭐ Niveau ' + state.level + "</span><span class=\"gold-text\">🪙 " + state.gold + "</span><span>🔥 Série " + state.streak + "</span></div>" +
       "</div>" +
       '<div class="hero-stats" style="flex-direction:column;align-items:stretch;gap:8px">' +
       '<h3 class="panel-title">ÉQUIPEMENT</h3>' + slots + loot +
@@ -591,7 +621,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (t.status === "todo") {
       actions = '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🏃 En cours</button>';
     } else if (t.status === "doing") {
-      actions = '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>';
+      actions = '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>' +
+        '<button class="btn btn-action act-back" data-action="back" data-task="' + t.id + '">↩ Retour</button>';
+    } else {
+      actions = '<button class="btn btn-action act-cancel" data-action="cancel-quest" data-task="' + t.id + '">↩ Annuler</button>' +
+        '<button class="btn" data-action="archive-task" data-task="' + t.id + '">🗄️ Archiver</button>';
     }
     return '<div class="' + cls + '" draggable="true" data-task="' + t.id + '">' +
       '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
@@ -603,7 +637,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       "</div>";
   }
   function columnHTML(key) {
-    var list = state.tasks.filter(function (t) { return t.status === key; });
+    var list = state.tasks.filter(function (t) { return t.status === key && !t.archived; });
     var cards = list.map(taskCardHTML).join("");
     return '<div class="column" data-drop="' + key + '">' +
       '<div class="column-header">' + COLUMNS[key] + '<span class="column-count">' + list.length + "</span></div>" +
@@ -631,7 +665,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
   function shopView() {
-    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + "</span> — style Bonus XP total : <span class=\"gold-text\">x" + Math.round(xpMultiplier() * 100) + "%</span></p>" +
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — l\'équipement booste discrètement ton XP gagné.</p>' +
       '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
@@ -687,10 +721,32 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<div class="panel"><h2 class="panel-title">APPARENCE</h2><div class="theme-swatches" style="flex-wrap:wrap;gap:8px">' + rows + "</div>" +
       '<p class="lootbox-hint" style="margin-bottom:0">Le thème est gardé dans ta sauvegarde locale.</p></div>';
   }
+  function archiveView() {
+    var list = state.tasks.filter(function (t) { return t.archived; });
+    if (!list.length) {
+      return '<div class="panel"><h2 class="panel-title">ARCHIVE</h2><p class="lootbox-hint" style="margin:0">Aucune quête archivée. Archive une quête terminée depuis le board (bouton 🗄️) pour garder une trace sans encombrer le board.</p></div>';
+    }
+    var rows = list.map(function (t) {
+      var d = DIFFS[t.diff] || DIFFS.facile;
+      return '<div class="panel" style="margin-bottom:12px">' +
+        '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
+        '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + "</span>" +
+        (t.gain ? '<span class="task-reward">+' + t.gain.xp + " XP · +" + t.gain.gold + " 🪙</span>" : "") +
+        '<button class="btn" style="margin-left:auto" data-action="unarchive-task" data-task="' + t.id + '">↩ Désarchiver</button></div>' +
+        '<div class="task-meta">' + labelChipsHTML(t) +
+        (t.doneAt ? '<span class="due-date">🏁 terminée le ' + fmtDate(t.doneAt) + "</span>" : "") +
+        (t.dueDate ? '<span class="due-date">📅 ' + fmtDate(t.dueDate) + "</span>" : "") + "</div>" +
+        (t.comment ? '<div style="margin-top:6px"><i>« ' + esc(t.comment) + ' »</i></div>' : "") +
+        (t.subtasks && t.subtasks.length ? '<div class="task-progress">☑ ' + t.subtasks.filter(function (st) { return st.done; }).length + "/" + t.subtasks.length + " étapes accomplies</div>" : "") +
+        "</div>";
+    }).join("");
+    return '<h2 class="panel-title">ARCHIVE (' + list.length + ')</h2>' + rows;
+  }
   function viewHTML() {
     if (state.view === "achievements") return achievementsView();
     if (state.view === "shop") return shopView();
     if (state.view === "stats") return statsView();
+    if (state.view === "archive") return archiveView();
     if (state.view === "theme") return themeView();
     return boardView();
   }
@@ -749,23 +805,42 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var d = DIFFS[t.diff] || DIFFS.facile;
     return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>";
   }
-  function openTaskModal(id) {
+  function openTaskModal(id, keepEdit) {
     var t = taskById(id);
     if (!t) return;
     openTaskId = id;
-    var d = DIFFS[t.diff] || DIFFS.facile;
+    if (!keepEdit) editStepIdx = null;
     var steps = (t.subtasks || []).map(function (st, i) {
+      if (editStepIdx === i) {
+        return '<form class="subtask" data-form="edit-subtask" data-task="' + t.id + '" data-index="' + i + '">' +
+          '<input name="edit-step" value="' + esc(st.text) + '" required />' +
+          '<button type="submit" class="btn">💾</button></form>';
+      }
       return '<label class="subtask' + (st.done ? " subtask-done" : "") + '">' +
         '<input type="checkbox" data-action="toggle-subtask" data-task="' + t.id + '" data-index="' + i + '"' + (st.done ? " checked" : "") + " />" +
-        "<span>" + esc(st.text) + '</span>' +
+        '<span data-step-index="' + i + '" title="Double-clique pour modifier">' + esc(st.text) + '</span>' +
         '<button type="button" class="task-btn step-del" data-action="remove-subtask" data-task="' + t.id + '" data-index="' + i + '" title="Supprimer l\'étape">✖</button></label>';
     }).join("");
+    var attached = labelsOf(t);
+    var remaining = state.labels.filter(function (l) { return (t.labels || []).indexOf(l.id) === -1; });
+    var labelEditor = attached.map(function (l) {
+      return '<span class="label-chip" style="background:' + esc(l.color) + '">' + esc(l.name) +
+        '<button type="button" class="chip-x" data-action="remove-task-label" data-task="' + t.id + '" data-label="' + l.id + '" title="Retirer de cette quête">✖</button></span>';
+    }).join(" ")
+      + remaining.map(function (l) {
+        return '<button type="button" class="chip" data-action="add-task-label" data-task="' + t.id + '" data-label="' + l.id + '">+ ' + esc(l.name) + "</button>";
+      }).join(" ")
+      + (!state.labels.length ? '<span class="lootbox-hint">Aucun libellé — crées-en via le bouton 🏷️ du board.</span>' : "");
     var body = '<span class="modal-close" data-action="close-modal">✖</span>' +
       '<h2 class="panel-title">CHECKLIST DE QUÊTE</h2>' +
       '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
-      '<div class="task-meta">' + difficultyHTML(t) + labelChipsHTML(t) +
+      '<div class="task-meta">' + difficultyHTML(t) +
       (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">📅 ' + fmtDate(t.dueDate) + (isOverdue(t) ? " ☠ en retard" : "") + "</span>" : "") + "</div>" +
       bossHPHTML(t) +
+      '<div class="form-row" style="margin-top:10px"><label class="form-label">🏷️ Libellés (✖ pour retirer, + pour ajouter)</label>' +
+      '<div class="label-picker">' + labelEditor + "</div></div>" +
+      '<div class="form-row"><label class="form-label">📅 Échéance (vide = aucune)</label>' +
+      '<input type="date" data-edit-due data-task="' + t.id + '" value="' + (t.dueDate || "") + '" /></div>' +
       '<div class="checklist">' + (steps || '<p class="lootbox-hint">Aucune étape. Ajoute-en une 👇</p>') + "</div>" +
       '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '">' +
       '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>';
@@ -776,7 +851,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           : '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>') +
         " </div>";
     } else {
-      body += '<p class="lootbox-hint" style="margin-top:10px">🏁 Quête terminée — XP déjà récolté.</p>';
+      body += '<div class="task-actions" style="margin-top:14px">' +
+        '<button class="btn btn-action act-cancel" data-action="cancel-quest" data-task="' + t.id + '">↩ Annuler (rend l\'XP)</button>' +
+        '<button class="btn" data-action="archive-task" data-task="' + t.id + '">🗄️ Archiver</button></div>' +
+        (t.comment ? '<p class="lootbox-hint" style="margin-top:10px">« ' + esc(t.comment) + ' »</p>' : "");
     }
     openModal(body);
   }
@@ -787,6 +865,30 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       closeModal();
     }
     return false;
+  }
+  function cancelCompletion(t) {
+    if (t.status !== "done") return;
+    var g = t.gain || { xp: 0, gold: 0 };
+    state.xp -= g.xp;
+    state.gold -= g.gold;
+    while (state.xp < 0 && state.level > 1) {
+      state.level = state.level - 1;
+      state.xp += xpNeeded(state.level);
+    }
+    if (state.xp < 0) state.xp = 0;
+    if (state.gold < 0) state.gold = 0;
+    state.stats.totalCompleted = Math.max(0, (state.stats.totalCompleted || 0) - 1);
+    var day = t.doneAt || todayKey();
+    if (state.stats.xpByDay[day]) state.stats.xpByDay[day] = Math.max(0, state.stats.xpByDay[day] - g.xp);
+    if (state.stats.doneByDay[day]) state.stats.doneByDay[day] = Math.max(0, state.stats.doneByDay[day] - 1);
+    if ((DIFFS[t.diff] || {}).boss) state.stats.bossKills = Math.max(0, (state.stats.bossKills || 0) - 1);
+    t.status = "doing";
+    t.doneAt = null;
+    t.gain = null;
+    t.comment = null;
+    t.archived = false;
+    saveState();
+    showToast("↩ Quête annulée — XP rendu");
   }
   function completeTask(t) {
     var d = DIFFS[t.diff] || DIFFS.facile;
@@ -812,6 +914,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var baseXp = Math.round((d.xp + streakBonus) * xpMultiplier() * 10) / 10;
     var beforeLevel = state.level;
     state = grantReward(state, baseXp, d.gold);
+    t.gain = { xp: Math.round(baseXp), gold: d.gold };
     state.stats.xpByDay[day] = (state.stats.xpByDay[day] || 0) + Math.round(baseXp);
     state.stats.doneByDay[day] = (state.stats.doneByDay[day] || 0) + 1;
     state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
@@ -829,13 +932,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var t = taskById(id);
     if (!t || t.status === "done") return;
     if (t.status === "doing") {
-      if (!completeTask(t)) { saveState(); renderAll(); return; }
-      closeModal();
-    } else {
-      t.status = "doing";
-      showToast("🏃 Quête en cours : " + t.title);
-      saveState();
+      openVictoryModal(id);
+      return;
     }
+    t.status = "doing";
+    showToast("🏃 Quête en cours : " + t.title);
+    saveState();
     renderAll();
   }
   function moveTask(id, to) {
@@ -843,13 +945,47 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!t) return;
     if (to === t.status) return;
     if (to === "done") {
-      if (!completeTask(t)) { saveState(); renderAll(); return; }
-      closeModal();
-    } else {
-      t.status = to;
-      saveState();
+      openVictoryModal(id);
+      return;
     }
+    t.status = to;
+    saveState();
     renderAll();
+  }
+  function openVictoryModal(id) {
+    var t = taskById(id);
+    if (!t) return;
+    var flavor = ["Le dernier coup d'épée du boss…", "Le vent s'est levé, et le boss est tombé.", "Raconte-nous ce moment épique."];
+    var ph = flavor[Math.floor(Math.random() * flavor.length)];
+    openModal('<span class="modal-close" data-action="close-modal">✖</span>' +
+      '<h2 class="panel-title">🏁 QUÊTE TERMINÉE !</h2>' +
+      '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
+      '<form data-form="victory" data-task="' + t.id + '">' +
+      '<div class="form-row"><label class="form-label">✍️ Raconte-nous en une phrase comment ça s\'est passé (facultatif) :</label>' +
+      '<input name="quest-comment" placeholder="' + esc(ph) + '" /></div>' +
+      '<button type="submit" class="btn btn-accent btn-big" style="width:100%">⚔️ Encaisser l\'XP</button>' +
+      "</form>");
+  }
+  function openHeroModal(seed) {
+    var h = state.hero;
+    if (h && seed !== false) heroDraft = { name: h.name, cls: h.cls, skin: h.skin };
+    var cl = CLASSES[heroDraft.cls] || CLASSES.guerrier;
+    var classBtns = Object.keys(CLASSES).map(function (k) {
+      var c = CLASSES[k];
+      return '<button type="button" class="diff-btn' + (heroDraft.cls === k ? " diff-active" : "") + '" data-action="set-class" data-class="' + k + '">' + c.icon + " " + c.name + "<small>" + esc(c.title) + "</small></button>";
+    }).join("");
+    var skinBtns = SKINS.map(function (c) {
+      return '<button type="button" class="chip' + (heroDraft.skin === c ? " chip-active" : "") + '" data-action="set-skin" data-skin="' + c + '"><span style="display:inline-block;width:16px;height:16px;background:' + c + ';border-radius:999px"></span></button>';
+    }).join(" ");
+    openModal((h ? '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' : "") +
+      '<h2 class="panel-title">' + (h ? "TON HÉROS" : "CRÉE TON HÉROS") + "</h2>" +
+      '<form id="hero-form">' +
+      '<div class="form-row"><label class="form-label">🛡️ Nom de ton héros</label>' +
+      '<input id="hero-name" placeholder="Ex : Gabri val le boss" value="' + esc(heroDraft.name) + '" required /></div>' +
+      '<div class="form-row"><label class="form-label">⚔️ Classe (cosmétique pour l\'instant)</label><div class="diff-picker">' + classBtns + "</div></div>" +
+      '<div class="form-row"><label class="form-label">🎨 Couleur de peau</label><div class="label-picker">' + skinBtns + "</div></div>" +
+      '<button type="submit" class="btn btn-accent btn-big" style="width:100%">' + (h ? "💾 Enregistrer" : "⚔️ Commencer l'aventure") + "</button>" +
+      "</form>");
   }
   function toggleSubtask(id, idx) {
     var t = taskById(id);
@@ -931,6 +1067,85 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (act === "close-modal") { closeModal(); syncAddDrafts(); return; }
       if (act === "switch-tab") { state.view = el.getAttribute("data-view"); saveState(); renderAll(); return; }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
+      if (act === "back") {
+        var tb = taskById(el.getAttribute("data-task"));
+        if (tb && tb.status === "doing") {
+          tb.status = "todo";
+          saveState();
+          closeModal();
+          renderAll();
+          showToast("↩ De retour à l'ardoise : " + tb.title);
+        }
+        return;
+      }
+      if (act === "cancel-quest") {
+        var tc = taskById(el.getAttribute("data-task"));
+        if (tc && confirm("Annuler cette quête terminée ? L'XP et l'or gagnés seront retirés (perte de niveau possible).")) {
+          cancelCompletion(tc);
+          closeModal();
+          renderAll();
+        }
+        return;
+      }
+      if (act === "archive-task") {
+        var ta = taskById(el.getAttribute("data-task"));
+        if (ta && ta.status === "done") {
+          ta.archived = true;
+          saveState();
+          closeModal();
+          renderAll();
+          showToast("🗄️ Quête archivée — visible dans l'onglet Archive");
+        }
+        return;
+      }
+      if (act === "unarchive-task") {
+        var tu = taskById(el.getAttribute("data-task"));
+        if (tu) {
+          tu.archived = false;
+          saveState();
+          renderAll();
+          showToast("↩ Quête de retour dans Terminé");
+        }
+        return;
+      }
+      if (act === "remove-task-label") {
+        var trl = taskById(el.getAttribute("data-task"));
+        var rlid = el.getAttribute("data-label");
+        if (trl) {
+          trl.labels = (trl.labels || []).filter(function (x) { return x !== rlid; });
+          saveState();
+          openTaskModal(trl.id);
+          renderAll();
+        }
+        return;
+      }
+      if (act === "add-task-label") {
+        var tal = taskById(el.getAttribute("data-task"));
+        var alid = el.getAttribute("data-label");
+        if (tal && (tal.labels || []).indexOf(alid) === -1) {
+          tal.labels.push(alid);
+          saveState();
+          openTaskModal(tal.id);
+          renderAll();
+        }
+        return;
+      }
+      if (act === "set-class") {
+        heroDraft.cls = el.getAttribute("data-class");
+        var hn = document.getElementById("hero-name");
+        if (hn) heroDraft.name = hn.value;
+        renderAll();
+        openHeroModal(false);
+        return;
+      }
+      if (act === "set-skin") {
+        heroDraft.skin = el.getAttribute("data-skin");
+        var hn2 = document.getElementById("hero-name");
+        if (hn2) heroDraft.name = hn2.value;
+        renderAll();
+        openHeroModal(false);
+        return;
+      }
       if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
       if (act === "open-add-modal") { openAddModal(); return; }
       if (act === "open-labels-modal") { openLabelsModal(); return; }
@@ -1093,6 +1308,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (e.target.id === "modal-overlay") { closeModal(); syncAddDrafts(); }
   });
   document.addEventListener("dblclick", function (e) {
+    var stepSpan = e.target.closest("#modal .subtask span[data-step-index]");
+    if (stepSpan) {
+      var lab = stepSpan.closest(".subtask").querySelector("input[data-task]");
+      editStepIdx = parseInt(stepSpan.getAttribute("data-step-index"), 10);
+      openTaskModal(lab ? lab.getAttribute("data-task") : openTaskId, true);
+      return;
+    }
+    if (e.target.closest(".hero-stage")) {
+      openHeroModal();
+      return;
+    }
     var card = e.target.closest(".task-card");
     if (!card) return;
     if (e.target.closest("button, input, .btn-action, .task-delete")) return;
@@ -1129,6 +1355,48 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       showToast("📜 Quête ajoutée : " + title);
       return;
     }
+    if (f.id === "hero-form") {
+      e.preventDefault();
+      var hname = (document.getElementById("hero-name").value || "").trim() || "Héros sans nom";
+      var isNew = !state.hero;
+      state.hero = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin };
+      closeModal();
+      saveState();
+      heroDraft = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin };
+      renderAll();
+      showToast(isNew ? "⚔️ Bienvenue, " + hname + " ! Que l'aventure commence." : "💾 Héros mis à jour");
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "victory") {
+      e.preventDefault();
+      var tv = taskById(f.getAttribute("data-task"));
+      if (tv) {
+        var com = f.querySelector("input[name=quest-comment]");
+        tv.comment = (com && com.value.trim()) || null;
+        if (completeTask(tv)) {
+          closeModal();
+        } else {
+          renderAll();
+          return;
+        }
+      }
+      renderAll();
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "edit-subtask") {
+      e.preventDefault();
+      var te = taskById(f.getAttribute("data-task"));
+      var eidx = parseInt(f.getAttribute("data-index"), 10);
+      var ev = f.querySelector("input[name=edit-step]").value.trim();
+      if (te && te.subtasks[eidx]) {
+        if (ev) te.subtasks[eidx].text = ev;
+        editStepIdx = null;
+        saveState();
+        openTaskModal(te.id);
+        renderAll();
+      }
+      return;
+    }
     if (f.getAttribute && f.getAttribute("data-form") === "add-subtask") {
       e.preventDefault();
       var input = f.querySelector("input[name=subtask-text]");
@@ -1161,6 +1429,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (e.target.name === "steps-text") drafts.steps = e.target.value;
   });
   document.addEventListener("change", function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute("data-edit-due")) {
+      var td = taskById(e.target.getAttribute("data-task"));
+      if (td) {
+        td.dueDate = e.target.value || null;
+        saveState();
+        showToast("📅 Échéance mise à jour");
+        renderAll();
+        openTaskModal(td.id);
+      }
+      return;
+    }
     if (e.target.getAttribute && e.target.getAttribute("data-action") === "toggle-subtask") {
       var changed = toggleSubtask(e.target.getAttribute("data-task"), parseInt(e.target.getAttribute("data-index"), 10));
       if (changed) { renderAll(); refreshTaskModal(); }
@@ -1208,6 +1487,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   document.getElementById("logo").innerHTML = spriteHTML(LOGO, "3px");
   applyTheme();
   renderAll();
+  if (!state.hero) openHeroModal();
 })();
 </script>
 </body>
