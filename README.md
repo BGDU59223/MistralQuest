@@ -4,6 +4,12 @@ Un gestionnaire de tâches gamifié façon Microsoft Planner, mais dans une vibe
 
 ## Lancer l'app
 
+### Version un seul fichier (aucune installation)
+
+Ouvrir simplement `mistral-quest.html` dans un navigateur (double-clic). Tout est embarqué : styles, sprites, logique de jeu, sauvegarde localStorage.
+
+### Version React (développement)
+
 ```bash
 npm install
 npm run dev

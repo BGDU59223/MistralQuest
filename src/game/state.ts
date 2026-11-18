@@ -129,9 +129,11 @@ function updateStreak(s: GameState): GameState {
   if (s.lastCompletedDay === key) return s;
   const gap = dayDiff(s.lastCompletedDay, key);
   const streak = gap === 1 ? s.streak + 1 : 1;
+  let next: GameState = { ...s, streak, lastCompletedDay: key };
   const bonusXp = Math.min(streak, 7) * 5;
-  const toast = bonusXp > 5 ? `🔥 Streak ${streak} jours ! Bonus +${bonusXp} XP` : s.toast;
-  return { ...s, streak, lastCompletedDay: key, toast };
+  if (bonusXp > 0) next = grantReward(next, bonusXp, 0);
+  if (bonusXp > 5) next = { ...next, toast: `🔥 Streak ${streak} jours ! Bonus +${bonusXp} XP` };
+  return next;
 }
 
 function checkAchievements(s: GameState): GameState {

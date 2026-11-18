@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mistral Quest — Suivi de tâches RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%231a1208'/%3E%3Crect x='3' y='2' width='10' height='2' fill='%23ff7000'/%3E%3Crect x='2' y='4' width='12' height='2' fill='%23ff7000'/%3E%3Crect x='2' y='6' width='12' height='6' fill='%23ffc46b'/%3E%3Crect x='4' y='12' width='8' height='2' fill='%23ff7000'/%3E%3C/svg%3E" />
+<style>
+:root {
+  --bg: #17110b;
+  --panel: #241a10;
+  --card: #2c2014;
+  --accent: #ff7000;
+  --accent-dark: #c25400;
+  --text: #f5e6c8;
+  --muted: #a08a68;
+  --danger: #d43d2a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "VT323", "Courier New", monospace;
+  font-size: 20px;
+  line-height: 1.3;
+}
+.app { max-width: 1200px; margin: 0 auto; padding: 16px; }
+h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
+.rarity-tag, .slot-tag, .xp-label, .hero-name, .ach-name {
+  font-family: "Press Start 2P", "VT323", monospace;
+}
+.panel {
+  background: var(--panel);
+  border: 3px solid var(--accent-dark);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+  padding: 14px;
+}
+.panel-title { margin: 0 0 10px; font-size: 12px; color: var(--accent); letter-spacing: 1px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 14px;
+  border-bottom: 3px solid var(--accent-dark); padding-bottom: 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-name { font-size: 16px; }
+.brand-name em { font-style: normal; color: var(--accent); }
+.hud { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hud-badge {
+  font-size: 10px; background: var(--card);
+  border: 2px solid var(--accent-dark); padding: 7px 10px; color: var(--accent);
+}
+.tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  font-size: 10px; padding: 10px 14px; background: var(--card);
+  color: var(--muted); border: 2px solid transparent; cursor: pointer;
+}
+.tab:hover { color: var(--text); border-color: var(--accent-dark); }
+.tab-active { color: var(--accent); border-color: var(--accent); background: var(--panel); }
+.btn {
+  font-family: "Press Start 2P", monospace; font-size: 10px; padding: 10px 14px;
+  background: var(--card); color: var(--text); border: 2px solid var(--accent-dark); cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-accent { background: var(--accent); color: #1a1208; }
+.btn-accent:hover:not(:disabled) { background: var(--accent-dark); color: #fff3e0; }
+.btn-danger { border-color: var(--danger); color: var(--danger); }
+input, textarea, select {
+  font-family: "VT323", monospace; font-size: 19px; background: var(--card);
+  border: 2px solid var(--accent-dark); color: var(--text); padding: 8px 10px; width: 100%;
+}
+input:focus, textarea:focus { outline: 2px solid var(--accent); }
+.add-task { margin-bottom: 16px; }
+.add-task-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.add-task-title { flex: 1; min-width: 240px; }
+.diff-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.diff-btn {
+  font-family: "Press Start 2P", monospace; font-size: 9px; padding: 8px 10px;
+  background: var(--card); border: 2px solid var(--muted); color: var(--muted);
+  cursor: pointer; display: flex; flex-direction: column; gap: 5px; align-items: center;
+}
+.diff-btn small { font-family: "VT323", monospace; font-size: 14px; }
+.diff-btn.diff-active { color: var(--text); }
+.diff-b-facile.diff-active { border-color: #6fdc8c; }
+.diff-b-moyenne.diff-active { border-color: #ffc46b; }
+.diff-b-difficile.diff-active { border-color: #ff7000; }
+.diff-b-boss.diff-active { border-color: #ff4d4d; }
+.boss-hint { margin-top: 10px; color: #ff4d4d; font-size: 17px; }
+.boss-hint textarea { margin-top: 6px; }
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .board { grid-template-columns: 1fr; } }
+.column {
+  background: var(--card); border: 3px solid var(--accent-dark);
+  padding: 10px; min-height: 200px;
+}
+.column-drop { border-color: var(--accent); border-style: dashed; }
+.column-header {
+  font-size: 11px; color: var(--accent); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.column-count { margin-left: auto; background: var(--panel); padding: 3px 8px; font-size: 10px; color: var(--muted); }
+.column-empty { color: var(--muted); text-align: center; padding: 20px 0; opacity: 0.6; }
+.task-card {
+  background: var(--panel); border-left: 5px solid var(--muted);
+  padding: 10px; margin-bottom: 10px; cursor: grab;
+}
+.task-card:active { cursor: grabbing; }
+.diff-facile { border-left-color: #6fdc8c; }
+.diff-moyenne { border-left-color: #ffc46b; }
+.diff-difficile { border-left-color: #ff7000; }
+.diff-boss { border-left-color: #ff4d4d; }
+.task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.task-diff { font-size: 8px; color: var(--muted); }
+.task-reward { margin-left: auto; font-size: 15px; color: var(--accent); }
+.task-btn {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 15px; padding: 0 2px; font-family: inherit;
+}
+.task-btn:hover { color: var(--accent); }
+.task-btn.task-delete:hover { color: var(--danger); }
+.task-title { font-size: 21px; }
+.boss-hp { margin: 8px 0; }
+.boss-hp-label { font-size: 15px; color: #ff4d4d; }
+.hp-bar { height: 10px; background: #3a0a0a; border: 2px solid #ff4d4d; }
+.hp-fill { height: 100%; background: #ff4d4d; transition: width 0.2s; }
+.subtasks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.subtask { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: 17px; }
+.subtask input { width: auto; }
+.subtask-done span { text-decoration: line-through; color: var(--muted); }
+.subtask-add input { font-size: 15px; padding: 4px 8px; opacity: 0.8; margin-top: 4px; }
+.hero-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+@media (max-width: 800px) { .hero-panel { grid-template-columns: 1fr; } }
+.hero-card { text-align: center; }
+.hero-stage { position: relative; display: inline-block; padding-top: 40px; }
+.hero-base { position: relative; z-index: 1; }
+.hero-layer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+.hero-bob { animation: bob 1.6s steps(2) infinite; }
+@keyframes bob { 0%, 100% { margin-top: 0; } 50% { margin-top: -3px; } }
+.hero-pet { left: auto; right: -60px; top: auto; bottom: 0; transform: none; }
+.hero-name { font-size: 12px; margin-top: 12px; }
+.hero-title { color: var(--accent); font-size: 10px; }
+.xp-bar {
+  height: 18px; border: 3px solid var(--accent-dark); background: var(--card);
+  margin: 10px auto; max-width: 320px;
+}
+.xp-fill {
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--accent), var(--accent) 8px, var(--accent-dark) 8px, var(--accent-dark) 16px);
+  transition: width 0.4s steps(8);
+}
+.xp-label { font-size: 9px; color: var(--muted); margin-bottom: 14px; }
+.hero-stats { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; font-size: 18px; }
+.lootbox-row { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.lootbox-hint { font-size: 15px; color: var(--muted); }
+.stats-card { text-align: center; }
+.chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; justify-content: center; margin: 10px 0; }
+.chart-col { display: flex; flex-direction: column; align-items: center; height: 100%; }
+.chart-bar-area {
+  flex: 1; width: 26px; display: flex; align-items: flex-end;
+  background: var(--card); border: 2px solid var(--accent-dark);
+}
+.chart-bar { width: 100%; background: var(--accent); min-height: 2px; transition: height 0.3s; }
+.chart-label { font-size: 16px; color: var(--muted); margin-top: 4px; }
+.stats-summary { font-size: 18px; color: var(--muted); }
+.shop-banner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.shop-banner p { margin: 0; }
+.gold-text { color: var(--accent); }
+.shop-banner .btn { margin-left: auto; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.shop-card { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+.shop-preview { min-height: 60px; display: flex; align-items: center; justify-content: center; }
+.theme-swatches { display: flex; gap: 4px; }
+.theme-swatch { width: 18px; height: 18px; border: 2px solid rgba(0, 0, 0, 0.4); }
+.shop-item-name { font-size: 17px; }
+.shop-item-meta { display: flex; gap: 6px; }
+.rarity-tag, .slot-tag { font-size: 13px; padding: 1px 6px; border: 1px solid var(--muted); color: var(--muted); }
+.rarity-commun { border-color: #6fdc8c; }
+.rarity-commun .rarity-tag { border-color: #6fdc8c; color: #6fdc8c; }
+.rarity-rare { border-color: #7aa2ff; }
+.rarity-rare .rarity-tag { border-color: #7aa2ff; color: #7aa2ff; }
+.rarity-epique { border-color: #c46bff; }
+.rarity-epique .rarity-tag { border-color: #c46bff; color: #c46bff; }
+.rarity-legendaire { border-color: #ffc46b; box-shadow: 0 0 12px rgba(255, 196, 107, 0.35); }
+.rarity-legendaire .rarity-tag { border-color: #ffc46b; color: #ffc46b; }
+.shop-item-desc { font-size: 16px; color: var(--muted); flex: 1; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.ach-card { display: flex; gap: 12px; align-items: center; }
+.ach-icon { font-size: 26px; }
+.ach-name { font-size: 10px; margin-bottom: 6px; }
+.ach-desc { font-size: 16px; color: var(--muted); }
+.ach-locked { opacity: 0.5; }
+.ach-unlocked { border-color: var(--accent); }
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #1a1208; font-family: "Press Start 2P", monospace;
+  font-size: 10px; padding: 14px 18px; border: 3px solid var(--accent-dark);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5); z-index: 50; max-width: 90vw;
+}
+.toast.hidden { display: none; }
+.footer { margin-top: 24px; text-align: center; font-size: 15px; color: var(--muted); opacity: 0.7; }
+.pixel-sprite { line-height: 0; }
+.pixel-sprite div { padding: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span id="logo"></span>
+      <span class="brand-name">MISTRAL <em>QUEST</em></span>
+    </div>
+    <div class="hud">
+      <span class="hud-badge" id="hud-level"></span>
+      <span class="hud-badge" id="hud-gold"></span>
+      <span class="hud-badge" id="hud-streak"></span>
+      <button class="btn btn-danger" data-action="reset" title="Effacer la sauvegarde">⟲</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+  <main id="main"></main>
+  <footer class="footer">
+    Mistral Quest — tes données restent dans ce navigateur (localStorage) · version un seul fichier HTML
+  </footer>
+</div>
+<div class="toast hidden" id="toast"></div>
+<script>
+(function () {
+  "use strict";
+
+  /* ================= Données ================= */
+
+  var DIFFICULTIES = {
+    facile:    { label: "Facile",    xp: 10,  gold: 6,  icon: "·", cls: "diff-facile",    bcls: "diff-b-facile" },
+    moyenne:   { label: "Moyenne",   xp: 25,  gold: 14, icon: "◆", cls: "diff-moyenne",   bcls: "diff-b-moyenne" },
+    difficile: { label: "Difficile", xp: 55,  gold: 30, icon: "★", cls: "diff-difficile", bcls: "diff-b-difficile" },
+    boss:      { label: "Boss",      xp: 140, gold: 75, icon: "☠", cls: "diff-boss",      bcls: "diff-b-boss" }
+  };
+  var SUBTASK_REWARD = { xp: 18, gold: 9 };
+  var LOOTBOX_PRICE = 60;
+  var LOOT_WEIGHTS = { commun: 55, rare: 27, epique: 13, legendaire: 5 };
+  var RARITY_CLASS = { commun: "rarity-commun", rare: "rarity-rare", epique: "rarity-epique", legendaire: "rarity-legendaire" };
+  var SLOT_LABEL = { hat: "Tête", cape: "Cape", pet: "Familier", theme: "Thème" };
+  var COLUMNS = [
+    { status: "todo",  label: "À faire",  icon: "📋" },
+    { status: "doing", label: "En cours", icon: "⚔️" },
+    { status: "done",  label: "Terminé",  icon: "🏁" }
+  ];
+
+  var HERO_SPRITE = [
+    "....hhhh....",
+    "...hhhhhh...",
+    "..hssssssh..",
+    "..hsessesh..",
+    "..hssssssh..",
+    "...ssssss...",
+    "..otttttto..",
+    ".otttttttto.",
+    ".otttttttto.",
+    ".otggggggto.",
+    "..otttttto..",
+    "..ss....ss..",
+    "..bb....bb..",
+    ".bbb....bbb."
+  ];
+  var HERO_PALETTE = { h: "#4a2c14", s: "#f4c08a", e: "#241505", o: "#c25400", t: "#ff7000", g: "#ffc46b", b: "#3a2410" };
+
+  var CAPE_ROWS_RED  = ["............", "............", "cc........cc", "ccc......ccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "ccc......ccc"];
+  var CAPE_ROWS_GOLD = CAPE_ROWS_RED;
+
+  var SHOP_ITEMS = [
+    { id: "hat-beret", name: "Béret du Dev", slot: "hat", rarity: "commun", price: 40, desc: "Classique mais efficace.",
+      sprite: ["............", "...rrrrrr...", ".rrrrrrrrr..", "....rr......"], palette: { r: "#d43d2a" } },
+    { id: "hat-cap", name: "Casquette Mistral", slot: "hat", rarity: "commun", price: 55, desc: "Aux couleurs de la maison.",
+      sprite: ["...tttttt...", "..tttttttt..", "vvvvvvvvvv.."], palette: { t: "#ff7000", v: "#c25400" } },
+    { id: "hat-wizard", name: "Chapeau de Sorcier", slot: "hat", rarity: "rare", price: 120, desc: "+10 en productivité magique.",
+      sprite: [".....ww.....", "....wwww....", "....wwww....", "...wwwwww...", "..wwwwwwww..", "wwwwwwwwwwww"], palette: { w: "#8a4fff" } },
+    { id: "hat-crown", name: "Couronne", slot: "hat", rarity: "epique", price: 240, desc: "Pour les rois du Kanban.",
+      sprite: [".g.g.g.g.g..", ".gggggggggg.", ".ggrgggrggg."], palette: { g: "#ffc46b", r: "#ff4d4d" } },
+    { id: "cape-red", name: "Cape Écarlate", slot: "cape", rarity: "commun", price: 60, desc: "Flotte au vent des deadlines.",
+      sprite: CAPE_ROWS_RED, palette: { c: "#d43d2a" } },
+    { id: "cape-gold", name: "Cape Dorée", slot: "cape", rarity: "epique", price: 220, desc: "Tissée dans la lumière.",
+      sprite: CAPE_ROWS_GOLD, palette: { c: "#ffc46b" } },
+    { id: "pet-fox", name: "Renard Pixel", slot: "pet", rarity: "rare", price: 150, desc: "Le mascot officiel.",
+      sprite: ["f.f.....", "fffw....", "ffffff..", "fkffkf..", ".fffff..", "..f.f..."], palette: { f: "#ff7000", w: "#fff3e0", k: "#241505" } },
+    { id: "pet-owl", name: "Hibou Sage", slot: "pet", rarity: "rare", price: 140, desc: "Rappelle tes deadlines en hulant.",
+      sprite: ["o.o.....", "ooooo...", "owowo...", "ooooo...", ".o.o...."], palette: { o: "#8a6b4a", w: "#ffffff" } },
+    { id: "pet-slime", name: "Slime de Stockage", slot: "pet", rarity: "commun", price: 45, desc: "Avale tes tâches terminées.",
+      sprite: ["........", "..ssss..", ".ssssss.", ".skssks.", "ssssssss", ".ssssss."], palette: { s: "#6fdc8c", k: "#0d3a1c" } },
+    { id: "pet-dragon", name: "Bébé Dragon", slot: "pet", rarity: "legendaire", price: 450, desc: "Crache des flammelettes sur la procrastination.",
+      sprite: ["d..d....", "ddddd...", "ddddd...", "dkddkd..", ".ddddd..", "..d.d..."], palette: { d: "#ff4d4d", k: "#3a0a0a" } },
+    { id: "theme-nuit", name: "Thème : Nuit Étoilée", slot: "theme", rarity: "rare", price: 100, desc: "Code sous les étoiles.",
+      theme: { "--bg": "#0b0e1a", "--panel": "#141a2e", "--card": "#1a2240", "--accent": "#7aa2ff", "--accent-dark": "#4a6ad4", "--text": "#dfe6ff", "--muted": "#8a94b8" } },
+    { id: "theme-foret", name: "Thème : Forêt", slot: "theme", rarity: "rare", price: 100, desc: "Productivité en pleine nature.",
+      theme: { "--bg": "#0d1a10", "--panel": "#16281a", "--card": "#1d3322", "--accent": "#6fdc8c", "--accent-dark": "#3ea85e", "--text": "#e2f5e6", "--muted": "#7ea88a" } },
+    { id: "theme-or", name: "Thème : Sable d'Or", slot: "theme", rarity: "epique", price: 200, desc: "La chaleur du désert dans ton board.",
+      theme: { "--bg": "#1c150a", "--panel": "#2a2010", "--card": "#332814", "--accent": "#ffc46b", "--accent-dark": "#d4943a", "--text": "#fff3e0", "--muted": "#b8a07a" } }
+  ];
+  var ITEMS_BY_ID = {};
+  SHOP_ITEMS.forEach(function (i) { ITEMS_BY_ID[i.id] = i; });
+
+  var ACHIEVEMENTS = [
+    { id: "first-task",    name: "Premier Pas",      desc: "Terminer 1 tâche",                      check: function (s) { return totalDone(s) >= 1; } },
+    { id: "ten-tasks",     name: "Cadreur",          desc: "Terminer 10 tâches",                    check: function (s) { return totalDone(s) >= 10; } },
+    { id: "fifty-tasks",   name: "Machine",          desc: "Terminer 50 tâches",                    check: function (s) { return totalDone(s) >= 50; } },
+    { id: "streak-3",      name: "Habitué",          desc: "Streak de 3 jours",                     check: function (s) { return s.streak >= 3; } },
+    { id: "streak-7",      name: "Semaine Parfaite", desc: "Streak de 7 jours",                     check: function (s) { return s.streak >= 7; } },
+    { id: "level-5",       name: "Aventurier",       desc: "Atteindre le niveau 5",                 check: function (s) { return s.level >= 5; } },
+    { id: "level-10",      name: "Héros",            desc: "Atteindre le niveau 10",                check: function (s) { return s.level >= 10; } },
+    { id: "first-boss",    name: "Tueur de Boss",    desc: "Vaincre un Boss",                       check: function (s) { return s.tasks.some(function (t) { return t.difficulty === "boss" && t.status === "done"; }); } },
+    { id: "first-purchase",name: "Cliente Fidèle",   desc: "Acheter un objet",                      check: function (s) { return s.ownedItems.length >= 1; } },
+    { id: "full-board",    name: "Board Zéro",       desc: "Vider son board (0 tâche restante)",    check: function (s) { return s.tasks.length > 0 && s.tasks.every(function (t) { return t.status === "done"; }); } }
+  ];
+
+  /* ================= Utilitaires ================= */
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function dayDiff(from, to) {
+    if (!from) return Infinity;
+    return Math.round((new Date(to + "T00:00:00") - new Date(from + "T00:00:00")) / 86400000);
+  }
+  function xpNeeded(level) { return 100 + (level - 1) * 80; }
+  function titleForLevel(level) {
+    if (level >= 16) return "Légende du Mistral";
+    if (level >= 12) return "Maître des Tâches";
+    if (level >= 8) return "Héros";
+    if (level >= 5) return "Aventurier";
+    if (level >= 3) return "Apprenti";
+    return "Novice";
+  }
+  function totalDone(s) {
+    return s.tasks.filter(function (t) { return t.status === "done"; }).length;
+  }
+
+  function sprite(rows, palette, scale) {
+    var cols = Math.max.apply(null, rows.map(function (r) { return r.length; }));
+    var cells = "";
+    rows.forEach(function (row, y) {
+      for (var x = 0; x < cols; x++) {
+        var ch = row[x] || ".";
+        var col = palette[ch];
+        cells += '<div style="width:' + scale + "px;height:" + scale + "px;" + (col ? "background:" + col : "") + '"></div>';
+      }
+    });
+    return '<div class="pixel-sprite" style="display:grid;grid-template-columns:repeat(' + cols + "," + scale + 'px);width:' + cols * scale + 'px" aria-hidden="true">' + cells + "</div>";
+  }
+
+  /* ================= État ================= */
+
+  var STORAGE_KEY = "mistral-quest-save-v1";
+  function initialState() {
+    return {
+      tasks: [], xp: 0, level: 1, gold: 30, streak: 0, lastCompletedDay: "",
+      ownedItems: [], equipped: {}, achievements: [], lootBoxes: 1, nextLootLevel: 3,
+      dailyLog: {}
+    };
+  }
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? Object.assign(initialState(), JSON.parse(raw)) : initialState();
+    } catch (e) { return initialState(); }
+  }
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota plein */ }
+  }
+
+  var state = loadState();
+  var activeTab = "board";
+  var pickDifficulty = "moyenne";
+  var addTitleDraft = "";
+  var bossDraft = "";
+  var toastTimer = null;
+
+  /* ================= Mécaniques de jeu ================= */
+
+  function showToast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.add("hidden"); }, 3200);
+  }
+
+  function grant(xp, gold) {
+    var ups = 0;
+    state.xp += xp;
+    while (state.xp >= xpNeeded(state.level)) {
+      state.xp -= xpNeeded(state.level);
+      state.level += 1;
+      ups += 1;
+    }
+    state.gold += gold;
+    if (ups > 0) {
+      while (state.nextLootLevel <= state.level) {
+        state.lootBoxes += 1;
+        state.nextLootLevel += 3;
+      }
+      showToast("⬆ Niveau " + state.level + " !");
+    }
+  }
+
+  function logDaily(xp) {
+    var key = todayKey();
+    var prev = state.dailyLog[key] || { done: 0, xp: 0 };
+    state.dailyLog[key] = { done: prev.done + 1, xp: prev.xp + xp };
+  }
+
+  function updateStreak() {
+    var key = todayKey();
+    if (state.lastCompletedDay === key) return;
+    var gap = dayDiff(state.lastCompletedDay, key);
+    state.streak = gap === 1 ? state.streak + 1 : 1;
+    state.lastCompletedDay = key;
+    var bonus = Math.min(state.streak, 7) * 5;
+    if (bonus > 0) {
+      grant(bonus, 0);
+      if (bonus > 5) showToast("🔥 Streak " + state.streak + " jours ! Bonus +" + bonus + " XP");
+    }
+  }
+
+  function checkAchievements() {
+    var unlocked = [];
+    ACHIEVEMENTS.forEach(function (a) {
+      if (state.achievements.indexOf(a.id) === -1 && a.check(state)) unlocked.push(a.name);
+    });
+    if (unlocked.length) {
+      state.achievements = state.achievements.concat(unlocked.map(function (n) {
+        return ACHIEVEMENTS.filter(function (a) { return a.name === n; })[0].id;
+      }));
+      showToast("🏆 Succès : " + unlocked.join(", "));
+    }
+  }
+
+  function completeTask(task) {
+    var rw = DIFFICULTIES[task.difficulty];
+    task.status = "done";
+    task.completedAt = Date.now();
+    grant(rw.xp, rw.gold);
+    logDaily(rw.xp);
+    updateStreak();
+    if (task.difficulty === "boss") showToast("☠ Boss vaincu ! +" + rw.xp + " XP +" + rw.gold + " or");
+  }
+
+  function rollLoot() {
+    var pool = SHOP_ITEMS.filter(function (i) { return state.ownedItems.indexOf(i.id) === -1; });
+    if (!pool.length) {
+      state.gold += 40;
+      showToast("🎁 Loot box : déjà tout possédé ! +40 or");
+      return;
+    }
+    var byRarity = {};
+    pool.forEach(function (i) { (byRarity[i.rarity] = byRarity[i.rarity] || []).push(i); });
+    var total = 0;
+    Object.keys(LOOT_WEIGHTS).forEach(function (r) { if (byRarity[r]) total += LOOT_WEIGHTS[r]; });
+    var roll = Math.random() * total;
+    var picked = pool[0];
+    for (var r in LOOT_WEIGHTS) {
+      if (!byRarity[r]) continue;
+      if (roll < LOOT_WEIGHTS[r]) {
+        picked = byRarity[r][Math.floor(Math.random() * byRarity[r].length)];
+        break;
+      }
+      roll -= LOOT_WEIGHTS[r];
+    }
+    state.ownedItems.push(picked.id);
+    showToast("🎁 Loot box : " + picked.name + " (" + picked.rarity + ") !");
+  }
+
+  /* ================= Vues ================= */
+
+  var TABS = [
+    { id: "board", label: "📋 Board" },
+    { id: "hero", label: "🧙 Héros" },
+    { id: "shop", label: "🛒 Boutique" },
+    { id: "achievements", label: "🏆 Succès" }
+  ];
+
+  function renderHud() {
+    document.getElementById("hud-level").textContent = "⬆ Niv. " + state.level;
+    document.getElementById("hud-gold").textContent = "🪙 " + state.gold;
+    document.getElementById("hud-streak").textContent = "🔥 " + state.streak;
+  }
+
+  function renderTabs() {
+    document.getElementById("tabs").innerHTML = TABS.map(function (t) {
+      return '<button class="tab' + (activeTab === t.id ? " tab-active" : "") + '" data-action="tab" data-tab="' + t.id + '">' + t.label + "</button>";
+    }).join("");
+  }
+
+  function addFormHTML() {
+    var isBoss = pickDifficulty === "boss";
+    var diffBtns = Object.keys(DIFFICULTIES).map(function (d) {
+      var cfg = DIFFICULTIES[d];
+      return '<button type="button" class="diff-btn ' + cfg.bcls + (pickDifficulty === d ? " diff-active" : "") +
+        '" data-action="set-diff" data-diff="' + d + '">' + cfg.icon + " " + cfg.label + "<small>+" + cfg.xp + "xp</small></button>";
+    }).join("");
+    return '<form class="add-task panel" id="add-form">' +
+      '<h3 class="panel-title">➕ Nouvelle tâche</h3>' +
+      '<div class="add-task-row">' +
+      '<input class="add-task-title" id="add-title" value="' + esc(addTitleDraft) + '" placeholder="Que faut-il accomplir, héros ?" />' +
+      '<div class="diff-picker">' + diffBtns + "</div></div>" +
+      (isBoss
+        ? '<div class="boss-hint">☠ Boss détecté ! Une étape par ligne — chaque étape terminée lui inflige des dégâts (+' +
+          SUBTASK_REWARD.xp + " XP) :<textarea id=\"boss-subtasks\" rows=\"3\" placeholder=\"Rédiger le cahier des charges&#10;Maquette Figma&#10;Revue de code\">" +
+          esc(bossDraft) + "</textarea></div>"
+        : "") +
+      '<div style="margin-top:10px"><button class="btn btn-accent" type="submit">Ajouter au board</button></div>' +
+      "</form>";
+  }
+
+  function subtasksHTML(t) {
+    if (!t.subtasks.length || t.status === "done") return "";
+    var rows = t.subtasks.map(function (st) {
+      return '<label class="subtask' + (st.done ? " subtask-done" : "") + '">' +
+        '<input type="checkbox" ' + (st.done ? "checked " : "") +
+        'data-action="toggle-subtask" data-task="' + t.id + '" data-sub="' + st.id + '" />' +
+        "<span>" + esc(st.label) + "</span></label>";
+    }).join("");
+    return '<div class="subtasks">' + rows +
+      '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '"><input placeholder="+ étape…" /></form></div>';
+  }
+
+  function taskCardHTML(t) {
+    var cfg = DIFFICULTIES[t.difficulty];
+    var isBoss = t.difficulty === "boss";
+    var hp = t.subtasks.length;
+    var hpDone = t.subtasks.filter(function (s) { return s.done; }).length;
+    return '<div class="task-card ' + cfg.cls + '" draggable="true" data-id="' + t.id + '">' +
+      '<div class="task-top">' +
+      '<span class="task-diff">' + cfg.icon + " " + cfg.label + "</span>" +
+      '<span class="task-reward">+' + cfg.xp + " XP · +" + cfg.gold + "🪙</span>" +
+      '<button class="task-btn" data-action="advance" data-id="' + t.id + '" title="Avancer">→</button>' +
+      '<button class="task-btn task-delete" data-action="delete-task" data-id="' + t.id + '" title="Supprimer">✕</button>' +
+      "</div>" +
+      '<div class="task-title">' + esc(t.title) + "</div>" +
+      (isBoss
+        ? '<div class="boss-hp"><div class="boss-hp-label">☠ PV du boss : ' + (hp - hpDone) + "/" + hp + "</div>" +
+          '<div class="hp-bar"><div class="hp-fill" style="width:' + (hp ? (hpDone / hp) * 100 : 0) + '%"></div></div></div>'
+        : "") +
+      subtasksHTML(t) +
+      "</div>";
+  }
+
+  function viewBoard() {
+    var cols = COLUMNS.map(function (col) {
+      var tasks = state.tasks.filter(function (t) { return t.status === col.status; });
+      return '<div class="column" data-status="' + col.status + '">' +
+        '<div class="column-header"><span>' + col.icon + "</span> " + col.label +
+        '<span class="column-count">' + tasks.length + "</span></div>" +
+        (tasks.length ? tasks.map(taskCardHTML).join("") : '<div class="column-empty">— vide —</div>') +
+        "</div>";
+    }).join("");
+    return addFormHTML() + '<div class="board">' + cols + "</div>";
+  }
+
+  function heroStageHTML() {
+    var hat = state.equipped.hat ? ITEMS_BY_ID[state.equipped.hat] : null;
+    var cape = state.equipped.cape ? ITEMS_BY_ID[state.equipped.cape] : null;
+    var pet = state.equipped.pet ? ITEMS_BY_ID[state.equipped.pet] : null;
+    var scale = 6;
+    var html = "";
+    if (cape) html += '<div class="hero-layer" style="z-index:0">' + sprite(cape.sprite, cape.palette, scale) + "</div>";
+    html += '<div class="hero-base hero-bob">' + sprite(HERO_SPRITE, HERO_PALETTE, scale) + "</div>";
+    if (hat) html += '<div class="hero-layer" style="z-index:2;top:' + (-(hat.sprite.length - 2) * scale) + 'px">' + sprite(hat.sprite, hat.palette, scale) + "</div>";
+    if (pet) html += '<div class="hero-layer hero-pet" style="z-index:2">' + sprite(pet.sprite, pet.palette, 4) + "</div>";
+    return '<div class="hero-stage">' + html + "</div>";
+  }
+
+  function weeklyStatsHTML() {
+    var days = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date();
+      d.setDate(d.getDate() - i);
+      var key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      var e = state.dailyLog[key] || { done: 0, xp: 0 };
+      days.push({ label: ["D", "L", "M", "M", "J", "V", "S"][d.getDay()], done: e.done, xp: e.xp });
+    }
+    var max = Math.max.apply(null, [1].concat(days.map(function (d) { return d.done; })));
+    var weekDone = days.reduce(function (a, b) { return a + b.done; }, 0);
+    var weekXp = days.reduce(function (a, b) { return a + b.xp; }, 0);
+    var bars = days.map(function (d) {
+      return '<div class="chart-col"><div class="chart-bar-area" title="' + d.done + ' tâche(s), ' + d.xp + ' XP">' +
+        '<div class="chart-bar" style="height:' + (d.done / max) * 100 + '%"></div></div>' +
+        '<div class="chart-label">' + d.label + "</div></div>";
+    }).join("");
+    return '<div class="panel stats-card"><h3 class="panel-title">📊 7 derniers jours</h3>' +
+      '<div class="chart">' + bars + "</div>" +
+      '<div class="stats-summary">' + weekDone + " tâche" + (weekDone > 1 ? "s" : "") + " · " + weekXp + " XP cette semaine</div></div>";
+  }
+
+  function viewHero() {
+    var need = xpNeeded(state.level);
+    var pct = Math.min(100, Math.round((state.xp / need) * 100));
+    var gap = dayDiff(state.lastCompletedDay, todayKey());
+    var displayStreak = gap <= 1 ? state.streak : 0;
+    var doneCount = totalDone(state);
+    return '<div class="hero-panel">' +
+      '<div class="hero-card panel">' +
+      heroStageHTML() +
+      '<div class="hero-name">HÉROS <span class="hero-title">— ' + titleForLevel(state.level) + "</span></div>" +
+      '<div class="xp-bar" title="' + state.xp + " / " + need + ' XP"><div class="xp-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="xp-label">NIVEAU ' + state.level + " · " + state.xp + "/" + need + " XP</div>" +
+      '<div class="hero-stats">' +
+      '<div><span class="stat-icon">🪙</span> ' + state.gold + " or</div>" +
+      '<div><span class="stat-icon">🔥</span> ' + displayStreak + " jour" + (displayStreak > 1 ? "s" : "") + " de streak</div>" +
+      '<div><span class="stat-icon">✅</span> ' + doneCount + " tâche" + (doneCount > 1 ? "s" : "") + "</div>" +
+      "</div>" +
+      '<div class="lootbox-row">' +
+      '<button class="btn btn-accent" data-action="open-lootbox"' + (state.lootBoxes <= 0 ? " disabled" : "") + ">🎁 Ouvrir une loot box (" + state.lootBoxes + ")</button>" +
+      '<span class="lootbox-hint">1 box offerte tous les 3 niveaux (prochain : niv. ' + state.nextLootLevel + ")</span>" +
+      "</div></div>" +
+      weeklyStatsHTML() +
+      "</div>";
+  }
+
+  function shopCardHTML(item) {
+    var owned = state.ownedItems.indexOf(item.id) !== -1;
+    var equipped = state.equipped[item.slot] === item.id;
+    var preview = item.sprite
+      ? sprite(item.sprite, item.palette || {}, 4)
+      : '<div class="theme-swatches">' + Object.values(item.theme).map(function (v) {
+          return '<span class="theme-swatch" style="background:' + v + '"></span>';
+        }).join("") + "</div>";
+    return '<div class="shop-card panel ' + RARITY_CLASS[item.rarity] + '">' +
+      '<div class="shop-preview">' + preview + "</div>" +
+      '<div class="shop-item-name">' + esc(item.name) + "</div>" +
+      '<div class="shop-item-meta"><span class="rarity-tag">' + item.rarity + '</span><span class="slot-tag">' + SLOT_LABEL[item.slot] + "</span></div>" +
+      '<div class="shop-item-desc">' + esc(item.desc) + "</div>" +
+      (owned
+        ? '<button class="btn btn-accent" data-action="equip-item" data-id="' + item.id + '">' + (equipped ? "Retirer" : "Équiper") + "</button>"
+        : '<button class="btn" data-action="buy-item" data-id="' + item.id + '"' + (state.gold < item.price ? " disabled" : "") + ">🪙 " + item.price + "</button>") +
+      "</div>";
+  }
+
+  function viewShop() {
+    return '<div class="shop">' +
+      '<div class="panel shop-banner"><h3 class="panel-title">🛒 Boutique de la Guilde</h3>' +
+      "<p>Ton or : <strong class=\"gold-text\">🪙 " + state.gold + "</strong></p>" +
+      '<button class="btn" data-action="buy-lootbox"' + (state.gold < LOOTBOX_PRICE ? " disabled" : "") + ">🎁 Acheter une loot box — " + LOOTBOX_PRICE + " 🪙</button>" +
+      "</div>" +
+      '<div class="shop-grid">' + SHOP_ITEMS.map(shopCardHTML).join("") + "</div></div>";
+  }
+
+  function viewAchievements() {
+    var got = state.achievements.length;
+    var cards = ACHIEVEMENTS.map(function (a) {
+      var unlocked = state.achievements.indexOf(a.id) !== -1;
+      return '<div class="panel ach-card ' + (unlocked ? "ach-unlocked" : "ach-locked") + '">' +
+        '<div class="ach-icon">' + (unlocked ? "🏆" : "🔒") + "</div>" +
+        "<div><div class=\"ach-name\">" + a.name + '</div><div class="ach-desc">' + a.desc + "</div></div></div>";
+    }).join("");
+    return '<div class="achievements">' +
+      '<div class="panel shop-banner"><h3 class="panel-title">🏆 Succès</h3><p>' + got + "/" + ACHIEVEMENTS.length + " débloqués</p></div>" +
+      '<div class="ach-grid">' + cards + "</div></div>";
+  }
+
+  function render() {
+    renderHud();
+    renderTabs();
+    document.getElementById("main").innerHTML =
+      activeTab === "board" ? viewBoard() :
+      activeTab === "hero" ? viewHero() :
+      activeTab === "shop" ? viewShop() : viewAchievements();
+  }
+
+  /* ================= Thème ================= */
+
+  function applyTheme() {
+    var root = document.documentElement;
+    var vars = { "--bg": "#17110b", "--panel": "#241a10", "--card": "#2c2014", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68" };
+    var themeId = state.equipped.theme;
+    if (themeId && ITEMS_BY_ID[themeId] && ITEMS_BY_ID[themeId].theme) Object.assign(vars, ITEMS_BY_ID[themeId].theme);
+    Object.keys(vars).forEach(function (k) { root.style.setProperty(k, vars[k]); });
+  }
+
+  /* ================= Actions ================= */
+
+  function advanceStatus(status) {
+    return status === "todo" ? "doing" : status === "doing" ? "done" : "done";
+  }
+
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-action]");
+    if (!el) return;
+    var action = el.getAttribute("data-action");
+
+    if (action === "tab") { activeTab = el.getAttribute("data-tab"); render(); return; }
+
+    if (action === "set-diff") { pickDifficulty = el.getAttribute("data-diff"); render(); return; }
+
+    if (action === "advance") {
+      var t1 = state.tasks.filter(function (t) { return t.id === el.getAttribute("data-id"); })[0];
+      if (t1 && t1.status === "todo") { t1.status = "doing"; }
+      else if (t1 && t1.status === "doing") { completeTask(t1); }
+      checkAchievements(); saveState(); render(); return;
+    }
+
+    if (action === "delete-task") {
+      state.tasks = state.tasks.filter(function (t) { return t.id !== el.getAttribute("data-id"); });
+      checkAchievements(); saveState(); render(); return;
+    }
+
+    if (action === "buy-item") {
+      var item = ITEMS_BY_ID[el.getAttribute("data-id")];
+      if (item && state.ownedItems.indexOf(item.id) === -1 && state.gold >= item.price) {
+        state.gold -= item.price;
+        state.ownedItems.push(item.id);
+        showToast("🛒 " + item.name + " acheté !");
+        checkAchievements();
+      }
+      saveState(); render(); return;
+    }
+
+    if (action === "equip-item") {
+      var item2 = ITEMS_BY_ID[el.getAttribute("data-id")];
+      if (item2) {
+        if (state.equipped[item2.slot] === item2.id) delete state.equipped[item2.slot];
+        else state.equipped[item2.slot] = item2.id;
+        applyTheme();
+      }
+      saveState(); render(); return;
+    }
+
+    if (action === "open-lootbox") {
+      if (state.lootBoxes > 0) { state.lootBoxes -= 1; rollLoot(); checkAchievements(); }
+      saveState(); render(); return;
+    }
+
+    if (action === "buy-lootbox") {
+      if (state.gold >= LOOTBOX_PRICE) state.gold -= LOOTBOX_PRICE, state.lootBoxes += 1;
+      saveState(); render(); return;
+    }
+
+    if (action === "reset") {
+      if (confirm("Effacer toute la progression ?")) {
+        state = initialState();
+        try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+        applyTheme();
+        saveState(); render();
+      }
+      return;
+    }
+  });
+
+  document.addEventListener("change", function (e) {
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "toggle-subtask") {
+      var task = state.tasks.filter(function (t) { return t.id === e.target.getAttribute("data-task"); })[0];
+      if (!task) return;
+      var sub = task.subtasks.filter(function (s) { return s.id === e.target.getAttribute("data-sub"); })[0];
+      if (!sub) return;
+      sub.done = e.target.checked;
+      if (sub.done) {
+        grant(SUBTASK_REWARD.xp, SUBTASK_REWARD.gold);
+        logDaily(SUBTASK_REWARD.xp);
+        updateStreak();
+        var allDone = task.subtasks.every(function (s) { return s.done; });
+        if (allDone && task.status !== "done") completeTask(task);
+      }
+      checkAchievements(); saveState(); render();
+    }
+  });
+
+  document.addEventListener("submit", function (e) {
+    var form = e.target;
+
+    if (form.id === "add-form") {
+      e.preventDefault();
+      var title = addTitleDraft.trim();
+      if (!title) return;
+      var task = {
+        id: uid(),
+        title: title,
+        difficulty: pickDifficulty,
+        status: "todo",
+        createdAt: Date.now(),
+        completedAt: null,
+        subtasks: (pickDifficulty === "boss" ? bossDraft.split("\n") : [])
+          .map(function (s) { return s.trim(); })
+          .filter(Boolean)
+          .map(function (label) { return { id: uid(), label: label, done: false }; })
+      };
+      state.tasks.push(task);
+      addTitleDraft = ""; bossDraft = "";
+      saveState(); render(); return;
+    }
+
+    if (form.getAttribute("data-form") === "add-subtask") {
+      e.preventDefault();
+      var input = form.querySelector("input");
+      var label = input && input.value.trim();
+      var t = state.tasks.filter(function (x) { return x.id === form.getAttribute("data-task"); })[0];
+      if (label && t) t.subtasks.push({ id: uid(), label: label, done: false });
+      saveState(); render(); return;
+    }
+  });
+
+  document.addEventListener("input", function (e) {
+    if (e.target.id === "add-title") addTitleDraft = e.target.value;
+    if (e.target.id === "boss-subtasks") bossDraft = e.target.value;
+  });
+
+  document.addEventListener("dragstart", function (e) {
+    var card = e.target.closest && e.target.closest(".task-card");
+    if (card && e.dataTransfer) e.dataTransfer.setData("text/plain", card.getAttribute("data-id"));
+  });
+  document.addEventListener("dragover", function (e) {
+    var col = e.target.closest && e.target.closest(".column");
+    if (col) { e.preventDefault(); col.classList.add("column-drop"); }
+  });
+  document.addEventListener("dragleave", function (e) {
+    var col = e.target.closest && e.target.closest(".column");
+    if (col) col.classList.remove("column-drop");
+  });
+  document.addEventListener("drop", function (e) {
+    var col = e.target.closest && e.target.closest(".column");
+    if (!col) return;
+    e.preventDefault();
+    col.classList.remove("column-drop");
+    var id = e.dataTransfer && e.dataTransfer.getData("text/plain");
+    var t = state.tasks.filter(function (x) { return x.id === id; })[0];
+    if (t && col.getAttribute("data-status") === "done" && t.status !== "done") {
+      completeTask(t);
+      checkAchievements(); saveState(); render();
+    } else if (t) {
+      t.status = col.getAttribute("data-status");
+      t.completedAt = t.status === "done" ? Date.now() : null;
+      saveState(); render();
+    }
+  });
+
+  /* ================= Init ================= */
+
+  document.getElementById("logo").innerHTML = sprite(
+    ["....gg....", "..gggggg..", ".gg gg gg.", ".gggggggg.", "..gg gg...", "..gg gg..."],
+    { g: "#ff7000" }, 3
+  );
+  applyTheme();
+  render();
+})();
+</script>
+</body>
+</html>
