@@ -10,9 +10,9 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%231a1208'/%3E%3Crect x='3' y='2' width='10' height='2' fill='%23ff7000'/%3E%3Crect x='2' y='4' width='12' height='2' fill='%23ff7000'/%3E%3Crect x='2' y='6' width='12' height='6' fill='%23ffc46b'/%3E%3Crect x='4' y='12' width='8' height='2' fill='%23ff7000'/%3E%3C/svg%3E" />
 <style>
 :root {
-  --bg: #17110b;
-  --panel: #241a10;
-  --card: #2c2014;
+  --bg: #000000;
+  --panel: #161310;
+  --card: #1e1a16;
   --accent: #ff7000;
   --accent-dark: #c25400;
   --text: #f5e6c8;
@@ -38,6 +38,7 @@ h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
   border: 3px solid var(--accent-dark);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
   padding: 14px;
+  border-radius: 8px;
 }
 .panel-title { margin: 0 0 10px; font-size: 12px; color: var(--accent); letter-spacing: 1px; }
 .topbar {
@@ -52,17 +53,20 @@ h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
 .hud-badge {
   font-size: 10px; background: var(--card);
   border: 2px solid var(--accent-dark); padding: 7px 10px; color: var(--accent);
+  border-radius: 4px;
 }
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .tab {
   font-size: 10px; padding: 10px 14px; background: var(--card);
   color: var(--muted); border: 2px solid transparent; cursor: pointer;
+  border-radius: 4px;
 }
 .tab:hover { color: var(--text); border-color: var(--accent-dark); }
 .tab-active { color: var(--accent); border-color: var(--accent); background: var(--panel); }
 .btn {
   font-family: "Press Start 2P", monospace; font-size: 10px; padding: 10px 14px;
   background: var(--card); color: var(--text); border: 2px solid var(--accent-dark); cursor: pointer;
+  border-radius: 4px;
 }
 .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -72,16 +76,20 @@ h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
 input, textarea, select {
   font-family: "VT323", monospace; font-size: 19px; background: var(--card);
   border: 2px solid var(--accent-dark); color: var(--text); padding: 8px 10px; width: 100%;
+  border-radius: 4px;
 }
 input:focus, textarea:focus { outline: 2px solid var(--accent); }
-.add-task { margin-bottom: 16px; }
-.add-task-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
-.add-task-title { flex: 1; min-width: 240px; }
+.board-actions { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.board-actions .btn-big { font-size: 11px; padding: 12px 16px; }
+.board-actions .spacer { flex: 1; }
+.form-row { margin-bottom: 12px; }
+.form-label { display: block; font-size: 17px; color: var(--muted); margin-bottom: 4px; }
 .diff-picker { display: flex; gap: 6px; flex-wrap: wrap; }
 .diff-btn {
   font-family: "Press Start 2P", monospace; font-size: 9px; padding: 8px 10px;
   background: var(--card); border: 2px solid var(--muted); color: var(--muted);
   cursor: pointer; display: flex; flex-direction: column; gap: 5px; align-items: center;
+  border-radius: 4px;
 }
 .diff-btn small { font-family: "VT323", monospace; font-size: 14px; }
 .diff-btn.diff-active { color: var(--text); }
@@ -89,31 +97,45 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .diff-b-moyenne.diff-active { border-color: #ffc46b; }
 .diff-b-difficile.diff-active { border-color: #ff7000; }
 .diff-b-boss.diff-active { border-color: #ff4d4d; }
-.boss-hint { margin-top: 10px; color: #ff4d4d; font-size: 17px; }
-.boss-hint textarea { margin-top: 6px; }
+.label-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: "VT323", monospace; font-size: 15px; padding: 1px 9px;
+  border-radius: 999px; color: #161005; white-space: nowrap;
+}
+.label-picker { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chip {
+  font-family: "VT323", monospace; font-size: 17px; padding: 3px 12px;
+  border: 2px solid var(--muted); border-radius: 999px;
+  background: transparent; color: var(--text); cursor: pointer;
+}
+.chip.chip-active { border-color: var(--accent); color: var(--accent); }
+.chip-create { display: flex; gap: 6px; margin-top: 8px; }
+.chip-create input { flex: 1; }
 .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 @media (max-width: 900px) { .board { grid-template-columns: 1fr; } }
 .column {
   background: var(--card); border: 3px solid var(--accent-dark);
   padding: 10px; min-height: 200px;
+  border-radius: 8px;
 }
 .column-drop { border-color: var(--accent); border-style: dashed; }
 .column-header {
   font-size: 11px; color: var(--accent); margin-bottom: 10px;
   display: flex; align-items: center; gap: 8px;
 }
-.column-count { margin-left: auto; background: var(--panel); padding: 3px 8px; font-size: 10px; color: var(--muted); }
+.column-count { margin-left: auto; background: var(--panel); padding: 3px 8px; font-size: 10px; color: var(--muted); border-radius: 4px; }
 .column-empty { color: var(--muted); text-align: center; padding: 20px 0; opacity: 0.6; }
 .task-card {
   background: var(--panel); border-left: 5px solid var(--muted);
   padding: 10px; margin-bottom: 10px; cursor: grab;
+  border-radius: 6px;
 }
 .task-card:active { cursor: grabbing; }
 .diff-facile { border-left-color: #6fdc8c; }
 .diff-moyenne { border-left-color: #ffc46b; }
 .diff-difficile { border-left-color: #ff7000; }
 .diff-boss { border-left-color: #ff4d4d; }
-.task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .task-diff { font-size: 8px; color: var(--muted); }
 .task-reward { margin-left: auto; font-size: 15px; color: var(--accent); }
 .task-btn {
@@ -122,16 +144,54 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 }
 .task-btn:hover { color: var(--accent); }
 .task-btn.task-delete:hover { color: var(--danger); }
-.task-title { font-size: 21px; }
+.task-title { font-size: 21px; cursor: pointer; }
+.task-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
+.due-date { font-size: 15px; color: var(--muted); }
+.due-date.overdue { color: #fff; font-weight: bold; }
+.task-progress { font-size: 15px; color: var(--muted); }
+.task-actions { margin-top: 10px; }
+.btn-action { font-size: 12px; padding: 12px 16px; }
+.btn-action.act-doing { border-color: #7aa2ff; color: #7aa2ff; }
+.btn-action.act-doing:hover { background: #7aa2ff; color: #10131f; }
+.btn-action.act-done { border-color: #6fdc8c; color: #6fdc8c; }
+.btn-action.act-done:hover { background: #6fdc8c; color: #0d1a10; }
+.task-overdue, .task-overdue.task-card { background: #c2262b; border-left-color: #7d1015; }
+.task-overdue .task-title,
+.task-overdue .task-diff,
+.task-overdue .task-reward,
+.task-overdue .due-date,
+.task-overdue .task-progress,
+.task-overdue .subtask span {
+  color: #ffffff;
+}
+.task-overdue .label-chip { color: #161005; }
+.task-overdue .btn-action.act-doing,
+.task-overdue .btn-action.act-done { color: #fff; }
 .boss-hp { margin: 8px 0; }
 .boss-hp-label { font-size: 15px; color: #ff4d4d; }
-.hp-bar { height: 10px; background: #3a0a0a; border: 2px solid #ff4d4d; }
-.hp-fill { height: 100%; background: #ff4d4d; transition: width 0.2s; }
+.hp-bar { height: 10px; background: #3a0a0a; border: 2px solid #ff4d4d; border-radius: 4px; }
+.hp-fill { height: 100%; background: #ff4d4d; transition: width 0.2s; border-radius: 2px; }
 .subtasks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .subtask { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: 17px; }
 .subtask input { width: auto; }
+.subtask .step-del { font-size: 14px; }
 .subtask-done span { text-decoration: line-through; color: var(--muted); }
-.subtask-add input { font-size: 15px; padding: 4px 8px; opacity: 0.8; margin-top: 4px; }
+.subtask-add { margin-top: 6px; }
+.subtask-add input { font-size: 15px; padding: 4px 8px; opacity: 0.8; }
+/* ---------- modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 40; padding: 16px;
+}
+.modal-overlay.hidden { display: none; }
+.modal { width: 620px; max-width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-close {
+  position: absolute; top: 10px; right: 10px; background: none; border: none;
+  color: var(--muted); font-size: 20px; cursor: pointer;
+}
+.modal-close:hover { color: var(--danger); }
+.checklist { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .hero-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 @media (max-width: 800px) { .hero-panel { grid-template-columns: 1fr; } }
 .hero-card { text-align: center; }
@@ -146,6 +206,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .xp-bar {
   height: 18px; border: 3px solid var(--accent-dark); background: var(--card);
   margin: 10px auto; max-width: 320px;
+  border-radius: 4px; overflow: hidden;
 }
 .xp-fill {
   height: 100%;
@@ -162,6 +223,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .chart-bar-area {
   flex: 1; width: 26px; display: flex; align-items: flex-end;
   background: var(--card); border: 2px solid var(--accent-dark);
+  border-radius: 4px; overflow: hidden;
 }
 .chart-bar { width: 100%; background: var(--accent); min-height: 2px; transition: height 0.3s; }
 .chart-label { font-size: 16px; color: var(--muted); margin-top: 4px; }
@@ -177,7 +239,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .theme-swatch { width: 18px; height: 18px; border: 2px solid rgba(0, 0, 0, 0.4); }
 .shop-item-name { font-size: 17px; }
 .shop-item-meta { display: flex; gap: 6px; }
-.rarity-tag, .slot-tag { font-size: 13px; padding: 1px 6px; border: 1px solid var(--muted); color: var(--muted); }
+.rarity-tag, .slot-tag { font-size: 13px; padding: 1px 6px; border: 1px solid var(--muted); color: var(--muted); border-radius: 4px; }
 .rarity-commun { border-color: #6fdc8c; }
 .rarity-commun .rarity-tag { border-color: #6fdc8c; color: #6fdc8c; }
 .rarity-rare { border-color: #7aa2ff; }
@@ -199,11 +261,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   background: var(--accent); color: #1a1208; font-family: "Press Start 2P", monospace;
   font-size: 10px; padding: 14px 18px; border: 3px solid var(--accent-dark);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5); z-index: 50; max-width: 90vw;
+  border-radius: 4px;
 }
 .toast.hidden { display: none; }
 .footer { margin-top: 24px; text-align: center; font-size: 15px; color: var(--muted); opacity: 0.7; }
-.pixel-sprite { line-height: 0; }
-.pixel-sprite div { padding: 0; }
+.pixel-sprite { display: grid; line-height: 0; }
+.pixel-sprite i { display: block; }
 </style>
 </head>
 <body>
@@ -226,631 +289,878 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     Mistral Quest — tes données restent dans ce navigateur (localStorage) · version un seul fichier HTML
   </footer>
 </div>
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal panel" id="modal"></div>
+</div>
 <div class="toast hidden" id="toast"></div>
 <script>
 (function () {
   "use strict";
-
-  /* ================= Données ================= */
-
-  var DIFFICULTIES = {
-    facile:    { label: "Facile",    xp: 10,  gold: 6,  icon: "·", cls: "diff-facile",    bcls: "diff-b-facile" },
-    moyenne:   { label: "Moyenne",   xp: 25,  gold: 14, icon: "◆", cls: "diff-moyenne",   bcls: "diff-b-moyenne" },
-    difficile: { label: "Difficile", xp: 55,  gold: 30, icon: "★", cls: "diff-difficile", bcls: "diff-b-difficile" },
-    boss:      { label: "Boss",      xp: 140, gold: 75, icon: "☠", cls: "diff-boss",      bcls: "diff-b-boss" }
-  };
+  var SAVE_KEY = "mistral-quest-save-v1";
   var SUBTASK_REWARD = { xp: 18, gold: 9 };
-  var LOOTBOX_PRICE = 60;
-  var LOOT_WEIGHTS = { commun: 55, rare: 27, epique: 13, legendaire: 5 };
-  var RARITY_CLASS = { commun: "rarity-commun", rare: "rarity-rare", epique: "rarity-epique", legendaire: "rarity-legendaire" };
-  var SLOT_LABEL = { hat: "Tête", cape: "Cape", pet: "Familier", theme: "Thème" };
-  var COLUMNS = [
-    { status: "todo",  label: "À faire",  icon: "📋" },
-    { status: "doing", label: "En cours", icon: "⚔️" },
-    { status: "done",  label: "Terminé",  icon: "🏁" }
+  var DIFFS = {
+    facile:    { label: "Facile",    xp: 10,  gold: 5,  icon: "🌱", badge: "diff-b-facile",  edge: "diff-facile" },
+    moyenne:   { label: "Moyenne",   xp: 25,  gold: 12, icon: "⚔️", badge: "diff-b-moyenne", edge: "diff-moyenne" },
+    difficile: { label: "Difficile", xp: 50,  gold: 25, icon: "🔥", badge: "diff-b-difficile", edge: "diff-difficile" },
+    boss:      { label: "Boss",      xp: 120, gold: 60, icon: "💀", badge: "diff-b-boss", edge: "diff-boss", boss: true }
+  };
+  var COLUMNS = { todo: "À faire 📌", doing: "En cours 🏃", done: "Terminé 🏁" };
+  var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
+  var TABS = [
+    ["board", "🗺️ Quêtes"],
+    ["achievements", "🏆 Exploits"],
+    ["shop", "🛒 Boutique"],
+    ["stats", "📊 Stats"],
+    ["theme", "🎨 Apparence"]
   ];
-
-  var HERO_SPRITE = [
-    "....hhhh....",
-    "...hhhhhh...",
-    "..hssssssh..",
-    "..hsessesh..",
-    "..hssssssh..",
-    "...ssssss...",
-    "..otttttto..",
-    ".otttttttto.",
-    ".otttttttto.",
-    ".otggggggto.",
-    "..otttttto..",
-    "..ss....ss..",
-    "..bb....bb..",
-    ".bbb....bbb."
-  ];
-  var HERO_PALETTE = { h: "#4a2c14", s: "#f4c08a", e: "#241505", o: "#c25400", t: "#ff7000", g: "#ffc46b", b: "#3a2410" };
-
-  var CAPE_ROWS_RED  = ["............", "............", "cc........cc", "ccc......ccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "cccc....cccc", "ccc......ccc"];
-  var CAPE_ROWS_GOLD = CAPE_ROWS_RED;
-
+  var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🎩 Tête"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Pieds"], ["familier", "🐾 Familier"]];
   var SHOP_ITEMS = [
-    { id: "hat-beret", name: "Béret du Dev", slot: "hat", rarity: "commun", price: 40, desc: "Classique mais efficace.",
-      sprite: ["............", "...rrrrrr...", ".rrrrrrrrr..", "....rr......"], palette: { r: "#d43d2a" } },
-    { id: "hat-cap", name: "Casquette Mistral", slot: "hat", rarity: "commun", price: 55, desc: "Aux couleurs de la maison.",
-      sprite: ["...tttttt...", "..tttttttt..", "vvvvvvvvvv.."], palette: { t: "#ff7000", v: "#c25400" } },
-    { id: "hat-wizard", name: "Chapeau de Sorcier", slot: "hat", rarity: "rare", price: 120, desc: "+10 en productivité magique.",
-      sprite: [".....ww.....", "....wwww....", "....wwww....", "...wwwwww...", "..wwwwwwww..", "wwwwwwwwwwww"], palette: { w: "#8a4fff" } },
-    { id: "hat-crown", name: "Couronne", slot: "hat", rarity: "epique", price: 240, desc: "Pour les rois du Kanban.",
-      sprite: [".g.g.g.g.g..", ".gggggggggg.", ".ggrgggrggg."], palette: { g: "#ffc46b", r: "#ff4d4d" } },
-    { id: "cape-red", name: "Cape Écarlate", slot: "cape", rarity: "commun", price: 60, desc: "Flotte au vent des deadlines.",
-      sprite: CAPE_ROWS_RED, palette: { c: "#d43d2a" } },
-    { id: "cape-gold", name: "Cape Dorée", slot: "cape", rarity: "epique", price: 220, desc: "Tissée dans la lumière.",
-      sprite: CAPE_ROWS_GOLD, palette: { c: "#ffc46b" } },
-    { id: "pet-fox", name: "Renard Pixel", slot: "pet", rarity: "rare", price: 150, desc: "Le mascot officiel.",
-      sprite: ["f.f.....", "fffw....", "ffffff..", "fkffkf..", ".fffff..", "..f.f..."], palette: { f: "#ff7000", w: "#fff3e0", k: "#241505" } },
-    { id: "pet-owl", name: "Hibou Sage", slot: "pet", rarity: "rare", price: 140, desc: "Rappelle tes deadlines en hulant.",
-      sprite: ["o.o.....", "ooooo...", "owowo...", "ooooo...", ".o.o...."], palette: { o: "#8a6b4a", w: "#ffffff" } },
-    { id: "pet-slime", name: "Slime de Stockage", slot: "pet", rarity: "commun", price: 45, desc: "Avale tes tâches terminées.",
-      sprite: ["........", "..ssss..", ".ssssss.", ".skssks.", "ssssssss", ".ssssss."], palette: { s: "#6fdc8c", k: "#0d3a1c" } },
-    { id: "pet-dragon", name: "Bébé Dragon", slot: "pet", rarity: "legendaire", price: 450, desc: "Crache des flammelettes sur la procrastination.",
-      sprite: ["d..d....", "ddddd...", "ddddd...", "dkddkd..", ".ddddd..", "..d.d..."], palette: { d: "#ff4d4d", k: "#3a0a0a" } },
-    { id: "theme-nuit", name: "Thème : Nuit Étoilée", slot: "theme", rarity: "rare", price: 100, desc: "Code sous les étoiles.",
-      theme: { "--bg": "#0b0e1a", "--panel": "#141a2e", "--card": "#1a2240", "--accent": "#7aa2ff", "--accent-dark": "#4a6ad4", "--text": "#dfe6ff", "--muted": "#8a94b8" } },
-    { id: "theme-foret", name: "Thème : Forêt", slot: "theme", rarity: "rare", price: 100, desc: "Productivité en pleine nature.",
-      theme: { "--bg": "#0d1a10", "--panel": "#16281a", "--card": "#1d3322", "--accent": "#6fdc8c", "--accent-dark": "#3ea85e", "--text": "#e2f5e6", "--muted": "#7ea88a" } },
-    { id: "theme-or", name: "Thème : Sable d'Or", slot: "theme", rarity: "epique", price: 200, desc: "La chaleur du désert dans ton board.",
-      theme: { "--bg": "#1c150a", "--panel": "#2a2010", "--card": "#332814", "--accent": "#ffc46b", "--accent-dark": "#d4943a", "--text": "#fff3e0", "--muted": "#b8a07a" } }
+    { id: "pomme",    name: "Pomme scintillante", desc: "+8 XP immédiatement",              cost: 15,  rarity: "commun",     type: "consumable", xp: 8 },
+    { id: "potion",   name: "Potion d'XP",        desc: "+15 XP immédiatement",             cost: 25,  rarity: "commun",     type: "consumable", xp: 15 },
+    { id: "epee",     name: "Épée de Mistral",    desc: "Arme · +5% XP gagné",              cost: 45,  rarity: "commun",     type: "gear", slot: "arme", bonus: 5 },
+    { id: "bouclier", name: "Bouclier pixel",     desc: "Armure · +5% XP gagné",            cost: 40,  rarity: "commun",     type: "gear", slot: "armure", bonus: 5 },
+    { id: "plume",    name: "Plume du vent",      desc: "Accessoire · +7% XP gagné",        cost: 60,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 7 },
+    { id: "botte",    name: "Bottes de vitesse",  desc: "Pieds · +8% XP gagné",             cost: 80,  rarity: "rare",       type: "gear", slot: "pieds", bonus: 8 },
+    { id: "chapeau",  name: "Chapeau pointu",     desc: "Tête · +8% XP gagné",              cost: 70,  rarity: "rare",       type: "gear", slot: "tete", bonus: 8 },
+    { id: "chat",     name: "Chat boulon",        desc: "Familier · +5% XP gagné",          cost: 120, rarity: "rare",       type: "gear", slot: "familier", bonus: 5 },
+    { id: "amulette", name: "Amulette solaire",   desc: "Accessoire · +10% XP gagné",       cost: 90,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 10 },
+    { id: "dragon",   name: "Insigne dragon",     desc: "Armure · +12% XP gagné",           cost: 140, rarity: "epique",     type: "gear", slot: "armure", bonus: 12 },
+    { id: "anneau",   name: "Anneau du vent",     desc: "Accessoire · +12% XP gagné",       cost: 160, rarity: "epique",     type: "gear", slot: "accessoire", bonus: 12 },
+    { id: "lame",     name: "Lame légendaire",    desc: "Arme · +15% XP gagné",             cost: 180, rarity: "epique",     type: "gear", slot: "arme", bonus: 15 },
+    { id: "dragonnet", name: "Dragonnet",         desc: "Familier légendaire · +20% XP",    cost: 300, rarity: "legendaire", type: "gear", slot: "familier", bonus: 20 }
   ];
-  var ITEMS_BY_ID = {};
-  SHOP_ITEMS.forEach(function (i) { ITEMS_BY_ID[i.id] = i; });
-
   var ACHIEVEMENTS = [
-    { id: "first-task",    name: "Premier Pas",      desc: "Terminer 1 tâche",                      check: function (s) { return totalDone(s) >= 1; } },
-    { id: "ten-tasks",     name: "Cadreur",          desc: "Terminer 10 tâches",                    check: function (s) { return totalDone(s) >= 10; } },
-    { id: "fifty-tasks",   name: "Machine",          desc: "Terminer 50 tâches",                    check: function (s) { return totalDone(s) >= 50; } },
-    { id: "streak-3",      name: "Habitué",          desc: "Streak de 3 jours",                     check: function (s) { return s.streak >= 3; } },
-    { id: "streak-7",      name: "Semaine Parfaite", desc: "Streak de 7 jours",                     check: function (s) { return s.streak >= 7; } },
-    { id: "level-5",       name: "Aventurier",       desc: "Atteindre le niveau 5",                 check: function (s) { return s.level >= 5; } },
-    { id: "level-10",      name: "Héros",            desc: "Atteindre le niveau 10",                check: function (s) { return s.level >= 10; } },
-    { id: "first-boss",    name: "Tueur de Boss",    desc: "Vaincre un Boss",                       check: function (s) { return s.tasks.some(function (t) { return t.difficulty === "boss" && t.status === "done"; }); } },
-    { id: "first-purchase",name: "Cliente Fidèle",   desc: "Acheter un objet",                      check: function (s) { return s.ownedItems.length >= 1; } },
-    { id: "full-board",    name: "Board Zéro",       desc: "Vider son board (0 tâche restante)",    check: function (s) { return s.tasks.length > 0 && s.tasks.every(function (t) { return t.status === "done"; }); } }
+    { id: "first",   name: "Première quête",  desc: "Terminer 1 quête",                 icon: "🌱", check: function (s) { return s.stats.totalCompleted >= 1; }, gold: 10 },
+    { id: "fifth",   name: "Ça démarre",      desc: "Terminer 5 quêtes",                icon: "⚡", check: function (s) { return s.stats.totalCompleted >= 5; }, gold: 20 },
+    { id: "tenth",   name: "Héros du lundi",  desc: "Terminer 10 quêtes",               icon: "🏅", check: function (s) { return s.stats.totalCompleted >= 10; }, gold: 40 },
+    { id: "vet",     name: "Vétéran",         desc: "Terminer 25 quêtes",               icon: "🎖️", check: function (s) { return s.stats.totalCompleted >= 25; }, gold: 80 },
+    { id: "lvl5",    name: "Niveau 5",        desc: "Atteindre le niveau 5",            icon: "⭐", check: function (s) { return s.level >= 5; }, gold: 30 },
+    { id: "lvl10",   name: "Niveau 10",       desc: "Atteindre le niveau 10",           icon: "🌟", check: function (s) { return s.level >= 10; }, gold: 60 },
+    { id: "rich",    name: "Richasse",        desc: "Détenir 200 pièces",               icon: "💰", check: function (s) { return s.gold >= 200; }, gold: 25 },
+    { id: "streak3", name: "Série de 3",      desc: "3 jours d'affilée",                icon: "🔥", check: function (s) { return s.streak >= 3; }, gold: 30 },
+    { id: "streak7", name: "Série de 7",      desc: "7 jours d'affilée",                icon: "☄️", check: function (s) { return s.streak >= 7; }, gold: 70 },
+    { id: "boss",    name: "Tueur de boss",   desc: "Vaincre un boss",                  icon: "💀", check: function (s) { return s.stats.bossKills >= 1; }, gold: 50 }
   ];
-
-  /* ================= Utilitaires ================= */
-
-  function uid() {
-    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  }
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  function todayKey() {
-    var d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  }
-  function dayDiff(from, to) {
-    if (!from) return Infinity;
-    return Math.round((new Date(to + "T00:00:00") - new Date(from + "T00:00:00")) / 86400000);
-  }
-  function xpNeeded(level) { return 100 + (level - 1) * 80; }
-  function titleForLevel(level) {
-    if (level >= 16) return "Légende du Mistral";
-    if (level >= 12) return "Maître des Tâches";
-    if (level >= 8) return "Héros";
-    if (level >= 5) return "Aventurier";
-    if (level >= 3) return "Apprenti";
-    return "Novice";
-  }
-  function totalDone(s) {
-    return s.tasks.filter(function (t) { return t.status === "done"; }).length;
-  }
-
-  function sprite(rows, palette, scale) {
-    var cols = Math.max.apply(null, rows.map(function (r) { return r.length; }));
-    var cells = "";
-    rows.forEach(function (row, y) {
-      for (var x = 0; x < cols; x++) {
-        var ch = row[x] || ".";
-        var col = palette[ch];
-        cells += '<div style="width:' + scale + "px;height:" + scale + "px;" + (col ? "background:" + col : "") + '"></div>';
-      }
-    });
-    return '<div class="pixel-sprite" style="display:grid;grid-template-columns:repeat(' + cols + "," + scale + 'px);width:' + cols * scale + 'px" aria-hidden="true">' + cells + "</div>";
-  }
-
-  /* ================= État ================= */
-
-  var STORAGE_KEY = "mistral-quest-save-v1";
+  var THEMES = {
+    nuit:   { name: "Nuit",   vars: { "--bg": "#000000", "--panel": "#161310", "--card": "#1e1a16", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68", "--danger": "#d43d2a" } },
+    sable:  { name: "Sable",  vars: { "--bg": "#241d12", "--panel": "#2f2718", "--card": "#3a3020", "--accent": "#ffb03b", "--accent-dark": "#c07818", "--text": "#fff3dc", "--muted": "#b39a70", "--danger": "#e05545" } },
+    lagon:  { name: "Lagon",  vars: { "--bg": "#071518", "--panel": "#0e2226", "--card": "#142d31", "--accent": "#35d0c0", "--accent-dark": "#1a8f84", "--text": "#ddf6f2", "--muted": "#7aa8a2", "--danger": "#e05545" } },
+    aurore: { name: "Aurore", vars: { "--bg": "#120b1f", "--panel": "#1c1330", "--card": "#261a40", "--accent": "#b58cff", "--accent-dark": "#7a4fd8", "--text": "#efe6ff", "--muted": "#9a84c4", "--danger": "#e05545" } }
+  };
+  var PAL = { S: "#f2c199", k: "#231207", H: "#7a4a1e", O: "#ff7000", D: "#c25400", Y: "#ffd54a", C: "#a83a20", W: "#f5ede0", B: "#8c5a2b", L: "#6fd8ff", G: "#6fdc8c", P: "#ff9db5", U: "#8f6cff" };
+  var HERO_BASE = [
+    "................",
+    ".....SSSSSS.....",
+    "....SSSSSSSS....",
+    "....SSkSSkSS....",
+    ".....SSSSSS.....",
+    "......SSSS......",
+    "....OOOOOOOO....",
+    "...OOOOOOOOOO...",
+    "..OOODOOOODOOO..",
+    "..OOOOOOOOOOOO..",
+    ".YOOOOOOOOOOOOY.",
+    "..OOOOOOOOOOOO..",
+    "...OOOOOOOOOO...",
+    "...BBB....BBB...",
+    "...BBB....BBB...",
+    "..BBB......BBB.."
+  ];
+  var HERO_HAT = [
+    "........Y......",
+    "........Y......",
+    ".......OYO.....",
+    ".......OOO.....",
+    "......OOOOO....",
+    ".....OOOOOOO...",
+    "....OOOOOOOOO..",
+    "...OOOOOOOOOOO."
+  ];
+  var HERO_CAPE = [
+    "..C..........C..",
+    "..CC........CC..",
+    "..CCC......CCC..",
+    "..CCCC....CCCC..",
+    "..CCCCCCCCCCCC..",
+    "...CCCCCCCCCC...",
+    "...CCCCCCCCCCC..",
+    "....CCCCCCCCC..."
+  ];
+  var PET = [
+    "...LL...",
+    "..LLkL..",
+    ".LLLLLL.",
+    ".LLLLLL.",
+    "..L..L.."
+  ];
   function initialState() {
     return {
-      tasks: [], xp: 0, level: 1, gold: 30, streak: 0, lastCompletedDay: "",
-      ownedItems: [], equipped: {}, achievements: [], lootBoxes: 1, nextLootLevel: 3,
-      dailyLog: {}
+      v: 1, tasks: [], labels: [],
+      level: 1, xp: 0, gold: 30,
+      streak: 0, lastCompletedDay: null,
+      inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
+      stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
+      theme: "nuit", view: "board"
     };
+  }
+  function migrate(s) {
+    var base = initialState(), out = {};
+    for (var k in base) { out[k] = (s && s[k] !== undefined) ? s[k] : base[k]; }
+    out.stats = s && s.stats ? s.stats : base.stats;
+    out.stats.xpByDay = out.stats.xpByDay || {};
+    out.stats.doneByDay = out.stats.doneByDay || {};
+    out.stats.totalCompleted = out.stats.totalCompleted || 0;
+    out.stats.bossKills = out.stats.bossKills || 0;
+    out.labels = out.labels || [];
+    out.equipment = out.equipment || {};
+    out.achievements = out.achievements || [];
+    out.tasks = (out.tasks || []).map(function (t) {
+      return {
+        id: t.id, title: t.title, diff: t.diff || "facile", status: t.status || "todo",
+        subtasks: t.subtasks || [], createdAt: t.createdAt || "",
+        dueDate: t.dueDate !== undefined ? t.dueDate : null,
+        labels: t.labels || [], doneAt: t.doneAt || null
+      };
+    });
+    return out;
   }
   function loadState() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? Object.assign(initialState(), JSON.parse(raw)) : initialState();
-    } catch (e) { return initialState(); }
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (raw) return migrate(JSON.parse(raw));
+    } catch (e) {}
+    return migrate(null);
   }
   function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota plein */ }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
   }
-
   var state = loadState();
-  var activeTab = "board";
-  var pickDifficulty = "moyenne";
-  var addTitleDraft = "";
-  var bossDraft = "";
-  var toastTimer = null;
-
-  /* ================= Mécaniques de jeu ================= */
-
+  var draggedId = null;
+  var openTaskId = null;
+  var drafts = { title: "", due: "", steps: "", diff: "facile", labels: [], taskId: null };
+  function esc(x) {
+    return String(x === null || x === undefined ? "" : x)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function todayKey(d) {
+    var dt = d || new Date();
+    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
+  }
+  function fmtDate(iso) {
+    if (!iso) return "";
+    var p = String(iso).split("-");
+    if (p.length !== 3) return String(iso);
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+  function isOverdue(t) {
+    return !!(t.dueDate && t.status !== "done" && t.dueDate < todayKey());
+  }
+  function labelsOf(t) {
+    return (t.labels || []).map(function (id) {
+      return (state.labels || []).filter(function (l) { return l.id === id; })[0];
+    }).filter(Boolean);
+  }
+  function xpNeeded(level) { return 100 + (level - 1) * 80; }
+  function xpMultiplier() {
+    var m = 1;
+    for (var slot in state.equipment) {
+      var item = shopById(state.equipment[slot]);
+      if (item) m += item.bonus / 100;
+    }
+    return m;
+  }
+  function shopById(id) {
+    for (var i = 0; i < SHOP_ITEMS.length; i++) { if (SHOP_ITEMS[i].id === id) return SHOP_ITEMS[i]; }
+    return null;
+  }
+  function taskById(id) {
+    for (var i = 0; i < state.tasks.length; i++) { if (state.tasks[i].id === id) return state.tasks[i]; }
+    return null;
+  }
+  var lastToast = "";
   function showToast(msg) {
     var el = document.getElementById("toast");
-    el.textContent = msg;
+    el.innerHTML = esc(msg);
     el.classList.remove("hidden");
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.add("hidden"); }, 3200);
+    lastToast = msg;
+    if (showToast._t) clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { el.classList.add("hidden"); }, 2600);
   }
-
-  function grant(xp, gold) {
-    var ups = 0;
-    state.xp += xp;
-    while (state.xp >= xpNeeded(state.level)) {
-      state.xp -= xpNeeded(state.level);
-      state.level += 1;
-      ups += 1;
+  function grantReward(s, xp, gold) {
+    var next = { ...s, xp: s.xp + xp, gold: s.gold + gold };
+    while (next.xp >= xpNeeded(next.level)) {
+      next.xp -= xpNeeded(next.level);
+      next.level += 1;
+      next.gold += 25;
     }
-    state.gold += gold;
-    if (ups > 0) {
-      while (state.nextLootLevel <= state.level) {
-        state.lootBoxes += 1;
-        state.nextLootLevel += 3;
-      }
-      showToast("⬆ Niveau " + state.level + " !");
+    if (next.level % 3 === 0 && next.level > 0 && levelChanged(s, next)) {
+      next.pendingLoot = (next.pendingLoot || 0) + 1;
     }
+    return next;
   }
-
-  function logDaily(xp) {
-    var key = todayKey();
-    var prev = state.dailyLog[key] || { done: 0, xp: 0 };
-    state.dailyLog[key] = { done: prev.done + 1, xp: prev.xp + xp };
-  }
-
-  function updateStreak() {
-    var key = todayKey();
-    if (state.lastCompletedDay === key) return;
-    var gap = dayDiff(state.lastCompletedDay, key);
-    state.streak = gap === 1 ? state.streak + 1 : 1;
-    state.lastCompletedDay = key;
-    var bonus = Math.min(state.streak, 7) * 5;
-    if (bonus > 0) {
-      grant(bonus, 0);
-      if (bonus > 5) showToast("🔥 Streak " + state.streak + " jours ! Bonus +" + bonus + " XP");
-    }
-  }
-
+  function levelChanged(before, after) { return after.level > before.level && after.level % 3 === 0; }
   function checkAchievements() {
-    var unlocked = [];
-    ACHIEVEMENTS.forEach(function (a) {
-      if (state.achievements.indexOf(a.id) === -1 && a.check(state)) unlocked.push(a.name);
-    });
-    if (unlocked.length) {
-      state.achievements = state.achievements.concat(unlocked.map(function (n) {
-        return ACHIEVEMENTS.filter(function (a) { return a.name === n; })[0].id;
-      }));
-      showToast("🏆 Succès : " + unlocked.join(", "));
-    }
-  }
-
-  function completeTask(task) {
-    var rw = DIFFICULTIES[task.difficulty];
-    task.status = "done";
-    task.completedAt = Date.now();
-    grant(rw.xp, rw.gold);
-    logDaily(rw.xp);
-    updateStreak();
-    if (task.difficulty === "boss") showToast("☠ Boss vaincu ! +" + rw.xp + " XP +" + rw.gold + " or");
-  }
-
-  function rollLoot() {
-    var pool = SHOP_ITEMS.filter(function (i) { return state.ownedItems.indexOf(i.id) === -1; });
-    if (!pool.length) {
-      state.gold += 40;
-      showToast("🎁 Loot box : déjà tout possédé ! +40 or");
-      return;
-    }
-    var byRarity = {};
-    pool.forEach(function (i) { (byRarity[i.rarity] = byRarity[i.rarity] || []).push(i); });
-    var total = 0;
-    Object.keys(LOOT_WEIGHTS).forEach(function (r) { if (byRarity[r]) total += LOOT_WEIGHTS[r]; });
-    var roll = Math.random() * total;
-    var picked = pool[0];
-    for (var r in LOOT_WEIGHTS) {
-      if (!byRarity[r]) continue;
-      if (roll < LOOT_WEIGHTS[r]) {
-        picked = byRarity[r][Math.floor(Math.random() * byRarity[r].length)];
-        break;
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) {
+      var a = ACHIEVEMENTS[i];
+      if (state.achievements.indexOf(a.id) === -1 && a.check(state)) {
+        state.achievements.push(a.id);
+        state.gold += a.gold;
+        showToast("🏆 Exploit : " + a.name + " (+" + a.gold + " pièces)");
       }
-      roll -= LOOT_WEIGHTS[r];
     }
-    state.ownedItems.push(picked.id);
-    showToast("🎁 Loot box : " + picked.name + " (" + picked.rarity + ") !");
   }
-
-  /* ================= Vues ================= */
-
-  var TABS = [
-    { id: "board", label: "📋 Board" },
-    { id: "hero", label: "🧙 Héros" },
-    { id: "shop", label: "🛒 Boutique" },
-    { id: "achievements", label: "🏆 Succès" }
-  ];
-
-  function renderHud() {
-    document.getElementById("hud-level").textContent = "⬆ Niv. " + state.level;
-    document.getElementById("hud-gold").textContent = "🪙 " + state.gold;
-    document.getElementById("hud-streak").textContent = "🔥 " + state.streak;
+  function applyTheme() {
+    var theme = THEMES[state.theme] || THEMES.nuit;
+    var vars = theme.vars;
+    for (var k in vars) { document.documentElement.style.setProperty(k, vars[k]); }
   }
-
-  function renderTabs() {
-    document.getElementById("tabs").innerHTML = TABS.map(function (t) {
-      return '<button class="tab' + (activeTab === t.id ? " tab-active" : "") + '" data-action="tab" data-tab="' + t.id + '">' + t.label + "</button>";
+  function spriteHTML(grid, cell) {
+    var h = grid.length, w = grid[0].length;
+    var s = '<div class="pixel-sprite" style="grid-template-columns:repeat(' + w + ',' + cell + ');grid-auto-rows:' + cell + '">';
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        var c = grid[y][x];
+        s += (c === "." || !PAL[c]) ? "<i></i>" : '<i style="background:' + PAL[c] + '"></i>';
+      }
+    }
+    return s + "</div>";
+  }
+  function heroHTML() {
+    var stage = '<div class="hero-stage hero-bob">'
+      + '<div class="hero-layer" style="z-index:0;top:6px">' + spriteHTML(HERO_CAPE, "6px") + "</div>"
+      + '<div class="hero-layer hero-base" style="z-index:1;top:auto;bottom:0;transform:none">' + spriteHTML(HERO_BASE, "6px") + "</div>"
+      + '<div class="hero-layer" style="z-index:2;top:-2px">' + spriteHTML(HERO_HAT, "6px") + "</div>"
+      + '<div class="hero-layer hero-pet" style="z-index:3">' + spriteHTML(PET, "4px") + "</div>"
+      + "</div>";
+    var pct = Math.min(100, Math.round((state.xp / xpNeeded(state.level)) * 100));
+    var slots = EQUIP_SLOTS.map(function (sl) {
+      var it = state.equipment[sl[0]] ? shopById(state.equipment[sl[0]]) : null;
+      return '<span class="hud-badge">' + sl[1] + " : " + (it ? esc(it.name) : '<span style="color:var(--muted)">vide</span>') + "</span>";
     }).join("");
-  }
-
-  function addFormHTML() {
-    var isBoss = pickDifficulty === "boss";
-    var diffBtns = Object.keys(DIFFICULTIES).map(function (d) {
-      var cfg = DIFFICULTIES[d];
-      return '<button type="button" class="diff-btn ' + cfg.bcls + (pickDifficulty === d ? " diff-active" : "") +
-        '" data-action="set-diff" data-diff="' + d + '">' + cfg.icon + " " + cfg.label + "<small>+" + cfg.xp + "xp</small></button>";
-    }).join("");
-    return '<form class="add-task panel" id="add-form">' +
-      '<h3 class="panel-title">➕ Nouvelle tâche</h3>' +
-      '<div class="add-task-row">' +
-      '<input class="add-task-title" id="add-title" value="' + esc(addTitleDraft) + '" placeholder="Que faut-il accomplir, héros ?" />' +
-      '<div class="diff-picker">' + diffBtns + "</div></div>" +
-      (isBoss
-        ? '<div class="boss-hint">☠ Boss détecté ! Une étape par ligne — chaque étape terminée lui inflige des dégâts (+' +
-          SUBTASK_REWARD.xp + " XP) :<textarea id=\"boss-subtasks\" rows=\"3\" placeholder=\"Rédiger le cahier des charges&#10;Maquette Figma&#10;Revue de code\">" +
-          esc(bossDraft) + "</textarea></div>"
-        : "") +
-      '<div style="margin-top:10px"><button class="btn btn-accent" type="submit">Ajouter au board</button></div>' +
-      "</form>";
-  }
-
-  function subtasksHTML(t) {
-    if (!t.subtasks.length || t.status === "done") return "";
-    var rows = t.subtasks.map(function (st) {
-      return '<label class="subtask' + (st.done ? " subtask-done" : "") + '">' +
-        '<input type="checkbox" ' + (st.done ? "checked " : "") +
-        'data-action="toggle-subtask" data-task="' + t.id + '" data-sub="' + st.id + '" />' +
-        "<span>" + esc(st.label) + "</span></label>";
-    }).join("");
-    return '<div class="subtasks">' + rows +
-      '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '"><input placeholder="+ étape…" /></form></div>';
-  }
-
-  function taskCardHTML(t) {
-    var cfg = DIFFICULTIES[t.difficulty];
-    var isBoss = t.difficulty === "boss";
-    var hp = t.subtasks.length;
-    var hpDone = t.subtasks.filter(function (s) { return s.done; }).length;
-    return '<div class="task-card ' + cfg.cls + '" draggable="true" data-id="' + t.id + '">' +
-      '<div class="task-top">' +
-      '<span class="task-diff">' + cfg.icon + " " + cfg.label + "</span>" +
-      '<span class="task-reward">+' + cfg.xp + " XP · +" + cfg.gold + "🪙</span>" +
-      '<button class="task-btn" data-action="advance" data-id="' + t.id + '" title="Avancer">→</button>' +
-      '<button class="task-btn task-delete" data-action="delete-task" data-id="' + t.id + '" title="Supprimer">✕</button>' +
+    var mult = Math.round(xpMultiplier() * 100);
+    var loot = "";
+    if (state.pendingLoot > 0) {
+      loot = '<div class="lootbox-row"><button class="btn btn-accent" data-action="open-lootbox">🎁 Ouvrir une loot box (' + state.pendingLoot + ')</button><span class="lootbox-hint">Gagne des loot boxes tous les 3 niveaux !</span></div>';
+    } else {
+      loot = '<div class="lootbox-row"><span class="lootbox-hint">🎁 Loot box au niveau ' + (Math.floor(state.level / 3) + 1) * 3 + '</span></div>';
+    }
+    return '<div class="panel">' +
+      '<h2 class="panel-title">HERO</h2>' +
+      '<div class="hero-panel">' +
+      '<div class="hero-card">' + stage +
+      '<div class="hero-name">Héros</div>' +
+      '<div class="hero-title">Vagabond du pixel</div>' +
+      '<div class="xp-bar"><div class="xp-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="xp-label">XP ' + state.xp + " / " + xpNeeded(state.level) + "</div>" +
+      '<div class="hero-stats"><span>⭐ Niveau ' + state.level + "</span><span class=\"gold-text\">🪙 " + state.gold + "</span><span>🔥 Série " + state.streak + "</span><span>📈 Bonus XP x" + mult + "%</span></div>" +
       "</div>" +
-      '<div class="task-title">' + esc(t.title) + "</div>" +
-      (isBoss
-        ? '<div class="boss-hp"><div class="boss-hp-label">☠ PV du boss : ' + (hp - hpDone) + "/" + hp + "</div>" +
-          '<div class="hp-bar"><div class="hp-fill" style="width:' + (hp ? (hpDone / hp) * 100 : 0) + '%"></div></div></div>'
-        : "") +
-      subtasksHTML(t) +
+      '<div class="hero-stats" style="flex-direction:column;align-items:stretch;gap:8px">' +
+      '<h3 class="panel-title">ÉQUIPEMENT</h3>' + slots + loot +
+      "</div></div></div>";
+  }
+  function tabsHTML() {
+    return TABS.map(function (t) {
+      return '<button class="tab' + (state.view === t[0] ? " tab-active" : "") + '" data-action="switch-tab" data-view="' + t[0] + '">' + t[1] + "</button>";
+    }).join("");
+  }
+  function labelChipsHTML(t) {
+    return labelsOf(t).map(function (l) {
+      return '<span class="label-chip label-dot" style="background:' + esc(l.color) + '">' + esc(l.name) + "</span>";
+    }).join(" ");
+  }
+  function subtasksProgressHTML(t) {
+    if (t.diff === "boss") return "";
+    if (!t.subtasks || !t.subtasks.length) return "";
+    var done = t.subtasks.filter(function (st) { return st.done; }).length;
+    return '<div class="task-progress">☑ ' + done + "/" + t.subtasks.length + " étapes</div>";
+  }
+  function bossHPHTML(t) {
+    if (t.diff !== "boss" || !t.subtasks.length) return "";
+    var done = t.subtasks.filter(function (st) { return st.done; }).length;
+    var pct = Math.round(((t.subtasks.length - done) / t.subtasks.length) * 100);
+    return '<div class="boss-hp"><div class="boss-hp-label">💀 PV du boss : ' + (t.subtasks.length - done) + "/" + t.subtasks.length + '</div><div class="hp-bar"><div class="hp-fill" style="width:' + pct + '%"></div></div></div>';
+  }
+  function taskCardHTML(t) {
+    var d = DIFFS[t.diff] || DIFFS.facile;
+    var overdue = isOverdue(t);
+    var cls = "task-card " + d.edge + (overdue ? " task-overdue" : "");
+    var actions = "";
+    if (t.status === "todo") {
+      actions = '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🏃 En cours</button>';
+    } else if (t.status === "doing") {
+      actions = '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>';
+    }
+    return '<div class="' + cls + '" draggable="true" data-task="' + t.id + '">' +
+      '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
+      '<button class="task-btn task-delete" data-action="delete-task" data-task="' + t.id + '" title="Supprimer">✖</button></div>' +
+      '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + labelChipsHTML(t) + "</div>" +
+      bossHPHTML(t) + subtasksProgressHTML(t) +
+      (t.dueDate ? '<div class="due-date' + (overdue ? " overdue" : "") + '">📅 Échéance : ' + fmtDate(t.dueDate) + (overdue ? " ☠ EN RETARD" : "") + "</div>" : "") +
+      (actions ? '<div class="task-actions">' + actions + "</div>" : "") +
       "</div>";
   }
-
-  function viewBoard() {
-    var cols = COLUMNS.map(function (col) {
-      var tasks = state.tasks.filter(function (t) { return t.status === col.status; });
-      return '<div class="column" data-status="' + col.status + '">' +
-        '<div class="column-header"><span>' + col.icon + "</span> " + col.label +
-        '<span class="column-count">' + tasks.length + "</span></div>" +
-        (tasks.length ? tasks.map(taskCardHTML).join("") : '<div class="column-empty">— vide —</div>') +
-        "</div>";
+  function columnHTML(key) {
+    var list = state.tasks.filter(function (t) { return t.status === key; });
+    var cards = list.map(taskCardHTML).join("");
+    return '<div class="column" data-drop="' + key + '">' +
+      '<div class="column-header">' + COLUMNS[key] + '<span class="column-count">' + list.length + "</span></div>" +
+      (cards || '<div class="column-empty">Vide</div>') + "</div>";
+  }
+  function boardView() {
+    return heroHTML() +
+      '<div class="board-actions" style="margin-top:14px">' +
+      '<button class="btn btn-accent btn-big" data-action="open-add-modal">➕ Ajouter une quête</button>' +
+      '<button class="btn btn-big" data-action="open-labels-modal">🏷️ Libellés</button>' +
+      '<span class="spacer"></span><span class="lootbox-hint">💡 Double-clique sur une tuile pour sa checklist</span></div>' +
+      '<div class="board">' + columnHTML("todo") + columnHTML("doing") + columnHTML("done") + "</div>";
+  }
+  function achievementsView() {
+    var cards = ACHIEVEMENTS.map(function (a) {
+      var got = state.achievements.indexOf(a.id) !== -1;
+      return '<div class="panel ' + (got ? "ach-unlocked" : "ach-locked") + '">' +
+        '<div class="ach-icon">' + a.icon + "</div>" +
+        '<div class="ach-name">' + esc(a.name) + "</div>" +
+        '<div class="ach-desc">' + esc(a.desc) + " · +" + a.gold + " 🪙</div>" +
+        '<div class="ach-desc">' + (got ? "✅ Débloqué" : "🔒 Verrouillé") + "</div></div>";
     }).join("");
-    return addFormHTML() + '<div class="board">' + cols + "</div>";
+    return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
-
-  function heroStageHTML() {
-    var hat = state.equipped.hat ? ITEMS_BY_ID[state.equipped.hat] : null;
-    var cape = state.equipped.cape ? ITEMS_BY_ID[state.equipped.cape] : null;
-    var pet = state.equipped.pet ? ITEMS_BY_ID[state.equipped.pet] : null;
-    var scale = 6;
-    var html = "";
-    if (cape) html += '<div class="hero-layer" style="z-index:0">' + sprite(cape.sprite, cape.palette, scale) + "</div>";
-    html += '<div class="hero-base hero-bob">' + sprite(HERO_SPRITE, HERO_PALETTE, scale) + "</div>";
-    if (hat) html += '<div class="hero-layer" style="z-index:2;top:' + (-(hat.sprite.length - 2) * scale) + 'px">' + sprite(hat.sprite, hat.palette, scale) + "</div>";
-    if (pet) html += '<div class="hero-layer hero-pet" style="z-index:2">' + sprite(pet.sprite, pet.palette, 4) + "</div>";
-    return '<div class="hero-stage">' + html + "</div>";
+  function shopView() {
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + "</span> — style Bonus XP total : <span class=\"gold-text\">x" + Math.round(xpMultiplier() * 100) + "%</span></p>" +
+      '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
+    var cards = SHOP_ITEMS.map(function (it) {
+      var owned = state.inventory.indexOf(it.id) !== -1;
+      var equipped = it.type === "gear" && state.equipment[it.slot] === it.id;
+      var action = "";
+      if (!owned) {
+        action = '<button class="btn btn-accent" data-action="buy-item" data-item="' + it.id + '"' + (state.gold < it.cost ? " disabled" : "") + ">Acheter (" + it.cost + " 🪙)</button>";
+      } else if (it.type === "gear") {
+        action = equipped
+          ? '<button class="btn" disabled>✅ Équipé</button>'
+          : '<button class="btn" data-action="equip-item" data-item="' + it.id + '">Équiper</button>' +
+            '<button class="btn btn-danger" data-action="equip-item" data-item="' + it.id + '" data-unequip="1">Retirer</button>';
+      } else {
+        action = '<span class="lootbox-hint">✅ Utilisé (XP reçu)</span>';
+      }
+      return '<div class="panel shop-card">' +
+        '<span class="rarity-tag rarity-' + it.rarity + '">' + it.rarity.toUpperCase() + "</span>" +
+        '<div class="shop-preview">' + (it.type === "gear" ? '<span style="font-size:34px">' + ({ arme: "⚔️", armure: "🛡️", tete: "🎩", accessoire: "💍", pieds: "🥾", familier: "🐾" })[it.slot] + "</span>" : '<span style="font-size:34px">' + (it.id === "potion" ? "🧪" : "🍎") + "</span>") + "</div>" +
+        '<div class="shop-item-name">' + esc(it.name) + "</div>" +
+        '<div class="shop-item-desc">' + esc(it.desc) + "</div>" +
+        '<div class="shop-item-meta">' + action + "</div></div>";
+    }).join("");
+    return banner + '<div class="shop-grid">' + cards + "</div>";
   }
-
-  function weeklyStatsHTML() {
+  function statsView() {
     var days = [];
     for (var i = 6; i >= 0; i--) {
       var d = new Date();
       d.setDate(d.getDate() - i);
-      var key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-      var e = state.dailyLog[key] || { done: 0, xp: 0 };
-      days.push({ label: ["D", "L", "M", "M", "J", "V", "S"][d.getDay()], done: e.done, xp: e.xp });
+      days.push(todayKey(d));
     }
-    var max = Math.max.apply(null, [1].concat(days.map(function (d) { return d.done; })));
-    var weekDone = days.reduce(function (a, b) { return a + b.done; }, 0);
-    var weekXp = days.reduce(function (a, b) { return a + b.xp; }, 0);
-    var bars = days.map(function (d) {
-      return '<div class="chart-col"><div class="chart-bar-area" title="' + d.done + ' tâche(s), ' + d.xp + ' XP">' +
-        '<div class="chart-bar" style="height:' + (d.done / max) * 100 + '%"></div></div>' +
-        '<div class="chart-label">' + d.label + "</div></div>";
+    var maxYp = 1;
+    days.forEach(function (k) { maxYp = Math.max(maxYp, (state.stats.xpByDay || {})[k] || 0); });
+    var cols = days.map(function (k) {
+      var v = (state.stats.xpByDay || {})[k] || 0;
+      var h = Math.max(v > 0 ? 8 : 0, Math.round((v / maxYp) * 100));
+      return '<div class="chart-col"><div class="chart-bar-area"><div class="chart-bar" style="height:' + h + '%"></div></div><div class="chart-label">' + k.slice(8) + "/" + k.slice(5, 7) + "</div></div>";
     }).join("");
-    return '<div class="panel stats-card"><h3 class="panel-title">📊 7 derniers jours</h3>' +
-      '<div class="chart">' + bars + "</div>" +
-      '<div class="stats-summary">' + weekDone + " tâche" + (weekDone > 1 ? "s" : "") + " · " + weekXp + " XP cette semaine</div></div>";
+    var done7 = days.reduce(function (a, k) { return a + ((state.stats.doneByDay || {})[k] || 0); }, 0);
+    var xp7 = days.reduce(function (a, k) { return a + ((state.stats.xpByDay || {})[k] || 0); }, 0);
+    return '<div class="panel"><h2 class="panel-title">STATS DES 7 DERNIERS JOURS</h2>' +
+      '<div class="chart">' + cols + "</div>" +
+      '<div class="stats-summary">XP gagnés : <b>' + xp7 + "</b> · Quêtes terminées : <b>" + done7 + "</b> · Série actuelle : <b>" + state.streak + " j</b> · Boss vaincus : <b>" + (state.stats.bossKills || 0) + '</b></div></div>';
   }
-
-  function viewHero() {
-    var need = xpNeeded(state.level);
-    var pct = Math.min(100, Math.round((state.xp / need) * 100));
-    var gap = dayDiff(state.lastCompletedDay, todayKey());
-    var displayStreak = gap <= 1 ? state.streak : 0;
-    var doneCount = totalDone(state);
-    return '<div class="hero-panel">' +
-      '<div class="hero-card panel">' +
-      heroStageHTML() +
-      '<div class="hero-name">HÉROS <span class="hero-title">— ' + titleForLevel(state.level) + "</span></div>" +
-      '<div class="xp-bar" title="' + state.xp + " / " + need + ' XP"><div class="xp-fill" style="width:' + pct + '%"></div></div>' +
-      '<div class="xp-label">NIVEAU ' + state.level + " · " + state.xp + "/" + need + " XP</div>" +
-      '<div class="hero-stats">' +
-      '<div><span class="stat-icon">🪙</span> ' + state.gold + " or</div>" +
-      '<div><span class="stat-icon">🔥</span> ' + displayStreak + " jour" + (displayStreak > 1 ? "s" : "") + " de streak</div>" +
-      '<div><span class="stat-icon">✅</span> ' + doneCount + " tâche" + (doneCount > 1 ? "s" : "") + "</div>" +
-      "</div>" +
-      '<div class="lootbox-row">' +
-      '<button class="btn btn-accent" data-action="open-lootbox"' + (state.lootBoxes <= 0 ? " disabled" : "") + ">🎁 Ouvrir une loot box (" + state.lootBoxes + ")</button>" +
-      '<span class="lootbox-hint">1 box offerte tous les 3 niveaux (prochain : niv. ' + state.nextLootLevel + ")</span>" +
-      "</div></div>" +
-      weeklyStatsHTML() +
-      "</div>";
+  function themeView() {
+    var rows = Object.keys(THEMES).map(function (id) {
+      var th = THEMES[id];
+      var sw = [th.vars["--bg"], th.vars["--panel"], th.vars["--card"], th.vars["--accent"]].map(function (c) {
+        return '<span class="theme-swatch" style="background:' + c + '"></span>';
+      }).join("");
+      return '<button class="chip' + (state.theme === id ? " chip-active" : "") + '" data-action="set-theme" data-theme="' + id + '"><span class="w3" style="display:inline-flex;gap:4px;align-items:center">' + sw + " " + th.name + "</span></button>";
+    }).join(" ");
+    return '<div class="panel"><h2 class="panel-title">APPARENCE</h2><div class="theme-swatches" style="flex-wrap:wrap;gap:8px">' + rows + "</div>" +
+      '<p class="lootbox-hint" style="margin-bottom:0">Le thème est gardé dans ta sauvegarde locale.</p></div>';
   }
-
-  function shopCardHTML(item) {
-    var owned = state.ownedItems.indexOf(item.id) !== -1;
-    var equipped = state.equipped[item.slot] === item.id;
-    var preview = item.sprite
-      ? sprite(item.sprite, item.palette || {}, 4)
-      : '<div class="theme-swatches">' + Object.values(item.theme).map(function (v) {
-          return '<span class="theme-swatch" style="background:' + v + '"></span>';
-        }).join("") + "</div>";
-    return '<div class="shop-card panel ' + RARITY_CLASS[item.rarity] + '">' +
-      '<div class="shop-preview">' + preview + "</div>" +
-      '<div class="shop-item-name">' + esc(item.name) + "</div>" +
-      '<div class="shop-item-meta"><span class="rarity-tag">' + item.rarity + '</span><span class="slot-tag">' + SLOT_LABEL[item.slot] + "</span></div>" +
-      '<div class="shop-item-desc">' + esc(item.desc) + "</div>" +
-      (owned
-        ? '<button class="btn btn-accent" data-action="equip-item" data-id="' + item.id + '">' + (equipped ? "Retirer" : "Équiper") + "</button>"
-        : '<button class="btn" data-action="buy-item" data-id="' + item.id + '"' + (state.gold < item.price ? " disabled" : "") + ">🪙 " + item.price + "</button>") +
-      "</div>";
+  function viewHTML() {
+    if (state.view === "achievements") return achievementsView();
+    if (state.view === "shop") return shopView();
+    if (state.view === "stats") return statsView();
+    if (state.view === "theme") return themeView();
+    return boardView();
   }
-
-  function viewShop() {
-    return '<div class="shop">' +
-      '<div class="panel shop-banner"><h3 class="panel-title">🛒 Boutique de la Guilde</h3>' +
-      "<p>Ton or : <strong class=\"gold-text\">🪙 " + state.gold + "</strong></p>" +
-      '<button class="btn" data-action="buy-lootbox"' + (state.gold < LOOTBOX_PRICE ? " disabled" : "") + ">🎁 Acheter une loot box — " + LOOTBOX_PRICE + " 🪙</button>" +
-      "</div>" +
-      '<div class="shop-grid">' + SHOP_ITEMS.map(shopCardHTML).join("") + "</div></div>";
+  function openModal(html) {
+    document.getElementById("modal").innerHTML = html;
+    document.getElementById("modal-overlay").classList.remove("hidden");
+    var inp = document.getElementById("modal").querySelector("input, textarea");
+    if (inp) inp.focus();
   }
-
-  function viewAchievements() {
-    var got = state.achievements.length;
-    var cards = ACHIEVEMENTS.map(function (a) {
-      var unlocked = state.achievements.indexOf(a.id) !== -1;
-      return '<div class="panel ach-card ' + (unlocked ? "ach-unlocked" : "ach-locked") + '">' +
-        '<div class="ach-icon">' + (unlocked ? "🏆" : "🔒") + "</div>" +
-        "<div><div class=\"ach-name\">" + a.name + '</div><div class="ach-desc">' + a.desc + "</div></div></div>";
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.add("hidden");
+    document.getElementById("modal").innerHTML = "";
+    openTaskId = null;
+  }
+  function openAddModal() {
+    var body = '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
+      '<h2 class="panel-title">NOUVELLE QUÊTE</h2>' +
+      '<form id="quest-form">' +
+      '<div class="form-row"><label class="form-label">🎯 Que faut-il accomplir ?</label>' +
+      '<input name="add-title" id="add-title" placeholder="Ex : Finir la recette paye" value="' + esc(drafts.title) + '" required /></div>' +
+      '<div class="form-row"><label class="form-label">⚔️ Niveau de la quête (XP)</label><div class="diff-picker">' +
+      Object.keys(DIFFS).map(function (k) {
+        var d = DIFFS[k];
+        return '<button type="button" class="diff-btn ' + d.badge + (drafts.diff === k ? " diff-active" : "") + '" data-action="set-diff" data-diff="' + k + '">' + d.icon + " " + d.label + "<small>+" + d.xp + " XP</small></button>";
+      }).join("") + "</div></div>" +
+      '<div class="form-row"><label class="form-label">🏷️ Libellés</label><div class="label-picker">' +
+      (state.labels.map(function (l) {
+        var on = drafts.labels.indexOf(l.id) !== -1;
+        return '<button type="button" class="chip' + (on ? " chip-active" : "") + '" data-action="toggle-add-label" data-label="' + l.id + '"><span class="label-chip" style="background:' + esc(l.color) + '">' + esc(l.name) + "</span></button>";
+      }).join("") || '<span class="lootbox-hint">Aucun libellé créé pour l\'instant.</span>') + "</div>" +
+      '<div class="chip-create"><input name="new-inline-label" placeholder="Créer un libellé rapide…" /><button type="button" class="btn" data-action="create-inline-label">Créer</button></div></div>' +
+      '<div class="form-row"><label class="form-label">📅 Date d\'échéance (optionnelle)</label>' +
+      '<input type="date" name="add-due" id="add-due" value="' + esc(drafts.due) + '" /></div>' +
+      '<div class="form-row"><label class="form-label">☑ Points à cocher (un par ligne, optionnel)</label>' +
+      '<textarea name="steps-text" rows="4" placeholder="Finir la partie prime périodique\nFinir la partie absence…">' + esc(drafts.steps) + "</textarea></div>" +
+      '<button type="submit" class="btn btn-accent btn-big" style="width:100%">➕ Ajouter au board</button>' +
+      "</form>";
+    openModal(body);
+  }
+  function openLabelsModal() {
+    var rows = state.labels.map(function (l) {
+      return '<div class="form-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+        '<span class="label-chip" style="background:' + esc(l.color) + '">' + esc(l.name) + "</span>" +
+        '<span class="lootbox-hint">' + labelUsedCount(l.id) + " quête(s)</span>" +
+        '<button type="button" class="btn btn-danger" style="margin-left:auto" data-action="delete-label" data-label="' + l.id + '">Supprimer</button></div>';
     }).join("");
-    return '<div class="achievements">' +
-      '<div class="panel shop-banner"><h3 class="panel-title">🏆 Succès</h3><p>' + got + "/" + ACHIEVEMENTS.length + " débloqués</p></div>" +
-      '<div class="ach-grid">' + cards + "</div></div>";
+    openModal('<span class="modal-close" data-action="close-modal">✖</span>' +
+      '<h2 class="panel-title">LIBELLÉS</h2>' +
+      (rows || '<p class="lootbox-hint">Aucun libellé. Crée-en un 👇</p>') +
+      '<form data-form="create-label" class="chip-create"><input name="label-name" placeholder="Nom du libellé (ex : SIRH)" required /><button type="submit" class="btn btn-accent">Créer</button></form>');
   }
-
-  function render() {
-    renderHud();
-    renderTabs();
-    document.getElementById("main").innerHTML =
-      activeTab === "board" ? viewBoard() :
-      activeTab === "hero" ? viewHero() :
-      activeTab === "shop" ? viewShop() : viewAchievements();
+  function labelUsedCount(id) {
+    return state.tasks.filter(function (t) { return (t.labels || []).indexOf(id) !== -1; }).length;
   }
-
-  /* ================= Thème ================= */
-
-  function applyTheme() {
-    var root = document.documentElement;
-    var vars = { "--bg": "#17110b", "--panel": "#241a10", "--card": "#2c2014", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68" };
-    var themeId = state.equipped.theme;
-    if (themeId && ITEMS_BY_ID[themeId] && ITEMS_BY_ID[themeId].theme) Object.assign(vars, ITEMS_BY_ID[themeId].theme);
-    Object.keys(vars).forEach(function (k) { root.style.setProperty(k, vars[k]); });
+  function difficultyHTML(t) {
+    var d = DIFFS[t.diff] || DIFFS.facile;
+    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>";
   }
-
-  /* ================= Actions ================= */
-
-  function advanceStatus(status) {
-    return status === "todo" ? "doing" : status === "doing" ? "done" : "done";
+  function openTaskModal(id) {
+    var t = taskById(id);
+    if (!t) return;
+    openTaskId = id;
+    var d = DIFFS[t.diff] || DIFFS.facile;
+    var steps = (t.subtasks || []).map(function (st, i) {
+      return '<label class="subtask' + (st.done ? " subtask-done" : "") + '">' +
+        '<input type="checkbox" data-action="toggle-subtask" data-task="' + t.id + '" data-index="' + i + '"' + (st.done ? " checked" : "") + " />" +
+        "<span>" + esc(st.text) + '</span>' +
+        '<button type="button" class="task-btn step-del" data-action="remove-subtask" data-task="' + t.id + '" data-index="' + i + '" title="Supprimer l\'étape">✖</button></label>';
+    }).join("");
+    var body = '<span class="modal-close" data-action="close-modal">✖</span>' +
+      '<h2 class="panel-title">CHECKLIST DE QUÊTE</h2>' +
+      '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
+      '<div class="task-meta">' + difficultyHTML(t) + labelChipsHTML(t) +
+      (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">📅 ' + fmtDate(t.dueDate) + (isOverdue(t) ? " ☠ en retard" : "") + "</span>" : "") + "</div>" +
+      bossHPHTML(t) +
+      '<div class="checklist">' + (steps || '<p class="lootbox-hint">Aucune étape. Ajoute-en une 👇</p>') + "</div>" +
+      '<form class="subtask-add" data-form="add-subtask" data-task="' + t.id + '">' +
+      '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>';
+    if (t.status !== "done") {
+      body += '<div class="task-actions" style="margin-top:14px">' +
+        (t.status === "todo"
+          ? '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🏃 En cours</button>'
+          : '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>') +
+        " </div>";
+    } else {
+      body += '<p class="lootbox-hint" style="margin-top:10px">🏁 Quête terminée — XP déjà récolté.</p>';
+    }
+    openModal(body);
   }
-
+  function refreshTaskModal() {
+    if (openTaskId) {
+      var t = taskById(openTaskId);
+      if (t && t.status !== "done") { openTaskModal(openTaskId); return true; }
+      closeModal();
+    }
+    return false;
+  }
+  function completeTask(t) {
+    var d = DIFFS[t.diff] || DIFFS.facile;
+    if (d.boss && t.subtasks && t.subtasks.some(function (st) { return !st.done; })) {
+      showToast("💀 Termine toutes les étapes pour vaincre le boss !");
+      return false;
+    }
+    t.status = "done";
+    t.doneAt = todayKey();
+    var day = todayKey();
+    var y = new Date();
+    y.setDate(y.getDate() - 1);
+    var yk = todayKey(y);
+    if (state.lastCompletedDay === day) {
+      state.streak = Math.max(1, state.streak);
+    } else if (state.lastCompletedDay === yk) {
+      state.streak += 1;
+    } else {
+      state.streak = 1;
+    }
+    state.lastCompletedDay = day;
+    var streakBonus = Math.min(state.streak, 7) * 5;
+    var baseXp = Math.round((d.xp + streakBonus) * xpMultiplier() * 10) / 10;
+    var beforeLevel = state.level;
+    state = grantReward(state, baseXp, d.gold);
+    state.stats.xpByDay[day] = (state.stats.xpByDay[day] || 0) + Math.round(baseXp);
+    state.stats.doneByDay[day] = (state.stats.doneByDay[day] || 0) + 1;
+    state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
+    if (d.boss) {
+      state.stats.bossKills = (state.stats.bossKills || 0) + 1;
+      showToast("💀 Boss vaincu !");
+    }
+    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
+    showToast("+ " + Math.round(baseXp) + " XP · +" + d.gold + " 🪙");
+    checkAchievements();
+    saveState();
+    return true;
+  }
+  function advanceTask(id) {
+    var t = taskById(id);
+    if (!t || t.status === "done") return;
+    if (t.status === "doing") {
+      if (!completeTask(t)) { saveState(); renderAll(); return; }
+      closeModal();
+    } else {
+      t.status = "doing";
+      showToast("🏃 Quête en cours : " + t.title);
+      saveState();
+    }
+    renderAll();
+  }
+  function moveTask(id, to) {
+    var t = taskById(id);
+    if (!t) return;
+    if (to === t.status) return;
+    if (to === "done") {
+      if (!completeTask(t)) { saveState(); renderAll(); return; }
+      closeModal();
+    } else {
+      t.status = to;
+      saveState();
+    }
+    renderAll();
+  }
+  function toggleSubtask(id, idx) {
+    var t = taskById(id);
+    if (!t || !t.subtasks || !t.subtasks[idx]) return;
+    var st = t.subtasks[idx];
+    st.done = !st.done;
+    if (st.done) {
+      state = grantReward(state, SUBTASK_REWARD.xp, SUBTASK_REWARD.gold);
+      showToast("☑ Étape validée : +18 XP · +9 🪙");
+      var d = DIFFS[t.diff] || DIFFS.facile;
+      if (d.boss && t.subtasks.every(function (x) { return x.done; })) {
+        if (t.status !== "done" && completeTask(t)) {
+          closeModal();
+          renderAll();
+          return true;
+        }
+      }
+    }
+    saveState();
+    return true;
+  }
+  function removeSubtask(id, idx) {
+    var t = taskById(id);
+    if (!t || !t.subtasks || !t.subtasks[idx]) return;
+    t.subtasks.splice(idx, 1);
+    saveState();
+  }
+  function deleteTask(id) {
+    state.tasks = state.tasks.filter(function (t) { return t.id !== id; });
+    saveState();
+    renderAll();
+  }
+  function createLabel(name) {
+    name = (name || "").trim();
+    if (!name) return null;
+    var color = LABEL_COLORS[state.labels.length % LABEL_COLORS.length];
+    var l = { id: uid(), name: name, color: color };
+    state.labels.push(l);
+    saveState();
+    return l;
+  }
+  function deleteLabel(id) {
+    state.labels = state.labels.filter(function (l) { return l.id !== id; });
+    state.tasks.forEach(function (t) {
+      t.labels = (t.labels || []).filter(function (x) { return x !== id; });
+    });
+    drafts.labels = drafts.labels.filter(function (x) { return x !== id; });
+    saveState();
+  }
+  function syncAddDrafts() {
+    var el = document.getElementById("add-title");
+    if (el) drafts.title = el.value;
+    var due = document.getElementById("add-due");
+    if (due) drafts.due = due.value;
+    var tx = document.querySelector("#modal textarea[name=steps-text]");
+    if (tx) drafts.steps = tx.value;
+  }
+  function renderAll() {
+    document.getElementById("tabs").innerHTML = tabsHTML();
+    document.getElementById("main").innerHTML = viewHTML();
+    document.getElementById("hud-level").textContent = "⭐ Niveau " + state.level;
+    document.getElementById("hud-gold").textContent = "🪙 " + state.gold;
+    document.getElementById("hud-streak").textContent = "🔥 Série " + state.streak + " j";
+  }
+  function nextLootItem() {
+    var available = SHOP_ITEMS.filter(function (it) { return it.type === "gear" && state.inventory.indexOf(it.id) === -1; });
+    if (!available.length) return null;
+    var pool = [];
+    available.forEach(function (it) {
+      var w = it.rarity === "commun" ? 5 : it.rarity === "rare" ? 3 : it.rarity === "epique" ? 2 : 1;
+      for (var i = 0; i < w; i++) pool.push(it);
+    });
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   document.addEventListener("click", function (e) {
     var el = e.target.closest("[data-action]");
-    if (!el) return;
-    var action = el.getAttribute("data-action");
-
-    if (action === "tab") { activeTab = el.getAttribute("data-tab"); render(); return; }
-
-    if (action === "set-diff") { pickDifficulty = el.getAttribute("data-diff"); render(); return; }
-
-    if (action === "advance") {
-      var t1 = state.tasks.filter(function (t) { return t.id === el.getAttribute("data-id"); })[0];
-      if (t1 && t1.status === "todo") { t1.status = "doing"; }
-      else if (t1 && t1.status === "doing") { completeTask(t1); }
-      checkAchievements(); saveState(); render(); return;
-    }
-
-    if (action === "delete-task") {
-      state.tasks = state.tasks.filter(function (t) { return t.id !== el.getAttribute("data-id"); });
-      checkAchievements(); saveState(); render(); return;
-    }
-
-    if (action === "buy-item") {
-      var item = ITEMS_BY_ID[el.getAttribute("data-id")];
-      if (item && state.ownedItems.indexOf(item.id) === -1 && state.gold >= item.price) {
-        state.gold -= item.price;
-        state.ownedItems.push(item.id);
-        showToast("🛒 " + item.name + " acheté !");
-        checkAchievements();
+    if (el) {
+      var act = el.getAttribute("data-action");
+      if (act === "close-modal") { closeModal(); syncAddDrafts(); return; }
+      if (act === "switch-tab") { state.view = el.getAttribute("data-view"); saveState(); renderAll(); return; }
+      if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
+      if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
+      if (act === "open-add-modal") { openAddModal(); return; }
+      if (act === "open-labels-modal") { openLabelsModal(); return; }
+      if (act === "set-diff") {
+        syncAddDrafts();
+        drafts.diff = el.getAttribute("data-diff");
+        openAddModal();
+        return;
       }
-      saveState(); render(); return;
-    }
-
-    if (action === "equip-item") {
-      var item2 = ITEMS_BY_ID[el.getAttribute("data-id")];
-      if (item2) {
-        if (state.equipped[item2.slot] === item2.id) delete state.equipped[item2.slot];
-        else state.equipped[item2.slot] = item2.id;
-        applyTheme();
+      if (act === "toggle-add-label") {
+        var lid = el.getAttribute("data-label");
+        var i = drafts.labels.indexOf(lid);
+        if (i === -1) drafts.labels.push(lid); else drafts.labels.splice(i, 1);
+        el.classList.toggle("chip-active");
+        return;
       }
-      saveState(); render(); return;
-    }
-
-    if (action === "open-lootbox") {
-      if (state.lootBoxes > 0) { state.lootBoxes -= 1; rollLoot(); checkAchievements(); }
-      saveState(); render(); return;
-    }
-
-    if (action === "buy-lootbox") {
-      if (state.gold >= LOOTBOX_PRICE) state.gold -= LOOTBOX_PRICE, state.lootBoxes += 1;
-      saveState(); render(); return;
-    }
-
-    if (action === "reset") {
-      if (confirm("Effacer toute la progression ?")) {
-        state = initialState();
-        try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+      if (act === "create-inline-label") {
+        var inp = el.closest(".chip-create").querySelector("input");
+        var l = createLabel(inp.value);
+        if (l) {
+          drafts.labels.push(l.id);
+          inp.value = "";
+          openAddModal();
+          showToast("🏷️ Libellé créé : " + l.name);
+        }
+        return;
+      }
+      if (act === "delete-label") {
+        deleteLabel(el.getAttribute("data-label"));
+        openLabelsModal();
+        renderAll();
+        showToast("🏷️ Libellé supprimé");
+        return;
+      }
+      if (act === "open-lootbox") {
+        if (state.pendingLoot > 0) {
+          var item = nextLootItem();
+          state.pendingLoot -= 1;
+          if (item) {
+            state.inventory.push(item.id);
+            showToast("🎁 Loot box : " + item.name + " ! (" + item.rarity + ")");
+          } else {
+            state.gold += 50;
+            showToast("🎁 Loot box vide… +50 🪙 de consolation");
+          }
+          checkAchievements();
+          saveState();
+          renderAll();
+        }
+        return;
+      }
+      if (act === "buy-item") {
+        var it = shopById(el.getAttribute("data-item"));
+        if (it && state.gold >= it.cost) {
+          if (it.type === "consumable") {
+            state.gold -= it.cost;
+            state = grantReward(state, Math.round(it.xp * xpMultiplier()), 0);
+            showToast("Chef ! " + it.name + " : + " + Math.round(it.xp * xpMultiplier()) + " XP");
+          } else {
+            state.gold -= it.cost;
+            state.inventory.push(it.id);
+            showToast("🛒 " + it.name + " acheté ! Équipe-le depuis le héros.");
+          }
+          checkAchievements();
+          saveState();
+          renderAll();
+        }
+        return;
+      }
+      if (act === "equip-item") {
+        var it2 = shopById(el.getAttribute("data-item"));
+        if (it2 && it2.type === "gear" && state.inventory.indexOf(it2.id) !== -1) {
+          if (el.hasAttribute("data-unequip")) {
+            if (state.equipment[it2.slot] === it2.id) delete state.equipment[it2.slot];
+          } else {
+            state.equipment[it2.slot] = it2.id;
+            showToast("⚔️ " + it2.name + " équipé !");
+          }
+          saveState();
+          renderAll();
+        }
+        return;
+      }
+      if (act === "reset") {
+        if (confirm("Recommencer une nouvelle vie de héros ? Tout sera perdu (quêtes, niveau, butin).")) {
+          try { localStorage.removeItem(SAVE_KEY); } catch (err) {}
+          state = migrate(null);
+          drafts = { title: "", due: "", steps: "", diff: "facile", labels: [] };
+          closeModal();
+          applyTheme();
+          renderAll();
+          showToast("🌟 Nouvelle partie !");
+        }
+        return;
+      }
+      if (act === "set-theme") {
+        state.theme = el.getAttribute("data-theme");
         applyTheme();
-        saveState(); render();
+        saveState();
+        renderAll();
+        return;
+      }
+      if (act === "remove-subtask") {
+        removeSubtask(el.getAttribute("data-task"), parseInt(el.getAttribute("data-index"), 10));
+        openTaskModal(el.getAttribute("data-task"));
+        refreshTaskModal && refreshTaskModal();
+        renderAll();
+        return;
+      }
+      if (act === "toggle-subtask") {
+        var changed = toggleSubtask(el.getAttribute("data-task"), parseInt(el.getAttribute("data-index"), 10));
+        if (changed) { renderAll(); refreshTaskModal(); }
+        return;
+      }
+    }
+    if (e.target.id === "modal-overlay") { closeModal(); syncAddDrafts(); }
+  });
+  document.addEventListener("dblclick", function (e) {
+    var card = e.target.closest(".task-card");
+    if (!card) return;
+    if (e.target.closest("button, input, .btn-action, .task-delete")) return;
+    openTaskModal(card.getAttribute("data-task"));
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (openTaskId) syncAddDrafts();
+      closeModal();
+    }
+  });
+  document.addEventListener("submit", function (e) {
+    var f = e.target;
+    if (f.id === "quest-form") {
+      e.preventDefault();
+      var titleEl = document.getElementById("add-title");
+      var dueEl = document.getElementById("add-due");
+      var tx = document.querySelector("#modal textarea[name=steps-text]");
+      var title = (titleEl && titleEl.value || "").trim();
+      if (!title) return;
+      var subtasks = (tx && tx.value || "").split("\n").map(function (s) { return s.trim(); })
+        .filter(Boolean).map(function (s) { return { text: s, done: false }; });
+      var t = {
+        id: uid(), title: title, diff: drafts.diff, status: "todo",
+        subtasks: subtasks, createdAt: todayKey(),
+        dueDate: (dueEl && dueEl.value) || null,
+        labels: drafts.labels.slice(), doneAt: null
+      };
+      state.tasks.push(t);
+      drafts = { title: "", due: "", steps: "", diff: drafts.diff, labels: [] };
+      closeModal();
+      saveState();
+      renderAll();
+      showToast("📜 Quête ajoutée : " + title);
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-subtask") {
+      e.preventDefault();
+      var input = f.querySelector("input[name=subtask-text]");
+      var txt = (input.value || "").trim();
+      if (txt) {
+        var task = taskById(f.getAttribute("data-task"));
+        if (task) {
+          task.subtasks.push({ text: txt, done: false });
+          saveState();
+          openTaskModal(task.id);
+          renderAll();
+        }
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "create-label") {
+      e.preventDefault();
+      var name = f.querySelector("input[name=label-name]").value;
+      if (createLabel(name)) {
+        openLabelsModal();
+        renderAll();
+        showToast("🏷️ Libellé créé !");
       }
       return;
     }
   });
-
+  document.addEventListener("input", function (e) {
+    if (e.target.id === "add-title") drafts.title = e.target.value;
+    if (e.target.id === "add-due") drafts.due = e.target.value;
+    if (e.target.name === "steps-text") drafts.steps = e.target.value;
+  });
   document.addEventListener("change", function (e) {
     if (e.target.getAttribute && e.target.getAttribute("data-action") === "toggle-subtask") {
-      var task = state.tasks.filter(function (t) { return t.id === e.target.getAttribute("data-task"); })[0];
-      if (!task) return;
-      var sub = task.subtasks.filter(function (s) { return s.id === e.target.getAttribute("data-sub"); })[0];
-      if (!sub) return;
-      sub.done = e.target.checked;
-      if (sub.done) {
-        grant(SUBTASK_REWARD.xp, SUBTASK_REWARD.gold);
-        logDaily(SUBTASK_REWARD.xp);
-        updateStreak();
-        var allDone = task.subtasks.every(function (s) { return s.done; });
-        if (allDone && task.status !== "done") completeTask(task);
-      }
-      checkAchievements(); saveState(); render();
+      var changed = toggleSubtask(e.target.getAttribute("data-task"), parseInt(e.target.getAttribute("data-index"), 10));
+      if (changed) { renderAll(); refreshTaskModal(); }
     }
   });
-
-  document.addEventListener("submit", function (e) {
-    var form = e.target;
-
-    if (form.id === "add-form") {
-      e.preventDefault();
-      var title = addTitleDraft.trim();
-      if (!title) return;
-      var task = {
-        id: uid(),
-        title: title,
-        difficulty: pickDifficulty,
-        status: "todo",
-        createdAt: Date.now(),
-        completedAt: null,
-        subtasks: (pickDifficulty === "boss" ? bossDraft.split("\n") : [])
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (label) { return { id: uid(), label: label, done: false }; })
-      };
-      state.tasks.push(task);
-      addTitleDraft = ""; bossDraft = "";
-      saveState(); render(); return;
-    }
-
-    if (form.getAttribute("data-form") === "add-subtask") {
-      e.preventDefault();
-      var input = form.querySelector("input");
-      var label = input && input.value.trim();
-      var t = state.tasks.filter(function (x) { return x.id === form.getAttribute("data-task"); })[0];
-      if (label && t) t.subtasks.push({ id: uid(), label: label, done: false });
-      saveState(); render(); return;
-    }
-  });
-
-  document.addEventListener("input", function (e) {
-    if (e.target.id === "add-title") addTitleDraft = e.target.value;
-    if (e.target.id === "boss-subtasks") bossDraft = e.target.value;
-  });
-
   document.addEventListener("dragstart", function (e) {
-    var card = e.target.closest && e.target.closest(".task-card");
-    if (card && e.dataTransfer) e.dataTransfer.setData("text/plain", card.getAttribute("data-id"));
+    var card = e.target.closest(".task-card");
+    if (card) { draggedId = card.getAttribute("data-task"); }
   });
   document.addEventListener("dragover", function (e) {
-    var col = e.target.closest && e.target.closest(".column");
+    var col = e.target.closest(".column");
     if (col) { e.preventDefault(); col.classList.add("column-drop"); }
   });
   document.addEventListener("dragleave", function (e) {
-    var col = e.target.closest && e.target.closest(".column");
+    var col = e.target.closest(".column");
     if (col) col.classList.remove("column-drop");
   });
   document.addEventListener("drop", function (e) {
-    var col = e.target.closest && e.target.closest(".column");
-    if (!col) return;
-    e.preventDefault();
-    col.classList.remove("column-drop");
-    var id = e.dataTransfer && e.dataTransfer.getData("text/plain");
-    var t = state.tasks.filter(function (x) { return x.id === id; })[0];
-    if (t && col.getAttribute("data-status") === "done" && t.status !== "done") {
-      completeTask(t);
-      checkAchievements(); saveState(); render();
-    } else if (t) {
-      t.status = col.getAttribute("data-status");
-      t.completedAt = t.status === "done" ? Date.now() : null;
-      saveState(); render();
+    var col = e.target.closest(".column");
+    if (col && draggedId) {
+      e.preventDefault();
+      col.classList.remove("column-drop");
+      moveTask(draggedId, col.getAttribute("data-drop"));
+      draggedId = null;
     }
   });
-
-  /* ================= Init ================= */
-
-  document.getElementById("logo").innerHTML = sprite(
-    ["....gg....", "..gggggg..", ".gg gg gg.", ".gggggggg.", "..gg gg...", "..gg gg..."],
-    { g: "#ff7000" }, 3
-  );
+  var LOGO = [
+    "................",
+    "...OO......OO...",
+    "..OOOO....OOOO..",
+    "..OOOOO..OOOOO..",
+    "...OOOOOOOOOO...",
+    "....OOOOOOOO....",
+    ".....OOOOOO.....",
+    "......OOOO......",
+    ".......OO.......",
+    "................",
+    "...BBBBBBBBBB...",
+    "..BBBYYYYYYYYBB.",
+    "..BBBYYYYYYYYBB.",
+    "...BBBBBBBBBB...",
+    "................",
+    "................"
+  ];
+  document.getElementById("logo").innerHTML = spriteHTML(LOGO, "3px");
   applyTheme();
-  render();
+  renderAll();
 })();
 </script>
 </body>

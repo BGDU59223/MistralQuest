@@ -4,6 +4,10 @@ Un gestionnaire de tâches gamifié façon Microsoft Planner, mais dans une vibe
 
 ## Lancer l'app
 
+### En ligne (GitHub Pages)
+
+L'app est déployée automatiquement à chaque push : **https://bgdu59223.github.io/MistralQuest/** — ouvre le lien, actualise après chaque modification poussée, c'est à jour.
+
 ### Version un seul fichier (aucune installation)
 
 Ouvrir simplement `mistral-quest.html` dans un navigateur (double-clic). Tout est embarqué : styles, sprites, logique de jeu, sauvegarde localStorage.
