@@ -165,7 +165,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .task-title { font-size: 21px; cursor: pointer; }
 .task-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
 .due-date { font-size: 15px; color: var(--muted); }
-.due-date.overdue { color: #fff; font-weight: bold; }
+.due-date.overdue { color: #ff6b5e; font-weight: bold; }
 .task-progress { font-size: 15px; color: var(--muted); }
 .task-actions { margin-top: 10px; }
 .btn-action { font-size: 12px; padding: 12px 16px; }
@@ -173,16 +173,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .btn-action.act-doing:hover { background: #7aa2ff; color: #10131f; }
 .btn-action.act-done { border-color: #6fdc8c; color: #6fdc8c; }
 .btn-action.act-done:hover { background: #6fdc8c; color: #0d1a10; }
-.task-overdue, .task-overdue.task-card { background: #c2262b; border-left-color: #7d1015; }
-.task-overdue .task-title,
-.task-overdue .task-diff,
-.task-overdue .task-reward,
-.task-overdue .due-date,
-.task-overdue .task-progress,
-.task-overdue .subtask span {
-  color: #ffffff;
+.task-overdue, .task-overdue.task-card {
+  border-left-color: #e0453a;
+  box-shadow: 0 0 0 2px #e0453a;
 }
-.task-overdue .label-chip { color: #161005; }
+.task-overdue .due-date { color: #ff6b5e; font-weight: bold; }
 .chip-x {
   border: none; background: rgba(0, 0, 0, 0.22); color: #161005; cursor: pointer;
   font-family: inherit; font-size: 13px; line-height: 1; padding: 1px 5px; border-radius: 999px;
@@ -191,8 +186,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .btn-action.act-cancel, .btn-action.act-back { border-color: #c0c8d8; color: #c0c8d8; }
 .btn-action.act-cancel:hover, .btn-action.act-back:hover { background: #c0c8d8; color: #16181f; }
 .subtask span[data-step-index] { cursor: text; }
-.task-overdue .btn-action.act-doing,
-.task-overdue .btn-action.act-done { color: #fff; }
 .quest-progress { margin: 8px 0 4px; }
 .quest-progress-label { font-size: 14px; color: var(--muted); margin-bottom: 3px; }
 .quest-bar { height: 12px; background: #171a20; border: 2px solid #3c4657; border-radius: 9px; overflow: hidden; }
