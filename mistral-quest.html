@@ -80,6 +80,9 @@ input, textarea, select {
 }
 input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .board-actions { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.filter-bar { margin-bottom: 14px; padding: 8px 10px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 10px; gap: 6px; }
+.filter-bar .chip { font-size: 11px; }
+.filter-bar .chip-active { border-color: var(--accent); color: var(--accent); }
 .board-actions .btn-big { font-size: 11px; padding: 12px 16px; }
 .board-actions .spacer { flex: 1; }
 .form-row { margin-bottom: 12px; }
@@ -554,6 +557,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       v: 1, tasks: [], labels: [],
       level: 1, xp: 0, gold: 30,
       streak: 0, lastCompletedDay: null,
+      filters: { labels: [], dates: [] },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
       theme: "nuit", view: "board", hero: null
@@ -739,6 +743,20 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       loot +
       "</div>";
   }
+  function filterBarHTML() {
+    var f = state.filters || (state.filters = { labels: [], dates: [] });
+    var labelChips = state.labels.map(function (l) {
+      return '<button type="button" class="chip' + (f.labels.indexOf(l.id) !== -1 ? " chip-active" : "") + '" data-action="toggle-filter-label" data-label="' + l.id + '"><span class="label-chip" style="background:' + esc(l.color) + '">'+ esc(l.name) + "</span></button>";
+    }).join("");
+    var dateChips = DATE_FILTERS.map(function (df) {
+      return '<button type="button" class="chip' + (f.dates.indexOf(df[0]) !== -1 ? " chip-active" : "") + '" data-action="toggle-filter-date" data-date="' + df[0] + '">' + df[1] + "</button>";
+    }).join("");
+    var active = f.labels.length + f.dates.length > 0;
+    return '<div class="board-actions filter-bar">' +
+      '<span class="lootbox-hint">🔍 Filtres :</span>' + labelChips + dateChips +
+      (active ? '<button class="btn btn-danger" data-action="clear-filters" style="margin-left:auto">✨ Tout afficher</button>' : "") +
+      "</div>";
+  }
   function tabsHTML() {
     return TABS.map(function (t) {
       return '<button class="tab' + (state.view === t[0] ? " tab-active" : "") + '" data-action="switch-tab" data-view="' + t[0] + '">' + t[1] + "</button>";
@@ -789,11 +807,47 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       "</div>";
   }
   function columnHTML(key) {
-    var list = state.tasks.filter(function (t) { return t.status === key && !t.archived; });
+    var list = filterTasks(state.tasks.filter(function (t) { return t.status === key && !t.archived; }));
     var cards = list.map(taskCardHTML).join("");
     return '<div class="column" data-drop="' + key + '">' +
       '<div class="column-header">' + COLUMNS[key] + '<span class="column-count">' + list.length + "</span></div>" +
       (cards || '<div class="column-empty">Vide</div>') + "</div>";
+  }
+  var DATE_FILTERS = [
+    ["overdue", "☠️ En retard"],
+    ["thisweek", "📆 Cette semaine"],
+    ["nextweek", "🗓️ Semaine prochaine"],
+    ["upcoming", "🔭 À venir"],
+    ["none", "Sans échéance"]
+  ];
+  function addDays(base, n) {
+    var d = new Date(base);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function dateFilterMatch(t, key) {
+    if (key === "overdue") return isOverdue(t);
+    if (key === "none") return !t.dueDate;
+    if (!t.dueDate) return false;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var due = new Date(t.dueDate + "T00:00:00");
+    if (isNaN(due.getTime())) return false;
+    var dow = (today.getDay() + 6) % 7;
+    var mon = addDays(today, -dow);
+    if (key === "thisweek") return due >= mon && due <= addDays(mon, 6);
+    if (key === "nextweek") return due >= addDays(mon, 7) && due <= addDays(mon, 13);
+    if (key === "upcoming") return due >= today;
+    return false;
+  }
+  function filterTasks(tasks) {
+    var f = state.filters || { labels: [], dates: [] };
+    if (!f.labels.length && !f.dates.length) return tasks;
+    return tasks.filter(function (t) {
+      var labelsOk = !f.labels.length || (t.labels || []).some(function (id) { return f.labels.indexOf(id) !== -1; });
+      var datesOk = !f.dates.length || f.dates.some(function (k) { return dateFilterMatch(t, k); });
+      return labelsOk && datesOk;
+    });
   }
   function boardView() {
     return '<div class="board-wrap">' +
@@ -803,7 +857,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="btn btn-big" data-action="open-labels-modal">🏷️ Libellés</button>' +
       '<button class="btn btn-big" data-action="save-export">💾 Sauvegarde</button>' +
       '<button class="btn btn-big" data-action="save-import">♻️ Restaurer</button>' +
-      '<span class="spacer"></span><span class="lootbox-hint">💡 Double-clique sur une tuile pour sa checklist</span></div>' +
+      '<span class="spacer"></span></div>' +
+      filterBarHTML() +
       '<div class="board">' + columnHTML("todo") + columnHTML("doing") + columnHTML("done") + "</div>" +
       "</div>" +
       '<div class="board-side">' + heroHTML() + "</div>" +
@@ -1646,6 +1701,29 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         openTaskModal(el.getAttribute("data-task"));
         refreshTaskModal && refreshTaskModal();
         renderAll();
+        return;
+      }
+      if (act === "toggle-filter-label") {
+        var fl = state.filters || (state.filters = { labels: [], dates: [] });
+        var lid = el.getAttribute("data-label");
+        fl.labels = fl.labels.indexOf(lid) !== -1 ? fl.labels.filter(function (x) { return x !== lid; }) : fl.labels.concat([lid]);
+        saveState();
+        renderAll();
+        return;
+      }
+      if (act === "toggle-filter-date") {
+        var fd = state.filters || (state.filters = { labels: [], dates: [] });
+        var dk = el.getAttribute("data-date");
+        fd.dates = fd.dates.indexOf(dk) !== -1 ? fd.dates.filter(function (x) { return x !== dk; }) : fd.dates.concat([dk]);
+        saveState();
+        renderAll();
+        return;
+      }
+      if (act === "clear-filters") {
+        state.filters = { labels: [], dates: [] };
+        saveState();
+        renderAll();
+        showToast("✨ Filtres retirés");
         return;
       }
       if (act === "remove-note") { removeTaskNote(el.getAttribute("data-task"), el.getAttribute("data-note")); return; }
