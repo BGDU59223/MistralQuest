@@ -286,7 +286,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   <nav class="tabs" id="tabs"></nav>
   <main id="main"></main>
   <footer class="footer">
-    Mistral Quest — tes données restent dans ce navigateur (localStorage) · version un seul fichier HTML
+    Mistral Quest — tes données restent dans ce navigateur (localStorage) · pense à 💾 Sauvegarde de temps en temps !
   </footer>
 </div>
 <div class="modal-overlay hidden" id="modal-overlay">
@@ -436,6 +436,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   var state = loadState();
   var draggedId = null;
+  var existingImportInput = null;
   var openTaskId = null;
   var drafts = { title: "", due: "", steps: "", diff: "facile", labels: [], taskId: null };
   function esc(x) {
@@ -613,6 +614,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="board-actions" style="margin-top:14px">' +
       '<button class="btn btn-accent btn-big" data-action="open-add-modal">➕ Ajouter une quête</button>' +
       '<button class="btn btn-big" data-action="open-labels-modal">🏷️ Libellés</button>' +
+      '<button class="btn btn-big" data-action="save-export">💾 Sauvegarde</button>' +
+      '<button class="btn btn-big" data-action="save-import">♻️ Restaurer</button>' +
       '<span class="spacer"></span><span class="lootbox-hint">💡 Double-clique sur une tuile pour sa checklist</span></div>' +
       '<div class="board">' + columnHTML("todo") + columnHTML("doing") + columnHTML("done") + "</div>";
   }
@@ -1021,6 +1024,50 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           renderAll();
           showToast("🌟 Nouvelle partie !");
         }
+        return;
+      }
+      if (act === "save-export") {
+        var payload = JSON.stringify({ app: "mistral-quest", version: 1, exportedAt: new Date().toISOString(), save: state }, null, 2);
+        var blob = new Blob([payload], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "mistral-quest-sauvegarde-" + todayKey() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+        showToast("💾 Sauvegarde téléchargée — garde-la précieusement !");
+        return;
+      }
+      if (act === "save-import") {
+        if (existingImportInput) { existingImportInput.click(); return; }
+        var input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json,.json";
+        input.style.display = "none";
+        input.addEventListener("change", function () {
+          var file = input.files && input.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function () {
+            try {
+              var data = JSON.parse(reader.result);
+              var save = data && data.save ? data.save : data;
+              if (!save || !Array.isArray(save.tasks)) throw new Error("format inconnu");
+              state = migrate(save);
+              saveState();
+              applyTheme();
+              renderAll();
+              showToast("♻️ Sauvegarde restaurée : niveau " + state.level + " · " + state.tasks.length + " quêtes");
+            } catch (err) {
+              showToast("❌ Fichier invalide : pas une sauvegarde Mistral Quest");
+            }
+          };
+          reader.readAsText(file);
+        });
+        document.body.appendChild(input);
+        existingImportInput = input;
+        input.click();
         return;
       }
       if (act === "set-theme") {
