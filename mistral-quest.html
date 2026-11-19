@@ -1916,6 +1916,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (t.status !== "done") {
       body += '<div class="task-actions" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px">' +
         '<button type="button" class="btn" data-action="close-modal">✖ Fermer la fenêtre</button>' +
+        '<button type="button" class="btn" data-action="open-conv-modal" data-task="' + t.id + '" title="Déplacer vers les quêtes secondaires">📌 En quête secondaire</button>' +
         (t.status === "todo"
           ? '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🚩 Démarrer</button>'
           : '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">✅ Terminer</button>') +
@@ -2034,6 +2035,30 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="form-row"><label class="form-label">☑ Points à cocher (un par ligne, optionnel)</label>' +
       '<textarea name="rec-steps-text" id="rec-steps-text" rows="4" placeholder="Vider la boîte mail\nRelancer les impayés…">' + esc(recDraft.steps) + "</textarea></div>" +
       '<button type="submit" class="btn btn-accent btn-big" style="width:100%">' + (recDraft.id ? "💾 Enregistrer les changements" : "📌 Épingler la quête") + "</button>" +
+      "</form>";
+    openModal(body);
+  }
+  var convDraft = { taskId: null, recurrence: "weekly" };
+  function openConvModal(id) {
+    var t = taskById(id);
+    if (!t) return;
+    convDraft.taskId = id;
+    if (t.timerStart) stopEntityTimer(t);
+    var rcBtns = Object.keys(RECURRENCES).map(function (k) {
+      var rr = RECURRENCES[k];
+      return '<button type="button" class="chip' + (convDraft.recurrence === k ? " chip-active" : "") + '" data-action="set-conv-rec" data-rec="' + k + '">' + rr.icon + " " + rr.label + " (+" + rr.xp + " XP · +" + rr.gold + " 🪙)" + "</button>";
+    }).join("");
+    var body = '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
+      '<h2 class="panel-title">📌 BASCULER EN QUÊTE SECONDAIRE</h2>' +
+      '<div class="task-top" style="margin-bottom:8px"><b style="font-size:22px">' + esc(t.title) + "</b></div>" +
+      '<p class="lootbox-hint" style="margin:0 0 10px">Elle quitte le board et rejoint le panneau des quêtes secondaires : mêmes étapes (décochées pour un cycle frais), mêmes libellés, même journal, temps passé conservé.</p>' +
+      '<form id="conv-form" data-form="convert-rec" data-task="' + t.id + '">' +
+      '<div class="form-row"><label class="form-label">🔁 Récurrence</label><div class="label-picker">' + rcBtns + "</div></div>" +
+      '<div class="form-row"><label class="form-label">📅 Date de début de la récurrence (1er créneau)</label>' +
+      '<input type="date" id="conv-start" value="' + todayKey() + '" required /></div>' +
+      '<div class="task-actions" style="margin-top:14px;display:flex;justify-content:space-between;gap:10px">' +
+      '<button type="button" class="btn" data-action="close-modal">✖ Fermer la fenêtre</button>' +
+      '<button type="submit" class="btn btn-action act-done">📌 Basculer</button></div>' +
       "</form>";
     openModal(body);
   }
@@ -2510,6 +2535,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         }
         return;
       }
+      if (act === "open-conv-modal") { openConvModal(el.getAttribute("data-task")); return; }
+      if (act === "set-conv-rec") {
+        convDraft.recurrence = el.getAttribute("data-rec");
+        openConvModal(convDraft.taskId);
+        return;
+      }
       if (act === "open-add-rec-modal") {
         recDraft = { id: null, title: "", description: "", recurrence: recDraft.recurrence || "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
         openAddRecModal();
@@ -2863,6 +2894,33 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       heroDraft = { name: hname, cls: heroDraft.cls, skin: heroDraft.skin, gender: heroDraft.gender || "homme" };
       renderAll();
       showToast(isNew ? "⚔️ Bienvenue, " + hname + " ! Que l'aventure commence." : "💾 Héros mis à jour");
+      return;
+    }
+    if (f.id === "conv-form") {
+      e.preventDefault();
+      var tc = taskById(f.getAttribute("data-task"));
+      if (tc) {
+        var csEl = document.getElementById("conv-start");
+        var cStart = (csEl && csEl.value) || todayKey();
+        stopEntityTimer(tc);
+        var rNew = {
+          id: uid(), title: tc.title, recurrence: convDraft.recurrence || "weekly",
+          startDate: cStart, description: "",
+          subtasks: (tc.subtasks || []).map(function (st) { return { text: st.text, done: false }; }),
+          labels: (tc.labels || []).slice(),
+          periods: {}, notes: (tc.notes || []).slice(), links: (tc.links || []).slice(), attachments: (tc.attachments || []).slice(),
+          timeSpent: tc.timeSpent || 0, timerStart: null
+        };
+        state.recurring.push(rNew);
+        var tIdx = state.tasks.indexOf(tc);
+        if (tIdx !== -1) state.tasks.splice(tIdx, 1);
+        openTaskId = null;
+        closeModal();
+        state.view = "recurring";
+        saveState();
+        renderAll();
+        showToast("📌 " + tc.title + " est devenue une quête secondaire (" + ((RECURRENCES[rNew.recurrence] || {}).label || "").toLowerCase() + ")");
+      }
       return;
     }
     if (f.getAttribute && f.getAttribute("data-form") === "victory") {
