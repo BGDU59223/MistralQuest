@@ -98,7 +98,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .filter-opt:hover { background: rgba(255,255,255,0.07); }
 .filter-opt.opt-active { background: rgba(255,112,0,0.14); color: var(--accent); }
 .task-card .btn-action { font-size: 9px; padding: 7px 12px; }
-.task-card .task-top .act-back { font-size: 17px; padding: 0 4px; color: var(--accent); margin-left: auto; }
+.task-card .task-top .act-timer { font-size: 15px; padding: 0 2px; color: var(--accent); margin-left: auto; }
+.task-card .task-top .act-timer:hover { color: #fff; background: var(--accent); border-radius: 4px; }
+.task-card .task-top .act-back { font-size: 17px; padding: 0 4px; color: var(--accent); margin-left: 0; }
 .task-card .task-top .act-back:hover { color: #fff; background: var(--accent); border-radius: 4px; }
 .task-card .task-top .task-delete { margin-left: 0; }
 .board-actions .btn-big { font-size: 11px; padding: 12px 16px; }
@@ -240,6 +242,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   .rec-stats { font-size: 11px; color: var(--muted); margin: 4px 0; }
   .rec-complete { width: 100%; margin-top: 8px; }
+  .task-card.task-timing, .rec-card.rec-timing {
+    background: linear-gradient(180deg, #171a21, #12141a);
+    border-color: #3a4355;
+    filter: grayscale(0.55);
+    opacity: 0.92;
+  }
+  .task-card.task-timing .rec-pin { display: none; }
+  .live-timer {
+    font-size: 27px;
+    text-align: center;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin: 10px 0;
+    font-weight: bold;
+  }
 
 .chip-x:hover { background: #161005; color: #fff; }
 .btn-action.act-cancel, .btn-action.act-back { border-color: #c0c8d8; color: #c0c8d8; }
@@ -644,7 +661,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         id: r.id, title: r.title || "Quête secondaire", recurrence: r.recurrence || "weekly",
         startDate: r.startDate || todayKey(), description: r.description || "",
         subtasks: r.subtasks || [], labels: r.labels || [],
-        periods: r.periods || {}, notes: r.notes || [], links: r.links || [], attachments: r.attachments || []
+        periods: r.periods || {}, notes: r.notes || [], links: r.links || [], attachments: r.attachments || [],
+        timeSpent: r.timeSpent || 0, timerStart: r.timerStart || null
       };
     });
     out.recFilter = out.recFilter || "all";
@@ -656,7 +674,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         subtasks: t.subtasks || [], createdAt: t.createdAt || "",
         dueDate: t.dueDate !== undefined ? t.dueDate : null,
         labels: t.labels || [], doneAt: t.doneAt || null,
-        comment: t.comment || null, gain: t.gain || null, archived: t.archived || false
+        comment: t.comment || null, gain: t.gain || null, archived: t.archived || false,
+        timeSpent: t.timeSpent || 0, timerStart: t.timerStart || null
       };
     });
     return out;
@@ -672,6 +691,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
   }
   var state = loadState();
+  var liveTicker = null;
   var draggedId = null;
   var existingImportInput = null;
   var openTaskId = null;
@@ -708,6 +728,39 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function isOverdue(t) {
     return !!(t.dueDate && t.status !== "done" && t.dueDate < todayKey());
+  }
+  function fmtDuration(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec / 60);
+    if (m < 60) return m + " min";
+    var h = Math.floor(m / 60), mm = m % 60;
+    return h + " h " + (mm < 10 ? "0" + mm : mm);
+  }
+  function fmtClock(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    var mm = (m < 10 ? "0" + m : "" + m), ss = (s < 10 ? "0" + s : "" + s);
+    return h > 0 ? h + ":" + mm + ":" + ss : mm + ":" + ss;
+  }
+  function timerElapsedSec(x) {
+    return (x.timeSpent || 0) + (x.timerStart ? Math.max(0, (Date.now() - x.timerStart) / 1000) : 0);
+  }
+  function timerBadgeHTML(x, attrId) {
+    var total = timerElapsedSec(x);
+    if (!total && !x.timerStart) return "";
+    var label = "\u23f1 " + fmtDuration(total) + (x.timerStart ? " · chrono en cours" : " de quête");
+    return '<span class="due-date">' + label + "</span>";
+  }
+  function stopEntityTimer(x) {
+    if (!x || !x.timerStart) return 0;
+    var sec = Math.max(0, Math.round((Date.now() - x.timerStart) / 1000));
+    x.timeSpent = (x.timeSpent || 0) + sec;
+    x.timerStart = null;
+    return sec;
+  }
+  function stopAllTimers() {
+    state.tasks.forEach(stopEntityTimer);
+    (state.recurring || []).forEach(stopEntityTimer);
   }
   function labelsOf(t) {
     return (t.labels || []).map(function (id) {
@@ -975,11 +1028,20 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var rc = recurrenceOf(r);
     var cur = currentOccurrence(r);
     var pinned = !!cur && !!r.periods && !!r.periods[cur];
+    if (r.timerStart) {
+      return '<div class="rec-card rec-timing" data-rid="' + r.id + '">' +
+        '<div class="rec-pin"></div>' +
+        '<div class="task-top"><span class="task-title">' + esc(r.title) + "</span></div>" +
+        '<div class="live-timer" data-live-timer data-rid="' + r.id + '">' + fmtClock(timerElapsedSec(r)) + "</div>" +
+        '<button class="btn btn-action act-cancel rec-complete" data-action="stop-timer" data-rid="' + r.id + '">⏸️ Pause du chrono</button>' +
+        "</div>";
+    }
     var timing = !cur ? "🕰️ apparaît le " + fmtDate(r.startDate)
       : (cur === todayKey() ? "🎯 nouveau cycle aujourd'hui" : "🕰️ cycle du " + fmtDate(cur) + " · " + nextOccurrenceLabel(r));
     return '<div class="rec-card' + (pinned ? " rec-done" : "") + '" data-rid="' + r.id + '">' +
       '<div class="rec-pin"></div>' +
-      '<div class="task-top"><span class="task-title">' + esc(r.title) + '</span>' +
+      '<div class="task-top"><span class="task-title">' + esc(r.title) + "</span>" +
+      '<button class="task-btn act-timer" data-action="start-timer" data-rid="' + r.id + '" title="Lancer le chrono">⏱️</button>' +
       '<button class="task-btn task-delete" data-action="edit-rec" data-rid="' + r.id + '" title="Modifier">✏️</button>' +
       '<button class="task-btn task-delete" data-action="delete-rec" data-rid="' + r.id + '" title="Supprimer">✖</button></div>' +
       '<div class="task-meta"><span class="task-diff ' + (pinned ? "diff-b-boss" : "diff-b-facile") + '">' + rc.icon + " " + rc.label.toUpperCase() + '</span>' +
@@ -1036,6 +1098,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var d = DIFFS[t.diff] || DIFFS.facile;
     var overdue = isOverdue(t);
     var cls = "task-card " + d.edge + (overdue ? " task-overdue" : "");
+    if (t.timerStart) {
+      return '<div class="' + cls + ' task-timing" draggable="true" data-task="' + t.id + '">' +
+        '<div class="task-top"><span class="task-title">' + esc(t.title) + "</span></div>" +
+        '<div class="live-timer" data-live-timer data-task="' + t.id + '">' + fmtClock(timerElapsedSec(t)) + "</div>" +
+        '<div class="task-actions"><button class="btn btn-action act-cancel" data-action="stop-timer" data-task="' + t.id + '">⏸️ Pause du chrono</button></div>' +
+        "</div>";
+    }
     var actions = "";
     if (t.status === "todo") {
       actions = '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🚩 Démarrer</button>';
@@ -1046,7 +1115,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<button class="btn" data-action="archive-task" data-task="' + t.id + '">🗄️ Archiver</button>';
     }
     return '<div class="' + cls + '" draggable="true" data-task="' + t.id + '">' +
-      '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
+      '<div class="task-top"><span class="task-title">' + esc(t.title) + "</span>" +
+      '<button class="task-btn act-timer" data-action="start-timer" data-task="' + t.id + '" title="Lancer le chrono">⏱️</button>' +
       (t.status === "doing" ? '<button class="task-btn act-back" data-action="back" data-task="' + t.id + '" title="Remettre en À faire">↩️</button>' : "") +
       '<button class="task-btn task-delete" data-action="delete-task" data-task="' + t.id + '" title="Supprimer">✖</button></div>' +
       '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + labelChipsHTML(t) + "</div>" +
@@ -1226,7 +1296,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<button class="btn" style="margin-left:auto" data-action="unarchive-task" data-task="' + t.id + '">↩ Désarchiver</button></div>' +
         '<div class="task-meta">' + labelChipsHTML(t) +
         (t.doneAt ? '<span class="due-date">🏁 terminée le ' + fmtDate(t.doneAt) + "</span>" : "") +
-        (t.dueDate ? '<span class="due-date">📅 ' + fmtDate(t.dueDate) + "</span>" : "") + "</div>" +
+        (t.dueDate ? '<span class="due-date">📅 ' + fmtDate(t.dueDate) + "</span>" : "") +
+        (t.timeSpent ? '<span class="due-date">⏱ ' + fmtDuration(t.timeSpent) + " de quête</span>" : "") + "</div>" +
         (t.comment ? '<div style="margin-top:6px"><i>« ' + esc(t.comment) + ' »</i></div>' : "") +
         (t.subtasks && t.subtasks.length ? '<div class="task-progress">☑ ' + t.subtasks.filter(function (st) { return st.done; }).length + "/" + t.subtasks.length + " étapes accomplies</div>" : "") +
         "</div>";
@@ -1498,7 +1569,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<h2 class="panel-title">CHECKLIST DE QUÊTE</h2>' +
       '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(t.title) + "</b></div>" +
       '<div class="task-meta">' + difficultyHTML(t) +
-      (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">' + (isOverdue(t) ? "💀 " : "📅 ") + fmtDate(t.dueDate) + "</span>" : "") + "</div>" +
+      (t.dueDate ? '<span class="due-date' + (isOverdue(t) ? " overdue" : "") + '">' + (isOverdue(t) ? "💀 " : "📅 ") + fmtDate(t.dueDate) + "</span>" : "") +
+      timerBadgeHTML(t) + "</div>" +
       questProgressBarHTML(t) +
       '<div class="task-split">' +
       '<div class="pane pane-left">' +
@@ -1705,7 +1777,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var body = '<span class="modal-close" data-action="close-modal">✖</span>' +
       '<h2 class="panel-title">CHECKLIST DE QUÊTE SECONDAIRE</h2>' +
       '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(r.title) + "</b></div>" +
-      '<div class="task-meta"><span class="task-diff diff-b-facile">' + rc.icon + " " + rc.label.toUpperCase() + '</span><span class="task-reward">+' + rc.xp + " XP · +" + rc.gold + " 🪙</span>" + labelChipsHTML(r) + "</div>" +
+      '<div class="task-meta"><span class="task-diff diff-b-facile">' + rc.icon + " " + rc.label.toUpperCase() + '</span><span class="task-reward">+' + rc.xp + " XP · +" + rc.gold + " 🪙</span>" + labelChipsHTML(r) + timerBadgeHTML(r) + "</div>" +
       recProgressHTML(r) +
       stats +
       '<div class="task-split">' +
@@ -1932,12 +2004,26 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (tx) drafts.steps = tx.value;
   }
   function renderAll() {
+    if (liveTicker) { clearInterval(liveTicker); liveTicker = null; }
     document.getElementById("tabs").innerHTML = tabsHTML();
     document.getElementById("main").innerHTML = viewHTML();
     document.getElementById("hud-level").textContent = "⭐ Niveau " + state.level;
     document.getElementById("hud-gold").textContent = "🪙 " + state.gold;
     document.getElementById("hud-streak").textContent = "🔥 Série " + state.streak + " j";
+    if (anyTimerRunning()) {
+      liveTicker = setInterval(function () {
+        qa2("[data-live-timer]").forEach(function (el) {
+          var xt = el.getAttribute("data-rid") ? recById(el.getAttribute("data-rid")) : taskById(el.getAttribute("data-task"));
+          if (xt && xt.timerStart) el.textContent = fmtClock(timerElapsedSec(xt));
+        });
+      }, 500);
+    }
   }
+  function anyTimerRunning() {
+    return state.tasks.some(function (t) { return t.timerStart; }) ||
+      (state.recurring || []).some(function (r) { return r.timerStart; });
+  }
+  function qa2(sel) { return [].slice.call(document.querySelectorAll(sel)); }
   function nextLootItem() {
     var available = SHOP_ITEMS.filter(function (it) { return it.type === "gear" && state.inventory.indexOf(it.id) === -1; });
     if (!available.length) return null;
@@ -2047,6 +2133,31 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return;
       }
       if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
+      if (act === "start-timer") {
+        var stTimer = el.getAttribute("data-rid") ? recById(el.getAttribute("data-rid")) : taskById(el.getAttribute("data-task"));
+        if (stTimer && !stTimer.timerStart) {
+          stopAllTimers();
+          stTimer.timerStart = Date.now();
+          saveState();
+          renderAll();
+          if (openTaskId === stTimer.id) openTaskModal(stTimer.id, true);
+          if (openRecId === stTimer.id) openRecDetailModal(stTimer.id, true);
+          showToast("⏱️ Chrono lancé : " + stTimer.title);
+        }
+        return;
+      }
+      if (act === "stop-timer") {
+        var spTimer = el.getAttribute("data-rid") ? recById(el.getAttribute("data-rid")) : taskById(el.getAttribute("data-task"));
+        if (spTimer && spTimer.timerStart) {
+          var secDone = stopEntityTimer(spTimer);
+          saveState();
+          renderAll();
+          if (openTaskId === spTimer.id) openTaskModal(spTimer.id, true);
+          if (openRecId === spTimer.id) openRecDetailModal(spTimer.id, true);
+          showToast("⏱️ " + fmtDuration(secDone) + " enregistrées sur : " + spTimer.title);
+        }
+        return;
+      }
       if (act === "open-add-rec-modal") {
         recDraft = { id: null, title: "", description: "", recurrence: recDraft.recurrence || "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
         openAddRecModal();
@@ -2723,6 +2834,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       draggedId = null;
     }
   });
+  window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec };
   var LOGO = [
     "................",
     "...OO......OO...",
