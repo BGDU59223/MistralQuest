@@ -201,6 +201,46 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   border: none; background: rgba(0, 0, 0, 0.22); color: #161005; cursor: pointer;
   font-family: inherit; font-size: 13px; line-height: 1; padding: 1px 5px; border-radius: 999px;
 }
+  /* ---------- CSS panneau-liège des quêtes secondaires ---------- */
+  .rec-board {
+    background: repeating-linear-gradient(45deg, #3a2b1a, #3a2b1a 14px, #33251648 14px, #33251648 28px), linear-gradient(180deg, #4a3620 0%, #33240f 100%);
+    background-color: #3a2b1a;
+    border: 3px solid #6b4d28;
+    border-radius: 10px;
+    box-shadow: inset 0 0 40px #00000073, 0 6px 18px #000000a3;
+    padding: 22px;
+    min-height: 60vh;
+  }
+  .rec-board-inner { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; align-items: start; }
+  .rec-empty { grid-column: 1 / -1; text-align: center; color: #f0d9a8; background: #2c20124d; }
+  .rec-card {
+    position: relative;
+    background: linear-gradient(180deg, var(--card) 0%, #211c17 100%);
+    border: 2px solid var(--accent-dark);
+    border-radius: 8px;
+    padding: 14px 12px 12px;
+    box-shadow: 0 4px 10px #00000085;
+    margin: 0;
+  }
+  .rec-card:nth-child(3n) { transform: rotate(-1deg); }
+  .rec-card:nth-child(3n+1) { transform: rotate(0.8deg); }
+  .rec-card:nth-child(4n) { transform: rotate(-0.4deg); }
+  .rec-pin {
+    position: absolute; top: -9px; left: 50%; margin-left: -9px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff9d54 0%, #e0453a 60%, #8f1f16 100%);
+    box-shadow: 0 2px 4px #000000b0, inset 0 -2px 3px #00000042;
+  }
+  .rec-card.rec-done { opacity: 0.75; }
+  .rec-card.rec-done .rec-pin { background: radial-gradient(circle at 35% 35%, #9ef3b2 0%, #2e994b 60%, #1b5e30 100%); }
+  .rec-desc {
+    font-size: 11px; color: var(--muted); font-style: italic;
+    margin: 6px 0 2px; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .rec-stats { font-size: 11px; color: var(--muted); margin: 4px 0; }
+  .rec-complete { width: 100%; margin-top: 8px; }
+
 .chip-x:hover { background: #161005; color: #fff; }
 .btn-action.act-cancel, .btn-action.act-back { border-color: #c0c8d8; color: #c0c8d8; }
 .btn-action.act-cancel:hover, .btn-action.act-back:hover { background: #2a3140; color: #ffffff; }
@@ -369,6 +409,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
   var TABS = [
     ["board", "🗺️ Quêtes"],
+    ["recurring", "📌 Quêtes secondaires"],
     ["achievements", "🏆 Exploits"],
     ["shop", "🛒 Boutique"],
     ["stats", "📊 Stats"],
@@ -569,6 +610,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       v: 1, tasks: [], labels: [],
       level: 1, xp: 0, gold: 30,
       streak: 0, lastCompletedDay: null,
+      recurring: [], recFilter: "all",
       filters: { labels: [], dates: [] },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
@@ -586,6 +628,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.labels = out.labels || [];
     out.equipment = out.equipment || {};
     out.achievements = out.achievements || [];
+    out.recurring = (out.recurring || []).map(function (r) {
+      return {
+        id: r.id, title: r.title || "Quête secondaire", recurrence: r.recurrence || "weekly",
+        startDate: r.startDate || todayKey(), description: r.description || "",
+        subtasks: r.subtasks || [], labels: r.labels || [],
+        periods: r.periods || {}, notes: r.notes || [], links: r.links || [], attachments: r.attachments || []
+      };
+    });
+    out.recFilter = out.recFilter || "all";
     out.hero = (s && s.hero !== undefined) ? s.hero : null;
     out.tasks = (out.tasks || []).map(function (t) {
       return {
@@ -612,6 +663,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var draggedId = null;
   var existingImportInput = null;
   var openTaskId = null;
+  var openRecId = null;
+  var recDraft = { id: null, title: "", description: "", recurrence: "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
+  function syncRecDrafts() {
+    var t = document.getElementById("rec-title");
+    if (t) recDraft.title = t.value;
+    var d = document.getElementById("rec-desc");
+    if (d) recDraft.description = d.value;
+    var s = document.getElementById("rec-start");
+    if (s) recDraft.startDate = s.value;
+    var st = document.getElementById("rec-steps-text");
+    if (st) recDraft.steps = st.value;
+  }
   var editStepIdx = null;
   var heroDraft = { name: "", cls: "guerrier", skin: "#f2c199", gender: "homme" };
   var drafts = { title: "", due: "", steps: "", diff: "facile", labels: [], taskId: null };
@@ -779,6 +842,130 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       (activeCount ? '<button class="btn btn-danger" data-action="clear-filters" style="margin-left:auto">✨ Tout afficher</button>' : "") +
       pop +
       "</div>";
+  }
+  /* ---------- Quêtes secondaires (récurrentes) ---------- */
+  var RECURRENCES = {
+    daily:      { label: "Quotidienne",     icon: "☀️",  xp: 8,   gold: 2,  stepXp: 3,  stepGold: 1, unit: "jour" },
+    weekly:     { label: "Hebdomadaire",    icon: "🗓️",  xp: 25,  gold: 5,  stepXp: 6,  stepGold: 2, unit: "semaine" },
+    biweekly:   { label: "Bihebdomadaire",  icon: "📆",  xp: 40,  gold: 8,  stepXp: 8,  stepGold: 2, unit: "2 semaines" },
+    monthly:    { label: "Mensuelle",       icon: "🌗",  xp: 70,  gold: 12, stepXp: 10, stepGold: 3, unit: "mois" },
+    quarterly:  { label: "Trimestrielle",   icon: "🍃",  xp: 120, gold: 20, stepXp: 12, stepGold: 3, unit: "trimestre" },
+    semiannual: { label: "Semestrielle",    icon: "☀️",  xp: 200, gold: 32, stepXp: 15, stepGold: 4, unit: "semestre" },
+    annual:     { label: "Annuelle",        icon: "🎂",  xp: 350, gold: 50, stepXp: 18, stepGold: 5, unit: "an" }
+  };
+  var RECURRENCE_FILTERS = [["all", "Toutes"], ["daily", "☀️ Quotidienne"], ["weekly", "🗓️ Hebdo"], ["biweekly", "📆 Bi-hebdo"], ["monthly", "🌗 Mensuelle"], ["quarterly", "🍃 Trimestrielle"], ["semiannual", "🌗 Semestrielle"], ["annual", "🎂 Annuelle"]];
+  var openRecFilterMenu = null;
+  function recById(id) {
+    for (var i = 0; i < state.recurring.length; i++) { if (state.recurring[i].id === id) return state.recurring[i]; }
+    return null;
+  }
+  function addMonthsClamped(iso, m) {
+    var p = iso.split("-");
+    var y = parseInt(p[0], 10), mo = parseInt(p[1], 10), d = parseInt(p[2], 10);
+    var y2 = y + Math.floor((mo - 1 + m) / 12), mo2 = ((mo - 1 + m) % 12 + 12) % 12 + 1;
+    var dim = new Date(y2, mo2, 0).getDate();
+    var d2 = Math.min(d, dim);
+    return y2 + "-" + ("0" + mo2).slice(-2) + "-" + ("0" + d2).slice(-2);
+  }
+  function nextOccurrence(r, afterIso) {
+    var cur = (afterIso || "") < r.startDate ? r.startDate : (afterIso || "");
+    if (r.recurrence === "daily") { var a = new Date(cur + "T00:00:00"); a.setDate(a.getDate() + 1); return todayKey(a); }
+    if (r.recurrence === "weekly") { var b = new Date(cur + "T00:00:00"); b.setDate(b.getDate() + 7); return todayKey(b); }
+    if (r.recurrence === "biweekly") { var c = new Date(cur + "T00:00:00"); c.setDate(c.getDate() + 14); return todayKey(c); }
+    if (r.recurrence === "monthly") return addMonthsClamped(cur, 1);
+    if (r.recurrence === "quarterly") return addMonthsClamped(cur, 3);
+    if (r.recurrence === "semiannual") return addMonthsClamped(cur, 6);
+    if (r.recurrence === "annual") return addMonthsClamped(cur, 12);
+    return null;
+  }
+  function recurrenceOf(r) { return RECURRENCES[r.recurrence] || RECURRENCES.weekly; }
+  function currentOccurrence(r) {
+    var cur = r.startDate;
+    if (!cur || cur > todayKey()) return null;
+    for (var guard = 0; guard < 10000; guard++) {
+      var nx = nextOccurrence(r, cur);
+      if (!nx || nx > todayKey()) break;
+      cur = nx;
+      if (cur === todayKey()) break;
+    }
+    return cur;
+  }
+  function nextOccurrenceLabel(r) {
+    var cur = currentOccurrence(r);
+    if (!cur) return "🔁 apparaît le " + fmtDate(r.startDate);
+    var nx = nextOccurrence(r, cur);
+    return nx ? "🔁 revient le " + fmtDate(nx) : "";
+  }
+  function recDoneCount(r) { return (r.subtasks || []).filter(function (st) { return st.done; }).length; }
+  function recProgressHTML(r) {
+    var n = (r.subtasks || []).length;
+    if (!n) return "";
+    var done = recDoneCount(r);
+    var pct = Math.round((done / n) * 100);
+    return '<div class="quest-progress"><div class="quest-progress-label">☑ ' + done + "/" + n + " étapes accomplies</div>" +
+      '<div class="quest-bar"><div class="quest-fill" style="width:' + pct + '%"></div></div></div>';
+  }
+  function recFilterBarHTML() {
+    var showAll = state.recFilter === "all";
+    var pop = "";
+    if (openRecFilterMenu === "rec") {
+      pop = '<div class="filter-pop">' + RECURRENCE_FILTERS.filter(function (x) { return x[0] !== "all"; }).map(function (df) {
+        var on = state.recFilter === df[0];
+        return '<button type="button" class="filter-opt' + (on ? " opt-active" : "") + '" data-action="set-rec-filter" data-rec="' + df[0] + '">' + df[1] + (on ? " ✔" : "") + "</button>";
+      }).join("") + "</div>";
+    }
+    var current = RECURRENCE_FILTERS.filter(function (x) { return x[0] === state.recFilter; })[0] || RECURRENCE_FILTERS[0];
+    var btnLabel = showAll ? "🗂️ Trier : récurrence" : "🗂️ " + current[1];
+    return '<div class="board-actions filter-bar">' +
+      '<button type="button" class="chip filter-btn' + (openRecFilterMenu === "rec" ? " chip-active" : "") + '" data-action="toggle-rec-filter-menu">' + btnLabel + " ▾</button>" +
+      (state.recFilter !== "all" ? '<button class="btn btn-danger" data-action="set-rec-filter" data-rec="all" style="margin-left:auto">✨ Tout afficher</button>' : "") +
+      pop +
+      "</div>";
+  }
+  function visibleRecurring() {
+    var list = state.recurring.slice().sort(function (a, b) {
+      var ad = currentOccurrence(a), bd = currentOccurrence(b);
+      return (ad || a.startDate || "") < (bd || b.startDate || "") ? -1 : 1;
+    });
+    if (state.recFilter && state.recFilter !== "all") {
+      list = list.filter(function (r) { return r.recurrence === state.recFilter; });
+    }
+    return list;
+  }
+  function recurringCardHTML(r) {
+    var rc = recurrenceOf(r);
+    var cur = currentOccurrence(r);
+    var pinned = !!cur && !!r.periods && !!r.periods[cur];
+    var timing = !cur ? "🕰️ apparaît le " + fmtDate(r.startDate)
+      : (cur === todayKey() ? "🎯 nouveau cycle aujourd'hui" : "🕰️ cycle du " + fmtDate(cur) + " · " + nextOccurrenceLabel(r));
+    return '<div class="rec-card' + (pinned ? " rec-done" : "") + '" data-rid="' + r.id + '">' +
+      '<div class="rec-pin"></div>' +
+      '<div class="task-top"><span class="task-title">' + esc(r.title) + '</span>' +
+      '<button class="task-btn task-delete" data-action="edit-rec" data-rid="' + r.id + '" title="Modifier">✏️</button>' +
+      '<button class="task-btn task-delete" data-action="delete-rec" data-rid="' + r.id + '" title="Supprimer">✖</button></div>' +
+      '<div class="task-meta"><span class="task-diff ' + (pinned ? "diff-b-boss" : "diff-b-facile") + '">' + rc.icon + " " + rc.label.toUpperCase() + '</span>' +
+      '<span class="task-reward">+' + rc.xp + " XP · +" + rc.gold + " 🪙</span>" + labelChipsHTML(r) + "</div>" +
+      (r.description ? '<div class="rec-desc">' + esc(r.description) + "</div>" : "") +
+      recProgressHTML(r) +
+      '<div class="due-date">' + timing + "</div>" +
+      (pinned ?
+        '<div class="task-meta" style="justify-content:center"><span class="task-diff diff-b-facile">✅ Cycle accompli — rendez-vous le ' + fmtDate(nextOccurrence(r, cur) || cur) + "</span></div>" :
+        '<button class="btn btn-action act-done rec-complete" data-action="complete-rec" data-rid="' + r.id + '" title="Encaisser et repartir pour un cycle">🏁 Boucler le cycle</button>') +
+      "</div>";
+  }
+  function recurringView() {
+    var list = visibleRecurring();
+    var cards = list.map(recurringCardHTML).join("");
+    return '<div class="board-actions">' +
+      '<button class="btn btn-accent btn-big" data-action="open-add-rec-modal">➕ Nouvelle quête secondaire</button>' +
+      '<button class="btn btn-big" data-action="switch-tab" data-view="board">← Retour au board</button>' +
+      "<span class=\"spacer\"></span></div>" +
+      recFilterBarHTML() +
+      '<div class="rec-board">' +
+      '<div class="rec-board-inner">' +
+      (cards ||
+        '<div class="panel rec-empty">📌 Le tableau-liège est vide — crée une quête secondaire récurrente (quotidienne, hebdo, mensuelle…) et viens l\'épingler ici.</div>') +
+      "</div></div>";
   }
   function tabsHTML() {
     return TABS.map(function (t) {
@@ -977,6 +1164,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<h2 class="panel-title">ARCHIVE (' + list.length + ')</h2>' + rows;
   }
   function viewHTML() {
+    if (state.view === "recurring") return recurringView();
     if (state.view === "achievements") return achievementsView();
     if (state.view === "shop") return shopView();
     if (state.view === "stats") return statsView();
@@ -996,6 +1184,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     document.getElementById("modal-overlay").classList.add("hidden");
     document.getElementById("modal").innerHTML = "";
     openTaskId = null;
+    openRecId = null;
   }
   function openAddModal() {
     var body = '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
@@ -1277,6 +1466,214 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     openModal(body, true);
   }
+  function openRecRecEdit(id) {
+    var r = recById(id);
+    if (!r) return;
+    openRecId = id;
+    recDraft = {
+      id: r.id, title: r.title, description: r.description || "", recurrence: r.recurrence,
+      startDate: r.startDate, steps: (r.subtasks || []).map(function (s) { return s.text; }).join("\n"),
+      labels: (r.labels || []).slice(), recCompleted: !!(r.periods && r.periods[currentOccurrence(r) || ""])
+    };
+    openAddRecModal();
+  }
+  function completeRecurrence(r) {
+    var cur = currentOccurrence(r);
+    if (!cur) { showToast("La quête n'est pas encore apparue — ajuste sa date de début."); return false; }
+    if (r.periods && r.periods[cur]) { showToast("✅ Cycle déjà bouclé — congé bien mérité !"); return false; }
+    var next = nextOccurrence(r, cur);
+    var rc = recurrenceOf(r);
+    var baseXp = Math.round(rc.xp * xpMultiplier());
+    var beforeLevel = state.level;
+    state = grantReward(state, baseXp, rc.gold);
+    r.periods = r.periods || {};
+    r.periods[cur] = { doneAt: todayKey(), gain: { xp: baseXp, gold: rc.gold } };
+    r.lastDone = todayKey();
+    (r.subtasks || []).forEach(function (st) { st.done = false; });
+    r.notes = r.notes || [];
+    r.notes.unshift({ id: uid(), date: stamp(), text: "Quête bouclée ! Rendez-vous le " + (next ? fmtDate(next) : "prochain cycle") + ".", cycledone: true });
+    var day = todayKey();
+    state.stats.xpByDay[day] = (state.stats.xpByDay[day] || 0) + baseXp;
+    state.stats.doneByDay[day] = (state.stats.doneByDay[day] || 0) + 1;
+    state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
+    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
+    showToast("🏁 Quête bouclée : +" + baseXp + " XP · +" + rc.gold + " 🪙");
+    checkAchievements();
+    saveState();
+    renderAll();
+    if (openRecId === r.id) openRecDetailModal(r.id, false);
+    return true;
+  }
+  function undoRecurrence(r) {
+    var cur = currentOccurrence(r);
+    var rec = cur && r.periods ? r.periods[cur] : null;
+    if (!rec) return;
+    var g = rec.gain || { xp: 0, gold: 0 };
+    state.xp -= g.xp;
+    state.gold -= g.gold;
+    while (state.xp < 0 && state.level > 1) {
+      state.level -= 1;
+      state.xp += xpNeeded(state.level);
+    }
+    if (state.xp < 0) state.xp = 0;
+    if (state.gold < 0) state.gold = 0;
+    state.stats.totalCompleted = Math.max(0, (state.stats.totalCompleted || 0) - 1);
+    var day = rec.doneAt || todayKey();
+    if (state.stats.xpByDay[day]) state.stats.xpByDay[day] = Math.max(0, state.stats.xpByDay[day] - g.xp);
+    if (state.stats.doneByDay[day]) state.stats.doneByDay[day] = Math.max(0, state.stats.doneByDay[day] - 1);
+    delete r.periods[cur];
+    var remain = Object.keys(r.periods).sort();
+    r.lastDone = remain.length ? r.periods[remain[remain.length - 1]].doneAt : null;
+    saveState();
+    showToast("↩ Cycle annulé — XP et or rendus");
+    renderAll();
+    if (openRecId === r.id) openRecDetailModal(r.id, false);
+  }
+  function downloadRecAttachment(rid, aid) {
+    var r = recById(rid);
+    var a = r && r.attachments && r.attachments.filter(function (x) { return x.id === aid; })[0];
+    if (!a) return;
+    fileStore.get(rid + " " + aid, function (blob) {
+      if (!blob) { showToast("❌ Fichier introuvable"); return; }
+      var url = URL.createObjectURL(blob);
+      var el = document.createElement("a");
+      el.href = url;
+      el.download = a.name;
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    });
+  }
+  function openAddRecModal() {
+    var rb = recDraft.recurrence;
+    var rc = RECURRENCES[rb] || RECURRENCES.weekly;
+    var recBtns = Object.keys(RECURRENCES).map(function (k) {
+      var rr = RECURRENCES[k];
+      return '<button type="button" class="chip' + (rb === k ? " chip-active" : "") + '" data-action="set-rec-draft" data-rec="' + k + '">' + rr.icon + " " + rr.label + "</button>";
+    }).join(" ");
+    var body = '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
+      '<h2 class="panel-title">' + (recDraft.id ? "MODIFIER LA QUÊTE SECONDAIRE" : "NOUVELLE QUÊTE SECONDAIRE") + "</h2>" +
+      '<form id="rec-form">' +
+      '<div class="form-row"><label class="form-label">🎯 Que faut-il accomplir ?</label>' +
+      '<input name="rec-title" id="rec-title" placeholder="Ex : Trier la boîte mail" value="' + esc(recDraft.title) + '" required /></div>' +
+      '<div class="form-row"><label class="form-label">🔁 Récurrence — récompense : +' + rc.xp + " XP · +" + rc.gold + ' 🪙 par cycle</label>' +
+      '<div class="label-picker">' + recBtns + "</div></div>" +
+      '<div class="form-row"><label class="form-label">📅 Date de début de la récurrence' + (recDraft.recCompleted ? " — en changer démarre un nouveau cycle" : "") + "</label>" +
+      '<input type="date" name="rec-start" id="rec-start" value="' + esc(recDraft.startDate) + '" required /></div>' +
+      '<div class="form-row"><label class="form-label">🧾 Descriptif de la quête (optionnel)</label>' +
+      '<textarea name="rec-desc" id="rec-desc" rows="2" placeholder="Ex : relances, imports, contrôles à faire chaque semaine…">' + esc(recDraft.description) + "</textarea></div>" +
+      '<div class="form-row"><label class="form-label">🏳️ Libellés</label><div class="label-picker">' +
+      (state.labels.map(function (l) {
+        var on = recDraft.labels.indexOf(l.id) !== -1;
+        return '<button type="button" class="chip' + (on ? " chip-active" : "") + '" data-action="toggle-rec-label" data-label="' + l.id + '"><span class="label-chip" style="background:' + esc(l.color) + '">' + esc(l.name) + "</span></button>";
+      }).join("") || '<span class="lootbox-hint">Aucun libellé créé pour l\'instant.</span>') + "</div>" +
+      '<div class="chip-create"><input name="rec-new-inline-label" placeholder="Créer un libellé rapide…" /><button type="button" class="btn" data-action="create-rec-inline-label">Créer</button></div></div>' +
+      '<div class="form-row"><label class="form-label">☑ Points à cocher (un par ligne, optionnel)</label>' +
+      '<textarea name="rec-steps-text" id="rec-steps-text" rows="4" placeholder="Vider la boîte mail\nRelancer les impayés…">' + esc(recDraft.steps) + "</textarea></div>" +
+      '<button type="submit" class="btn btn-accent btn-big" style="width:100%">' + (recDraft.id ? "💾 Enregistrer les changements" : "📌 Épingler la quête") + "</button>" +
+      "</form>";
+    openModal(body);
+  }
+  function openRecDetailModal(id, keepEdit) {
+    var r = recById(id);
+    if (!r) return;
+    openTaskId = null;
+    openRecId = id;
+    if (!keepEdit) editStepIdx = null;
+    var rc = recurrenceOf(r);
+    var cur = currentOccurrence(r);
+    var pinned = !!cur && !!r.periods && !!r.periods[cur];
+    var steps = (r.subtasks || []).map(function (st, i) {
+      if (editStepIdx === i) {
+        return '<form class="subtask" data-form="edit-rec-step" data-rid="' + r.id + '" data-index="' + i + '">' +
+          '<input name="edit-step" value="' + esc(st.text) + '" required />' +
+          '<button type="submit" class="btn">💾</button></form>';
+      }
+      return '<label class="subtask' + (st.done ? " subtask-done" : "") + '">' +
+        '<input type="checkbox" data-action="toggle-rec-step" data-rid="' + r.id + '" data-index="' + i + '"' + (st.done ? " checked" : "") + " />" +
+        '<span data-step-index="' + i + '" title="Double-clique pour modifier">' + esc(st.text) + "</span>" +
+        '<button type="button" class="task-btn step-del" data-action="remove-rec-step" data-rid="' + r.id + '" data-index="' + i + '" title="Supprimer l\'étape">✖</button></label>';
+    }).join("");
+    var attached = labelsOf(r);
+    var remaining = state.labels.filter(function (l) { return (r.labels || []).indexOf(l.id) === -1; });
+    var labelEditor = attached.map(function (l) {
+      return '<span class="label-chip" style="background:' + esc(l.color) + '">' + esc(l.name) +
+        '<button type="button" class="chip-x" data-action="remove-rec-label" data-rid="' + r.id + '" data-label="' + l.id + '" title="Retirer de cette quête">✖</button></span>';
+    }).join(" ")
+      + remaining.map(function (l) {
+        return '<button type="button" class="chip" data-action="add-rec-label" data-rid="' + r.id + '" data-label="' + l.id + '">+ ' + esc(l.name) + "</button>";
+      }).join(" ")
+      + (!state.labels.length ? '<span class="lootbox-hint">Aucun libellé — crées-en via le bouton 🏳️ du board.</span>' : "");
+    var noteEntries = ((r.notes || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; })).map(function (n) {
+      return '<div class="note-entry"><span class="note-date">🕰️ ' + esc(n.date) + '</span> ' + esc(n.text) +
+        (n.cycledone ? '<span class="task-diff diff-b-facile">🏁 cycle bouclé</span>' : "") +
+        '<button type="button" class="task-btn step-del" data-action="remove-rec-note" data-rid="' + r.id + '" data-note="' + n.id + '" title="Supprimer l\'entrée">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucune entrée. Ton journal de bord t\'attend 👇</p>';
+    var linkRows = (r.links || []).map(function (l) {
+      var host = l.url.replace(/^https?:\/\//i, "").split("/")[0];
+      return '<div class="link-row"><a class="task-link" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' + "🔗 " + esc(l.label) + "</a>" +
+        '<span class="link-host">' + esc(host) + "</span>" +
+        '<button type="button" class="task-btn step-del" style="margin-left:auto" data-action="remove-rec-link" data-rid="' + r.id + '" data-link="' + l.id + '" title="Supprimer le lien">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucun lien. Colle ici tes docs (tableur, wiki…)</p>';
+    var linkAdd = '<form class="mini-inputs" data-form="add-rec-link" data-rid="' + r.id + '">' +
+      '<input name="link-label" placeholder="Nom du lien (ex : Tableau des congés)" required />' +
+      '<div style="display:flex;gap:6px"><input name="link-url" placeholder="https://…" required style="flex:1" /><button type="submit" class="btn btn-accent">🔗 Ajouter</button></div></form>';
+    var attachRows = (r.attachments || []).map(function (a) {
+      return '<div class="link-row"><button type="button" class="btn btn-action" data-action="download-rec-attachment" data-rid="' + r.id + '" data-att="' + a.id + '" title="Télécharger">⬇ ' + esc(a.name) + "</button>" +
+        '<span class="link-host">' + fmtSize(a.size) + "</span>" +
+        '<button type="button" class="task-btn step-del" style="margin-left:auto" data-action="remove-rec-attachment" data-rid="' + r.id + '" data-att="' + a.id + '" title="Retirer">✖</button></div>';
+    }).join("") || '<p class="lootbox-hint" style="margin-bottom:6px">Aucun document joint (Excel, Word, PDF…)</p>';
+    var recBtns = Object.keys(RECURRENCES).map(function (k) {
+      var rr = RECURRENCES[k];
+      return '<button type="button" class="chip' + (r.recurrence === k ? " chip-active" : "") + '" data-action="change-rec-recurrence" data-rid="' + r.id + '" data-rec="' + k + '">' + rr.icon + " " + rr.label + "</button>";
+    }).join(" ");
+    var stats = '<div class="rec-stats">🏁 ' + Object.keys(r.periods || {}).length + " cycle(s) bouclé(s)" +
+      (r.lastDone ? " · dernière fois : " + fmtDate(r.lastDone) : "") +
+      (cur ? " · prochaine échéance : " + fmtDate(nextOccurrence(r, cur) || "") : "") + "</div>";
+    var body = '<span class="modal-close" data-action="close-modal">✖</span>' +
+      '<h2 class="panel-title">CHECKLIST DE QUÊTE SECONDAIRE</h2>' +
+      '<div class="task-top" style="margin-bottom:6px"><b style="font-size:23px">' + esc(r.title) + "</b></div>" +
+      '<div class="task-meta"><span class="task-diff diff-b-facile">' + rc.icon + " " + rc.label.toUpperCase() + '</span><span class="task-reward">+' + rc.xp + " XP · +" + rc.gold + " 🪙</span>" + labelChipsHTML(r) + "</div>" +
+      recProgressHTML(r) +
+      stats +
+      '<div class="task-split">' +
+      '<div class="pane pane-left">' +
+      '<h3>🗺️ La quête</h3>' +
+      '<div class="form-row" style="margin-top:2px"><label class="form-label">🎯 Nom de la quête (modifiable)</label>' +
+      '<input data-action="rename-rec" data-rid="' + r.id + '" value="' + esc(r.title) + '" maxlength="120" /></div>' +
+      '<div class="form-row" style="margin-top:0"><label class="form-label">🧾 Descriptif</label>' +
+      '<textarea data-action="edit-rec-desc" data-rid="' + r.id + '" rows="2">' + esc(r.description || "") + "</textarea></div>" +
+      '<div class="form-row" style="margin-top:0"><label class="form-label">🏳️ Libellés (✖ pour retirer, + pour ajouter)</label>' +
+      '<div class="label-picker">' + labelEditor + "</div></div>" +
+      '<div class="form-row" style="margin-top:0"><label class="form-label">🔁 Récurrence (modifiable)</label><div class="label-picker">' + recBtns + "</div></div>" +
+      '<div class="form-row" style="margin-top:0"><label class="form-label">📅 Date de début de la récurrence</label>' +
+      '<input type="date" data-edit-rec-start data-rid="' + r.id + '" value="' + (r.startDate || "") + '" /></div>' +
+      '<div class="checklist">' + (steps || '<p class="lootbox-hint">Aucune étape. Ajoute-en une 👇</p>') + "</div>" +
+      '<form class="subtask-add" data-form="add-rec-step" data-rid="' + r.id + '">' +
+      '<input name="subtask-text" placeholder="Nouvelle étape à cocher…" /><button type="submit" class="btn">Ajouter l\'étape</button></form>' +
+      "</div>" +
+      '<div class="pane pane-right">' +
+      '<h3>📓 Journal de combat</h3>' +
+      '<div class="note-list">' + noteEntries + "</div>" +
+      '<form class="chip-create" data-form="add-rec-note" data-rid="' + r.id + '">' +
+      '<input name="note-text" placeholder="Ex : relancé Marcel à la date du 12…" /><button type="submit" class="btn btn-accent">📓 Écrire</button></form>' +
+      '<h3 style="margin-top:14px">🔗 Liens utiles</h3>' +
+      '<div class="note-list">' + linkRows + "</div>" + linkAdd +
+      '<h3 style="margin-top:14px">📎 Pièces jointes</h3>' +
+      '<div class="note-list">' + attachRows + "</div>" +
+      '<label class="btn btn-accent btn-big attach-btn">🧩 Ajouter un document' +
+      '<input type="file" hidden data-action="upload-rec-attachment" data-rid="' + r.id + '" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx" /></label>' +
+      "</div>" +
+      "</div>";
+    body += '<div class="task-actions" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px">' +
+      '<button type="button" class="btn" data-action="close-modal">✖ Fermer la fenêtre</button>' +
+      (pinned
+        ? '<button type="button" class="btn" data-action="undo-complete-rec" data-rid="' + r.id + '">↩ Annuler le cycle bouclé (rend l\'XP)</button>'
+        : '<button class="btn btn-action act-done" data-action="complete-rec" data-rid="' + r.id + '">🏁 Boucler le cycle</button>') +
+      "</div>";
+    openModal(body, true);
+  }
   function refreshTaskModal() {
     if (openTaskId) {
       var t = taskById(openTaskId);
@@ -1482,6 +1879,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   document.addEventListener("click", function (e) {
     if (openFilterMenu && !e.target.closest(".filter-bar")) { openFilterMenu = null; renderAll(); }
+    if (openRecFilterMenu) {
+      var recBar = e.target.closest(".filter-bar");
+      if (!recBar || !recBar.querySelector('[data-action="toggle-rec-filter-menu"]')) { openRecFilterMenu = null; }
+    }
     var el = e.target.closest("[data-action]");
     if (el) {
       var act = el.getAttribute("data-action");
@@ -1575,6 +1976,96 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return;
       }
       if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
+      if (act === "open-add-rec-modal") {
+        recDraft = { id: null, title: "", description: "", recurrence: recDraft.recurrence || "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
+        openAddRecModal();
+        return;
+      }
+      if (act === "edit-rec") { openRecRecEdit(el.getAttribute("data-rid")); return; }
+      if (act === "set-rec-draft") { syncRecDrafts(); recDraft.recurrence = el.getAttribute("data-rec"); openAddRecModal(); return; }
+      if (act === "toggle-rec-label") {
+        var rlbl = el.getAttribute("data-label");
+        var ri = recDraft.labels.indexOf(rlbl);
+        if (ri === -1) recDraft.labels.push(rlbl); else recDraft.labels.splice(ri, 1);
+        el.classList.toggle("chip-active");
+        return;
+      }
+      if (act === "create-rec-inline-label") {
+        var ric = el.closest(".chip-create").querySelector("input");
+        var rl = createLabel(ric.value);
+        if (rl) {
+          syncRecDrafts();
+          recDraft.labels.push(rl.id);
+          openAddRecModal();
+          showToast("🏳️ Libellé créé : " + rl.name);
+        }
+        return;
+      }
+      if (act === "toggle-rec-filter-menu") { openRecFilterMenu = openRecFilterMenu ? null : "rec"; renderAll(); return; }
+      if (act === "set-rec-filter") { state.recFilter = el.getAttribute("data-rec"); openRecFilterMenu = null; saveState(); renderAll(); return; }
+      if (act === "delete-rec") { state.recurring = state.recurring.filter(function (x) { return x.id !== el.getAttribute("data-rid"); }); saveState(); renderAll(); return; }
+      if (act === "complete-rec") { var cpr = recById(el.getAttribute("data-rid")); if (cpr) completeRecurrence(cpr); return; }
+      if (act === "undo-complete-rec") { var ucr = recById(el.getAttribute("data-rid")); if (ucr && confirm("Annuler ce cycle bouclé ? L'XP et l'or de ce cycle seront retirés.")) undoRecurrence(ucr); return; }
+      if (act === "remove-rec-step") {
+        var rrs = recById(el.getAttribute("data-rid"));
+        if (rrs) { rrs.subtasks.splice(parseInt(el.getAttribute("data-index"), 10), 1); saveState(); openRecDetailModal(rrs.id, true); renderAll(); }
+        return;
+      }
+      if (act === "remove-rec-note") { var rrn = recById(el.getAttribute("data-rid")); if (rrn) { rrn.notes = (rrn.notes || []).filter(function (x) { return x.id !== el.getAttribute("data-note"); }); saveState(); openRecDetailModal(rrn.id, true); renderAll(); } return; }
+      if (act === "remove-rec-link") { var rrl = recById(el.getAttribute("data-rid")); if (rrl) { rrl.links = (rrl.links || []).filter(function (x) { return x.id !== el.getAttribute("data-link"); }); saveState(); openRecDetailModal(rrl.id, true); renderAll(); } return; }
+      if (act === "remove-rec-attachment") {
+        var rra = recById(el.getAttribute("data-rid"));
+        if (rra) {
+          rra.attachments = (rra.attachments || []).filter(function (x) { return x.id !== el.getAttribute("data-att"); });
+          saveState();
+          fileStore.del(rra.id + " " + el.getAttribute("data-att"), function () {});
+          openRecDetailModal(rra.id, true);
+          renderAll();
+        }
+        return;
+      }
+      if (act === "download-rec-attachment") { downloadRecAttachment(el.getAttribute("data-rid"), el.getAttribute("data-att")); return; }
+      if (act === "add-rec-label") {
+        var ral = recById(el.getAttribute("data-rid"));
+        var ralid = el.getAttribute("data-label");
+        if (ral && (ral.labels || []).indexOf(ralid) === -1) { ral.labels.push(ralid); saveState(); openRecDetailModal(ral.id, true); renderAll(); }
+        return;
+      }
+      if (act === "remove-rec-label") {
+        var rrlb = recById(el.getAttribute("data-rid"));
+        var rrlbid = el.getAttribute("data-label");
+        if (rrlb) { rrlb.labels = (rrlb.labels || []).filter(function (x) { return x !== rrlbid; }); saveState(); openRecDetailModal(rrlb.id, true); renderAll(); }
+        return;
+      }
+      if (act === "change-rec-recurrence") {
+        var rcx = recById(el.getAttribute("data-rid"));
+        if (rcx && rcx.recurrence !== el.getAttribute("data-rec")) {
+          rcx.recurrence = el.getAttribute("data-rec");
+          saveState();
+          openRecDetailModal(rcx.id, true);
+          renderAll();
+          showToast("🔁 Récurrence : " + (RECURRENCES[rcx.recurrence] || {}).label);
+        }
+        return;
+      }
+      if (act === "toggle-rec-step") {
+        var ctr = recById(el.getAttribute("data-rid"));
+        if (ctr) {
+          var cst = ctr.subtasks[parseInt(el.getAttribute("data-index"), 10)];
+          if (cst) {
+            cst.done = !cst.done;
+            if (cst.done) {
+              var crc = recurrenceOf(ctr);
+              state = grantReward(state, crc.stepXp, crc.stepGold);
+              showToast("☑ Étape validée : +" + crc.stepXp + " XP · +" + crc.stepGold + " 🪙");
+            }
+            saveState();
+            renderAll();
+            if (openRecId === ctr.id) openRecDetailModal(ctr.id, true);
+          }
+        }
+        return;
+      }
       if (act === "open-add-modal") { openAddModal(); return; }
       if (act === "open-labels-modal") { openLabelsModal(); return; }
       if (act === "set-diff") {
@@ -1662,6 +2153,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           try { localStorage.removeItem(SAVE_KEY); } catch (err) {}
           state = migrate(null);
           drafts = { title: "", due: "", steps: "", diff: "facile", labels: [] };
+          recDraft = { id: null, title: "", description: "", recurrence: "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
+          state.recFilter = "all";
           closeModal();
           applyTheme();
           renderAll();
@@ -1780,9 +2273,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       return;
     }
     var card = e.target.closest(".task-card");
-    if (!card) return;
-    if (e.target.closest("button, input, .btn-action, .task-delete")) return;
-    openTaskModal(card.getAttribute("data-task"));
+    if (card) {
+      if (e.target.closest("button, input, .btn-action, .task-delete")) return;
+      openTaskModal(card.getAttribute("data-task"));
+      return;
+    }
+    var recCard = e.target.closest(".rec-card");
+    if (recCard && !e.target.closest("button, input, .btn-action, .task-delete")) {
+      openRecDetailModal(recCard.getAttribute("data-rid"));
+      return;
+    }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
@@ -1892,6 +2392,116 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (lbl && url) addTaskLink(f.getAttribute("data-task"), lbl, url);
       return;
     }
+    if (f.id === "rec-form") {
+      e.preventDefault();
+      var rtEl = document.getElementById("rec-title");
+      var rsEl = document.getElementById("rec-start");
+      var rdEl = document.getElementById("rec-desc");
+      var rxEl = document.getElementById("rec-steps-text");
+      var rTitle = (rtEl && rtEl.value || "").trim();
+      if (!rTitle || !(rsEl && rsEl.value)) return;
+      var rSteps = (rxEl && rxEl.value || "").split("\n").map(function (x) { return x.trim(); })
+        .filter(Boolean).map(function (x) { return { text: x, done: false }; });
+      if (recDraft.id) {
+        var rUpd = recById(recDraft.id);
+        if (rUpd) {
+          rUpd.title = rTitle;
+          rUpd.description = (rdEl && rdEl.value || "").trim();
+          rUpd.recurrence = recDraft.recurrence;
+          rUpd.startDate = rsEl.value;
+          rUpd.labels = recDraft.labels.slice();
+          rUpd.subtasks = rSteps;
+        }
+        recDraft = { id: null, title: "", description: "", recurrence: rUpd ? rUpd.recurrence : "weekly", startDate: todayKey(), steps: "", labels: [], recCompleted: false };
+        closeModal();
+        saveState();
+        renderAll();
+        showToast("💾 Quête secondaire mise à jour");
+      } else {
+        var nRec = {
+          id: uid(), title: rTitle, recurrence: recDraft.recurrence, startDate: rsEl.value,
+          description: (rdEl && rdEl.value || "").trim(),
+          subtasks: rSteps, labels: recDraft.labels.slice(),
+          periods: {}, notes: [], links: [], attachments: []
+        };
+        state.recurring.push(nRec);
+        drafts.labels = [];
+        recDraft = { id: null, title: "", description: "", recurrence: recDraft.recurrence, startDate: todayKey(), steps: "", labels: [], recCompleted: false };
+        closeModal();
+        saveState();
+        renderAll();
+        showToast("📌 Quête épinglée au tableau : " + rTitle);
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "edit-rec-step") {
+      e.preventDefault();
+      var rre = recById(f.getAttribute("data-rid"));
+      var reidx = parseInt(f.getAttribute("data-index"), 10);
+      var rev = f.querySelector("input[name=edit-step]").value.trim();
+      if (rre && rre.subtasks[reidx]) {
+        if (rev) rre.subtasks[reidx].text = rev;
+        editStepIdx = null;
+        saveState();
+        openRecDetailModal(rre.id, true);
+        renderAll();
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-rec-step") {
+      e.preventDefault();
+      var rsi = f.querySelector("input[name=subtask-text]");
+      var rst = (rsi.value || "").trim();
+      if (rst) {
+        var rsr = recById(f.getAttribute("data-rid"));
+        if (rsr) {
+          rsr.subtasks.push({ text: rst, done: false });
+          rsi.value = "";
+          saveState();
+          openRecDetailModal(rsr.id, true);
+          renderAll();
+        }
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-rec-note") {
+      e.preventDefault();
+      var rnn = f.querySelector("input[name=note-text]");
+      var rnt = (rnn.value || "").trim();
+      if (rnt) {
+        var rntr = recById(f.getAttribute("data-rid"));
+        if (rntr) {
+          rntr.notes = rntr.notes || [];
+          rntr.notes.unshift({ id: uid(), date: stamp(), text: rnt });
+          saveState();
+          openRecDetailModal(rntr.id, true);
+          renderAll();
+          showToast("📓 Entrée ajoutée au journal");
+        }
+      }
+      return;
+    }
+    if (f.getAttribute && f.getAttribute("data-form") === "add-rec-link") {
+      e.preventDefault();
+      var rll = f.querySelector("input[name=link-label]");
+      var rlu = f.querySelector("input[name=link-url]");
+      var rlbl2 = (rll.value || "").trim();
+      var rurl = (rlu.value || "").trim();
+      var rLink = recById(f.getAttribute("data-rid"));
+      if (rlbl2 && rurl && rLink) {
+        if (!/^(https?:\/\/|mailto:)/i.test(rurl)) {
+          showToast("❌ Lien invalide — commence par http:// ou https://");
+          return;
+        }
+        rLink.links = rLink.links || [];
+        rLink.links.push({ id: uid(), label: rlbl2, url: rurl, date: stamp() });
+        saveState();
+        openRecDetailModal(rLink.id, true);
+        renderAll();
+        showToast("🔗 Lien ajouté");
+      }
+      return;
+    }
     if (f.getAttribute && f.getAttribute("data-form") === "create-label") {
       e.preventDefault();
       var name = f.querySelector("input[name=label-name]").value;
@@ -1946,6 +2556,78 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (e.target.getAttribute && e.target.getAttribute("data-action") === "toggle-subtask") {
       var changed = toggleSubtask(e.target.getAttribute("data-task"), parseInt(e.target.getAttribute("data-index"), 10));
       if (changed) { renderAll(); refreshTaskModal(); }
+      return;
+    }
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "toggle-rec-step") {
+      var ctr2 = recById(e.target.getAttribute("data-rid"));
+      if (ctr2) {
+        var cst2 = ctr2.subtasks[parseInt(e.target.getAttribute("data-index"), 10)];
+        if (cst2) {
+          cst2.done = !cst2.done;
+          if (cst2.done) {
+            var crc2 = recurrenceOf(ctr2);
+            state = grantReward(state, crc2.stepXp, crc2.stepGold);
+            showToast("☑ Étape validée : +" + crc2.stepXp + " XP · +" + crc2.stepGold + " 🪙");
+          }
+          saveState();
+          renderAll();
+          if (openRecId === ctr2.id) openRecDetailModal(ctr2.id, true);
+        }
+      }
+      return;
+    }
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "rename-rec") {
+      var rrn2 = recById(e.target.getAttribute("data-rid"));
+      var rnv = (e.target.value || "").trim();
+      if (rrn2 && rnv && rnv !== rrn2.title) {
+        rrn2.title = rnv;
+        saveState();
+        var rhb = document.querySelector("#modal .task-top b");
+        if (rhb) rhb.textContent = rnv;
+        renderAll();
+        showToast("Quête renommée");
+      }
+      return;
+    }
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "edit-rec-desc") {
+      var rrd = recById(e.target.getAttribute("data-rid"));
+      if (rrd) { rrd.description = (e.target.value || "").trim(); saveState(); }
+      return;
+    }
+    if (e.target.hasAttribute && e.target.hasAttribute("data-edit-rec-start")) {
+      var rrs = recById(e.target.getAttribute("data-rid"));
+      if (rrs && e.target.value) {
+        rrs.startDate = e.target.value;
+        saveState();
+        renderAll();
+        openRecDetailModal(rrs.id, true);
+        showToast("📅 Début de récurrence mis à jour");
+      }
+      return;
+    }
+    if (e.target.getAttribute && e.target.getAttribute("data-action") === "upload-rec-attachment") {
+      var rfile = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!rfile) return;
+      var rUpFile = recById(e.target.getAttribute("data-rid"));
+      if (!rUpFile) return;
+      if (rfile.size > MAX_FILE_BYTES) { showToast("❌ Fichier trop lourd (max 15 Mo)"); return; }
+      var raid = uid();
+      rUpFile.attachments = rUpFile.attachments || [];
+      rUpFile.attachments.push({ id: raid, name: rfile.name, size: rfile.size, type: rfile.type || "", date: stamp() });
+      saveState();
+      openRecDetailModal(rUpFile.id, true);
+      renderAll();
+      showToast("📎 " + rfile.name + " joint");
+      fileStore.put(rUpFile.id + " " + raid, rfile, function (okPut) {
+        if (!okPut) {
+          rUpFile.attachments = rUpFile.attachments.filter(function (a) { return a.id !== raid; });
+          saveState();
+          showToast("❌ Stockage impossible pour " + rfile.name);
+          openRecDetailModal(rUpFile.id, true);
+          renderAll();
+        }
+      });
     }
   });
   document.addEventListener("dragstart", function (e) {
