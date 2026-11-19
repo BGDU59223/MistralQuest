@@ -383,8 +383,44 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 }
 .toast.hidden { display: none; }
 .footer { margin-top: 24px; text-align: center; font-size: 15px; color: var(--muted); opacity: 0.7; }
-.pixel-sprite { display: grid; line-height: 0; }
-.pixel-sprite i { display: block; }
+/* ---- Pop-up flottante du chrono ---- */
+  #timer-float {
+    position: fixed; right: 16px; bottom: 16px; z-index: 55;
+    background: linear-gradient(180deg, #171a21, #101218);
+    border: 2px solid var(--accent-dark);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(255, 112, 0, 0.12);
+    padding: 8px 10px; min-width: 215px; max-width: 300px;
+  }
+  #timer-float.hidden { display: none; }
+  #timer-float .tf-bar {
+    display: flex; align-items: center; gap: 8px; cursor: move;
+    border-bottom: 1px solid rgba(255, 112, 0, 0.25); padding-bottom: 6px;
+    user-select: none; -webkit-user-select: none;
+  }
+  #timer-float .tf-title {
+    font-size: 13px; color: var(--text); flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #timer-float .tf-btns { display: flex; gap: 4px; }
+  #timer-float .tf-btn {
+    background: var(--card); color: var(--muted);
+    border: 1px solid var(--accent-dark); border-radius: 4px;
+    font-family: "VT323", "Courier New", monospace; font-size: 14px; line-height: 1;
+    padding: 3px 7px; cursor: pointer;
+  }
+  #timer-float .tf-btn:hover { color: #ffffff; background: #2a3140; }
+  #timer-float .tf-clock .live-timer { margin: 8px 0 4px; font-size: 30px; }
+  #timer-float .tf-actions { text-align: center; }
+  #timer-float .btn-action { width: 100%; }
+  #timer-float.tf-mini { min-width: 0; padding: 5px 8px; max-width: 320px; }
+  #timer-float.tf-mini .tf-bar { border-bottom: none; padding-bottom: 0; }
+  #timer-float.tf-mini .tf-title { max-width: 140px; }
+  #timer-float.tf-mini .live-timer { font-size: 16px; margin: 0; }
+  .hud-timer-recall { cursor: pointer; }
+  .hud-timer-recall.hidden { display: none; }
+  .pixel-sprite { display: grid; line-height: 0; }
+  .pixel-sprite i { display: block; }
 </style>
 </head>
 <body>
@@ -395,6 +431,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       <span class="brand-name">TASK <em>QUEST</em></span>
     </div>
     <div class="hud">
+      <button class="hud-badge hud-timer-recall hidden" id="hud-timer-float" data-action="show-timer-float" title="Réafficher la fenêtre du chrono (le chrono tourne toujours)">⏱</button>
       <span class="hud-badge" id="hud-level"></span>
       <span class="hud-badge" id="hud-gold"></span>
       <span class="hud-badge" id="hud-streak"></span>
@@ -407,6 +444,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     Task Quest — tes données restent dans ce navigateur (localStorage) · pense à 💾 Sauvegarde de temps en temps !
   </footer>
 </div>
+<div id="timer-float" class="hidden"></div>
 <div class="modal-overlay hidden" id="modal-overlay">
   <div class="modal panel" id="modal"></div>
 </div>
@@ -642,6 +680,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       filters: { labels: [], dates: [] },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
+      timerFloat: { hidden: false, minimized: false, x: null, y: null },
       theme: "nuit", view: "board", hero: null
     };
   }
@@ -667,6 +706,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     });
     out.recFilter = out.recFilter || "all";
     out.consumableLast = out.consumableLast || {};
+    out.timerFloat = (s && s.timerFloat) ? {
+      hidden: !!s.timerFloat.hidden,
+      minimized: !!s.timerFloat.minimized,
+      x: (s.timerFloat.x === undefined || s.timerFloat.x === null) ? null : Number(s.timerFloat.x),
+      y: (s.timerFloat.y === undefined || s.timerFloat.y === null) ? null : Number(s.timerFloat.y)
+    } : { hidden: false, minimized: false, x: null, y: null };
     out.hero = (s && s.hero !== undefined) ? s.hero : null;
     out.tasks = (out.tasks || []).map(function (t) {
       return {
@@ -762,6 +807,92 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     state.tasks.forEach(stopEntityTimer);
     (state.recurring || []).forEach(stopEntityTimer);
   }
+  /* ---- Pop-up flottante du chrono ---- */
+  function timerFloatDefaults() {
+    return { hidden: false, minimized: false, x: null, y: null };
+  }
+  function timerFloatEntity() {
+    var t = state.tasks.filter(function (x) { return x.timerStart; })[0];
+    if (t) return t;
+    return (state.recurring || []).filter(function (r) { return r.timerStart; })[0] || null;
+  }
+  function clampTf(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function applyTfPos(el) {
+    var tf = state.timerFloat || timerFloatDefaults();
+    if (tf.x === null || tf.x === undefined) {
+      el.style.left = ""; el.style.top = "";
+      el.style.right = "16px"; el.style.bottom = "16px";
+      return;
+    }
+    el.style.right = "auto"; el.style.bottom = "auto";
+    el.style.left = clampTf(tf.x, 0, Math.max(8, (window.innerWidth || 1200) - 60)) + "px";
+    el.style.top = clampTf(tf.y, 0, Math.max(8, (window.innerHeight || 800) - 60)) + "px";
+  }
+  function renderTimerFloat() {
+    var wrap = document.getElementById("timer-float");
+    var recall = document.getElementById("hud-timer-float");
+    if (!wrap) return;
+    var x = timerFloatEntity();
+    state.timerFloat = state.timerFloat || timerFloatDefaults();
+    var tf = state.timerFloat;
+    if (recall) recall.classList.toggle("hidden", !(x && tf.hidden));
+    if (!x || tf.hidden) { wrap.classList.add("hidden"); wrap.innerHTML = ""; return; }
+    wrap.classList.remove("hidden");
+    wrap.className = tf.minimized ? "tf-mini" : "";
+    var attr = (x.recurrence ? 'data-rid="' : 'data-task="') + x.id + '"';
+    var clock = '<span class="live-timer" data-live-timer ' + attr + ">" + fmtClock(timerElapsedSec(x)) + "</span>";
+    if (tf.minimized) {
+      wrap.innerHTML =
+        '<div class="tf-bar">' +
+          '<span class="tf-title">\u23f1 ' + esc(x.title) + "</span>" + clock +
+          '<span class="tf-btns">' +
+            '<button class="tf-btn" data-action="float-restore" title="Agrandir">\u25a3</button>' +
+            '<button class="tf-btn" data-action="float-close" title="Masquer (le chrono continue)">\u2716</button>' +
+          "</span>" +
+        "</div>";
+    } else {
+      wrap.innerHTML =
+        '<div class="tf-bar">' +
+          '<span class="tf-title">\ud83c\udfaf ' + esc(x.title) + "</span>" +
+          '<span class="tf-btns">' +
+            '<button class="tf-btn" data-action="float-min" title="R\u00e9duire">\u2014</button>' +
+            '<button class="tf-btn" data-action="float-close" title="Masquer (le chrono continue)">\u2716</button>' +
+          "</span>" +
+        "</div>" +
+        '<div class="tf-clock">' + clock + "</div>" +
+        '<div class="tf-actions"><button class="btn btn-action act-doing" data-action="stop-timer" ' + attr + ">\u23f8\ufe0f Pause du chrono</button></div>";
+    }
+    applyTfPos(wrap);
+  }
+  var tfDrag = null;
+  document.addEventListener("mousedown", function (e) {
+    if (!e.target || !e.target.closest) return;
+    var bar = e.target.closest("#timer-float .tf-bar");
+    if (!bar || e.target.closest("button")) return;
+    var wrap = document.getElementById("timer-float");
+    if (!wrap) return;
+    state.timerFloat = state.timerFloat || timerFloatDefaults();
+    var tf = state.timerFloat;
+    if (tf.x === null || tf.x === undefined) {
+      var r = wrap.getBoundingClientRect();
+      tf.x = Math.round(r.left || 0);
+      tf.y = Math.round(r.top || (window.innerHeight || 800) - 140);
+    }
+    tfDrag = { dx: e.clientX - tf.x, dy: e.clientY - tf.y };
+    if (e.preventDefault) e.preventDefault();
+  });
+  document.addEventListener("mousemove", function (e) {
+    if (!tfDrag) return;
+    state.timerFloat.x = e.clientX - tfDrag.dx;
+    state.timerFloat.y = e.clientY - tfDrag.dy;
+    var wrap = document.getElementById("timer-float");
+    if (wrap) applyTfPos(wrap);
+  });
+  document.addEventListener("mouseup", function () {
+    if (!tfDrag) return;
+    tfDrag = null;
+    saveState();
+  });
   function labelsOf(t) {
     return (t.labels || []).map(function (id) {
       return (state.labels || []).filter(function (l) { return l.id === id; })[0];
@@ -2018,6 +2149,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         });
       }, 500);
     }
+    renderTimerFloat();
   }
   function anyTimerRunning() {
     return state.tasks.some(function (t) { return t.timerStart; }) ||
@@ -2133,11 +2265,41 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return;
       }
       if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
+      if (act === "show-timer-float") {
+        state.timerFloat = state.timerFloat || timerFloatDefaults();
+        state.timerFloat.hidden = false;
+        saveState();
+        renderAll();
+        return;
+      }
+      if (act === "float-close") {
+        state.timerFloat = state.timerFloat || timerFloatDefaults();
+        state.timerFloat.hidden = true;
+        saveState();
+        renderAll();
+        return;
+      }
+      if (act === "float-min") {
+        state.timerFloat = state.timerFloat || timerFloatDefaults();
+        state.timerFloat.minimized = true;
+        saveState();
+        renderTimerFloat();
+        return;
+      }
+      if (act === "float-restore") {
+        state.timerFloat = state.timerFloat || timerFloatDefaults();
+        state.timerFloat.minimized = false;
+        saveState();
+        renderTimerFloat();
+        return;
+      }
       if (act === "start-timer") {
         var stTimer = el.getAttribute("data-rid") ? recById(el.getAttribute("data-rid")) : taskById(el.getAttribute("data-task"));
         if (stTimer && !stTimer.timerStart) {
           stopAllTimers();
           stTimer.timerStart = Date.now();
+          state.timerFloat = state.timerFloat || timerFloatDefaults();
+          state.timerFloat.hidden = false;
           saveState();
           renderAll();
           if (openTaskId === stTimer.id) openTaskModal(stTimer.id, true);
@@ -2834,7 +2996,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       draggedId = null;
     }
   });
-  window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec };
+  window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec,
+    timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; } };
   var LOGO = [
     "................",
     "...OO......OO...",
