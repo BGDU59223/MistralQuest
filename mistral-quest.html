@@ -901,40 +901,65 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     saveState();
   });
   /* ---- Vraie fenêtre système pour le chrono (Picture-in-Picture / pop-up navigateur) ---- */
-  var TFW_CSS = "body{margin:0;background:#0b0d12;color:#f5e6c8;font-family:'VT323','Courier New',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:10px}.tfw-title{font-size:14px;max-width:92%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #c25400;border-radius:6px;padding:4px 8px;background:#1e1a16}.tfw-clock{font-size:38px;color:#ff7000;letter-spacing:2px}.tfw-stop{background:#1e1a16;color:#7aa2ff;border:2px solid #7aa2ff;border-radius:6px;padding:6px 12px;font-size:16px;font-family:inherit;cursor:pointer}.tfw-stop:hover{color:#fff;background:#2a3140}.tfw-empty{color:#a08a68;font-size:15px;text-align:center;line-height:1.5}";
+  var TFW_EXTRA_CSS = "body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden}.tfw-wrap .task-card,.tfw-wrap .rec-card,.pip-body .task-card,.pip-body .rec-card{width:94%;margin:0;cursor:default}.pip-body{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}";
   var pipWin = null, pipTick = null;
   function closePip() {
     if (pipTick && pipWin && !pipWin.closed) pipWin.clearInterval(pipTick);
     if (pipWin && !pipWin.closed) pipWin.close();
     pipWin = null; pipTick = null;
   }
+  function copyAppStyles(destDoc) {
+    try {
+      [].slice.call(document.querySelectorAll("style")).forEach(function (s) {
+        var st = destDoc.createElement("style");
+        st.textContent = s.textContent;
+        destDoc.head.appendChild(st);
+      });
+      [].slice.call(document.querySelectorAll('link[rel="stylesheet"]')).forEach(function (l) {
+        var st = destDoc.createElement("link");
+        st.rel = "stylesheet";
+        st.href = l.href;
+        destDoc.head.appendChild(st);
+      });
+    } catch (e) {}
+  }
+  function timerTileHTML(x) {
+    return x.recurrence ? recurringCardHTML(x) : taskCardHTML(x);
+  }
   function buildPipWindow(pw) {
     pipWin = pw;
     var pd = pw.document;
     pd.title = "Task Quest - chrono";
+    copyAppStyles(pd);
     var st = pd.createElement("style");
-    st.textContent = TFW_CSS;
+    st.textContent = TFW_EXTRA_CSS;
     pd.head.appendChild(st);
-    pd.body.innerHTML = '<div class="tfw-title" id="pip-title"></div>' +
-      '<div class="tfw-clock" id="pip-clock"></div>' +
-      '<button class="tfw-stop" id="pip-stop">\u23f8\ufe0f Pause du chrono</button>';
-    pd.getElementById("pip-stop").addEventListener("click", function () {
-      var cur = timerFloatEntity();
-      if (cur) {
-        var sec = stopEntityTimer(cur);
-        saveState();
-        renderAll();
-        showToast("\u23f1\ufe0f " + fmtDuration(sec) + " enregistr\u00e9es sur : " + cur.title);
+    pd.body.innerHTML = '<div class="pip-body" id="pip-body" data-ent=""></div>';
+    pd.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest('[data-action="stop-timer"]')) {
+        var cur = timerFloatEntity();
+        if (cur) {
+          var sec = stopEntityTimer(cur);
+          saveState();
+          renderAll();
+          showToast("\u23f1\ufe0f " + fmtDuration(sec) + " enregistr\u00e9es sur : " + cur.title);
+        }
+        closePip();
       }
-      closePip();
     });
     pw.addEventListener("pagehide", function () { pipWin = null; if (pipTick) pipTick = null; });
     function pipRefresh() {
       if (!pipWin || pipWin.closed) { pipWin = null; pipTick = null; return; }
       var cur = timerFloatEntity();
       if (!cur) { closePip(); return; }
-      pd.getElementById("pip-title").textContent = "\ud83c\udfaf " + cur.title;
-      pd.getElementById("pip-clock").textContent = fmtClock(timerElapsedSec(cur));
+      var body = pd.getElementById("pip-body");
+      if (!body) return;
+      if (body.getAttribute("data-ent") !== cur.id) {
+        body.innerHTML = timerTileHTML(cur);
+        body.setAttribute("data-ent", cur.id);
+      }
+      var clk = pd.querySelector('#pip-body [data-live-timer]');
+      if (clk) clk.textContent = fmtClock(timerElapsedSec(cur));
     }
     pipRefresh();
     pipTick = pw.setInterval(pipRefresh, 500);
@@ -942,7 +967,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function openFallbackTimerWin() {
     try {
       var u = String(location.href).split("?")[0].split("#")[0] + "?timerwin=1";
-      var win = window.open(u, "tq-timer-win", "width=300,height=190,menubar=no,toolbar=no,location=no,status=no,resizable=yes");
+      var win = window.open(u, "tq-timer-win", "width=330,height=270,menubar=no,toolbar=no,location=no,status=no,resizable=yes");
       if (win) { try { win.focus(); } catch (e2) {} showToast("\ud83d\udccc Fen\u00eatre chrono ouverte : elle suit tes autres onglets."); }
       else showToast("\u26a0\ufe0f Le navigateur a bloqu\u00e9 la fen\u00eatre : autorise les pop-ups pour Task Quest.");
     } catch (e) {
@@ -955,7 +980,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var dpip = window.documentPictureInPicture;
     if (dpip && dpip.requestWindow) {
       try {
-        dpip.requestWindow({ width: 280, height: 180 }).then(function (pw) {
+        dpip.requestWindow({ width: 330, height: 260 }).then(function (pw) {
           buildPipWindow(pw);
           showToast("\ud83d\udccc Fen\u00eatre chrono \u00e9pingl\u00e9e : elle flotte au-dessus des autres onglets.");
           syncTimerButtons();
@@ -1008,25 +1033,33 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (!box) return;
       var x = s ? miniEntity(s) : null;
       if (!x) {
+        box.setAttribute("data-ent", "");
         box.innerHTML = '<div class="tfw-empty">Aucun chrono en cours.<br/>Lance un chrono depuis Task Quest.</div>' +
           '<button class="tf-btn" id="tfw-close">\u2716 Fermer</button>';
         var cb = document.getElementById("tfw-close");
         if (cb) cb.onclick = function () { window.close(); };
         return;
       }
-      var sec = (x.timeSpent || 0) + (x.timerStart ? Math.max(0, (Date.now() - x.timerStart) / 1000) : 0);
-      box.innerHTML = '<div class="tfw-title">\ud83c\udfaf ' + esc(x.title) + "</div>" +
-        '<div class="tfw-clock">' + fmtClock(sec) + "</div>" +
-        '<button class="tf-btn" id="tfw-stop">\u23f8\ufe0f Pause du chrono</button>';
-      var sb = document.getElementById("tfw-stop");
-      if (sb) sb.onclick = timerWinStopRunning;
+      if (box.getAttribute("data-ent") !== x.id) {
+        box.innerHTML = timerTileHTML(x);
+        box.setAttribute("data-ent", x.id);
+        var sb = box.querySelector('[data-action="stop-timer"]');
+        if (sb) sb.onclick = timerWinStopRunning;
+      }
+      var clk = box.querySelector("[data-live-timer]");
+      if (clk) {
+        var sec = (x.timeSpent || 0) + (x.timerStart ? Math.max(0, (Date.now() - x.timerStart) / 1000) : 0);
+        clk.textContent = fmtClock(sec);
+      }
     }
     renderMini();
     setInterval(renderMini, 500);
   }
+  function isTimerWin() { return /[?&]timerwin=1/.test(String(location.search)); }
   var tqChan = null;
   try { tqChan = new BroadcastChannel("task-quest-timer"); } catch (e) {}
   if (tqChan) tqChan.onmessage = function (ev) {
+    if (isTimerWin()) return;
     if (ev.data && ev.data.type === "stop-timer") {
       var cur = timerFloatEntity();
       if (cur) {
@@ -1039,6 +1072,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   };
   window.addEventListener("storage", function (ev) {
     if (ev.key !== SAVE_KEY || !ev.newValue) return;
+    if (isTimerWin()) return; /* la mini-fenêtre lit localStorage elle-même */
     try {
       var ns = JSON.parse(ev.newValue);
       var wasRunning = anyTimerRunning();
@@ -2321,6 +2355,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return pool[Math.floor(Math.random() * pool.length)];
   }
   document.addEventListener("click", function (e) {
+      if (isTimerWin()) return;
     if (openFilterMenu && !e.target.closest(".filter-bar")) { openFilterMenu = null; renderAll(); }
     if (openRecFilterMenu) {
       var recBar = e.target.closest(".filter-bar");
@@ -2761,6 +2796,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (e.target.id === "modal-overlay") { closeModal(); syncAddDrafts(); }
   });
   document.addEventListener("dblclick", function (e) {
+      if (isTimerWin()) return;
     var stepSpan = e.target.closest("#modal .subtask span[data-step-index]");
     if (stepSpan) {
       var lab = stepSpan.closest(".subtask").querySelector("input[data-task]");
@@ -2785,12 +2821,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   document.addEventListener("keydown", function (e) {
+      if (isTimerWin()) return;
     if (e.key === "Escape") {
       if (openTaskId) syncAddDrafts();
       closeModal();
     }
   });
   document.addEventListener("submit", function (e) {
+      if (isTimerWin()) return;
     var f = e.target;
     if (f.id === "quest-form") {
       e.preventDefault();
@@ -3014,6 +3052,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   document.addEventListener("input", function (e) {
+      if (isTimerWin()) return;
     if (e.target.id === "add-title") drafts.title = e.target.value;
     if (e.target.id === "add-due") drafts.due = e.target.value;
     if (e.target.name === "steps-text") {
@@ -3023,6 +3062,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   document.addEventListener("change", function (e) {
+      if (isTimerWin()) return;
     if (e.target.getAttribute && e.target.getAttribute("data-action") === "upload-attachment") {
       var file = e.target.files && e.target.files[0];
       e.target.value = "";
@@ -3131,18 +3171,22 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   document.addEventListener("dragstart", function (e) {
+      if (isTimerWin()) return;
     var card = e.target.closest(".task-card");
     if (card) { draggedId = card.getAttribute("data-task"); }
   });
   document.addEventListener("dragover", function (e) {
+      if (isTimerWin()) return;
     var col = e.target.closest(".column");
     if (col) { e.preventDefault(); col.classList.add("column-drop"); }
   });
   document.addEventListener("dragleave", function (e) {
+      if (isTimerWin()) return;
     var col = e.target.closest(".column");
     if (col) col.classList.remove("column-drop");
   });
   document.addEventListener("drop", function (e) {
+      if (isTimerWin()) return;
     var col = e.target.closest(".column");
     if (col && draggedId) {
       e.preventDefault();
@@ -3172,7 +3216,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     "................",
     "................"
   ];
-  if (/[?&]timerwin=1/.test(String(location.search))) { initTimerWindow(); return; }
+  if (isTimerWin()) { initTimerWindow(); return; }
   document.getElementById("logo").innerHTML = spriteHTML(LOGO, "3px");
   applyTheme();
   renderAll();
