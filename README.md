@@ -28,7 +28,7 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 ## Fonctionnalités
 
 - **Board Kanban** (À faire / En cours / Terminé) avec glisser-déposer, et fiche héros compacte sur la droite : le board profite de toute la largeur pour tes quêtes
-- **Filtres combinables** : par libellé et par échéance (☠️ En retard / 📆 Cette semaine / 🗓️ Semaine prochaine / 🔭 À venir / Sans échéance) — coches-en plusieurs à la fois et remets tout à plat d'un clic
+- **Filtres en menus déroulants** : un bouton 🏷️ Libellé et un bouton 📅 Échéance (☠️ En retard / 📆 Cette semaine / 🗓️ Semaine prochaine / 🔭 À venir / Sans échéance) — coche plusieurs options dans chaque liste, les tuiles se filtrent en direct et « ✨ Tout afficher » remet tout à plat
 - **Quêtes renommables** : le nom d'une quête se change à tout moment dans sa fenêtre (double-clic sur la tuile)
 - **Création de héros** : nom, genre (homme / femme), classes (magicien, guerrier, chasseur, assassin) et couleur de peau — modifiable à tout moment en double-cliquant sur le héros ; en sous-vêtements tant qu'il n'a rien équipé
 - **Niveau de quête automatique** : calculé d'après le nombre de points à cocher — 0 point → Libre (0 XP), 1 → Facile (+10 XP · 2 🪙), 2–3 → Moyenne (+25 · 5 🪙), 4–7 → Difficile (+50 · 8 🪙), 8 et plus → Boss (+120 · 12 🪙)
@@ -39,7 +39,7 @@ Build de production : `npm run build` · Aperçu : `npm run preview`
 - **Libellés personnalisés** : création libre, attribution aux quêtes, code couleur
 - **Progression** : barre d'XP, niveaux, titres (Novice → Légende du Mistral)
 - **Or & boutique** : armes, armures, casques, bottes, familiers et thèmes de couleurs, avec raretés commun / rare / épique / légendaire
-- **Retour en arrière** : bouton Retour depuis En cours vers À faire, et annulation d'une quête terminée (l'XP est rendue, perte de niveau possible)
+- **Retour en arrière** : petite flèche ↩️ en haut de la tuile (En cours → À faire), boutons d'action compactes, et annulation d'une quête terminée (l'XP est rendue, perte de niveau possible)
 - **Streak quotidien** : bonus d'XP croissant si tu complètes au moins une tâche par jour
 - **Loot boxes** : 1 offerte tous les 3 niveaux, ou achetable pour 60 pièces d'or
 - **10 succès** à débloquer

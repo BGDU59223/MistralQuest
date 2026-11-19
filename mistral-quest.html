@@ -81,8 +81,24 @@ input, textarea, select {
 input:focus, textarea:focus { outline: 2px solid var(--accent); }
 .board-actions { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
 .filter-bar { margin-bottom: 14px; padding: 8px 10px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 10px; gap: 6px; }
+.filter-bar { position: relative; }
 .filter-bar .chip { font-size: 11px; }
 .filter-bar .chip-active { border-color: var(--accent); color: var(--accent); }
+.filter-pop {
+  position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 40;
+  display: flex; flex-direction: column; gap: 2px; min-width: 210px;
+  background: var(--panel); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+  padding: 6px; box-shadow: 0 10px 28px rgba(0,0,0,0.55);
+}
+.filter-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: none; border: none; color: var(--text); font-family: inherit;
+  cursor: pointer; text-align: left; font-size: 12px; padding: 7px 9px; border-radius: 7px;
+}
+.filter-opt:hover { background: rgba(255,255,255,0.07); }
+.filter-opt.opt-active { background: rgba(255,112,0,0.14); color: var(--accent); }
+.task-card .btn-action { font-size: 9px; padding: 7px 12px; }
+.task-card .task-top .act-back { font-size: 14px; padding: 0 2px; }
 .board-actions .btn-big { font-size: 11px; padding: 12px 16px; }
 .board-actions .spacer { flex: 1; }
 .form-row { margin-bottom: 12px; }
@@ -737,18 +753,29 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       loot +
       "</div>";
   }
+  var openFilterMenu = null;
   function filterBarHTML() {
     var f = state.filters || (state.filters = { labels: [], dates: [] });
-    var labelChips = state.labels.map(function (l) {
-      return '<button type="button" class="chip' + (f.labels.indexOf(l.id) !== -1 ? " chip-active" : "") + '" data-action="toggle-filter-label" data-label="' + l.id + '"><span class="label-chip" style="background:' + esc(l.color) + '">'+ esc(l.name) + "</span></button>";
-    }).join("");
-    var dateChips = DATE_FILTERS.map(function (df) {
-      return '<button type="button" class="chip' + (f.dates.indexOf(df[0]) !== -1 ? " chip-active" : "") + '" data-action="toggle-filter-date" data-date="' + df[0] + '">' + df[1] + "</button>";
-    }).join("");
-    var active = f.labels.length + f.dates.length > 0;
+    var activeCount = f.labels.length + f.dates.length;
+    var labelBtn = '<button type="button" class="chip filter-btn' + (openFilterMenu === "labels" ? " chip-active" : "") + '" data-action="toggle-filter-menu" data-menu="labels">🏷️ Libellé' + (f.labels.length ? " (" + f.labels.length + ")" : "") + ' ▾</button>';
+    var dateBtn = '<button type="button" class="chip filter-btn' + (openFilterMenu === "dates" ? " chip-active" : "") + '" data-action="toggle-filter-menu" data-menu="dates">📅 Échéance' + (f.dates.length ? " (" + f.dates.length + ")" : "") + ' ▾</button>';
+    var pop = "";
+    if (openFilterMenu === "labels") {
+      pop = '<div class="filter-pop">' + (state.labels.map(function (l) {
+        var on = f.labels.indexOf(l.id) !== -1;
+        return '<button type="button" class="filter-opt' + (on ? " opt-active" : "") + '" data-action="toggle-filter-label" data-label="' + l.id + '"><span class="label-chip" style="background:' + esc(l.color) + '">'+ esc(l.name) + "</span>" + (on ? " ✔" : "") + "</button>";
+      }).join("") || '<p class="lootbox-hint" style="margin:0 6px">Aucun libellé créé — utilise le bouton 🏷️ Libellés</p>') + "</div>";
+    } else if (openFilterMenu === "dates") {
+      pop = '<div class="filter-pop">' + DATE_FILTERS.map(function (df) {
+        var on = f.dates.indexOf(df[0]) !== -1;
+        return '<button type="button" class="filter-opt' + (on ? " opt-active" : "") + '" data-action="toggle-filter-date" data-date="' + df[0] + '">' + df[1] + (on ? " ✔" : "") + "</button>";
+      }).join("") + "</div>";
+    }
     return '<div class="board-actions filter-bar">' +
-      '<span class="lootbox-hint">🔍 Filtres :</span>' + labelChips + dateChips +
-      (active ? '<button class="btn btn-danger" data-action="clear-filters" style="margin-left:auto">✨ Tout afficher</button>' : "") +
+      '<span class="lootbox-hint">🔍 Filtrer :</span>' + labelBtn + dateBtn +
+      (activeCount ? '<span class="lootbox-hint">' + activeCount + ' filtre' + (activeCount > 1 ? "s" : "") + " actif" + (activeCount > 1 ? "s" : "") + "</span>" : "") +
+      (activeCount ? '<button class="btn btn-danger" data-action="clear-filters" style="margin-left:auto">✨ Tout afficher</button>' : "") +
+      pop +
       "</div>";
   }
   function tabsHTML() {
@@ -785,14 +812,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (t.status === "todo") {
       actions = '<button class="btn btn-action act-doing" data-action="advance" data-task="' + t.id + '">🏃 En cours</button>';
     } else if (t.status === "doing") {
-      actions = '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>' +
-        '<button class="btn btn-action act-back" data-action="back" data-task="' + t.id + '">↩ Retour</button>';
+      actions = '<button class="btn btn-action act-done" data-action="advance" data-task="' + t.id + '">🏁 Terminé</button>';
     } else {
       actions = '<button class="btn btn-action act-cancel" data-action="cancel-quest" data-task="' + t.id + '">↩ Annuler</button>' +
         '<button class="btn" data-action="archive-task" data-task="' + t.id + '">🗄️ Archiver</button>';
     }
     return '<div class="' + cls + '" draggable="true" data-task="' + t.id + '">' +
       '<div class="task-top"><span class="task-title">' + esc(t.title) + '</span>' +
+      (t.status === "doing" ? '<button class="task-btn act-back" data-action="back" data-task="' + t.id + '" title="Remettre en À faire">↩️</button>' : "") +
       '<button class="task-btn task-delete" data-action="delete-task" data-task="' + t.id + '" title="Supprimer">✖</button></div>' +
       '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + labelChipsHTML(t) + "</div>" +
       questProgressBarHTML(t) +
@@ -1452,6 +1479,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return pool[Math.floor(Math.random() * pool.length)];
   }
   document.addEventListener("click", function (e) {
+    if (openFilterMenu && !e.target.closest(".filter-bar")) { openFilterMenu = null; renderAll(); }
     var el = e.target.closest("[data-action]");
     if (el) {
       var act = el.getAttribute("data-action");
@@ -1694,6 +1722,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         removeSubtask(el.getAttribute("data-task"), parseInt(el.getAttribute("data-index"), 10));
         openTaskModal(el.getAttribute("data-task"));
         refreshTaskModal && refreshTaskModal();
+        renderAll();
+        return;
+      }
+      if (act === "toggle-filter-menu") {
+        openFilterMenu = openFilterMenu === el.getAttribute("data-menu") ? null : el.getAttribute("data-menu");
         renderAll();
         return;
       }
