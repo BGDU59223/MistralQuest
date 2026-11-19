@@ -419,6 +419,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   #timer-float.tf-mini .live-timer { font-size: 16px; margin: 0; }
   .hud-timer-recall { cursor: pointer; }
   .hud-timer-recall.hidden { display: none; }
+  /* Mini-fenêtre chrono (mode ?timerwin=1 et Picture-in-Picture) */
+  .tfw-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 10px; }
+  .tfw-title { font-size: 14px; max-width: 92%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--accent-dark); border-radius: 6px; padding: 4px 8px; background: var(--card); }
+  .tfw-clock { font-size: 38px; color: var(--accent); letter-spacing: 2px; }
+  .tfw-empty { color: var(--muted); font-size: 15px; text-align: center; line-height: 1.5; }
   .pixel-sprite { display: grid; line-height: 0; }
   .pixel-sprite i { display: block; }
 </style>
@@ -855,6 +860,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<div class="tf-bar">' +
           '<span class="tf-title">\ud83c\udfaf ' + esc(x.title) + "</span>" +
           '<span class="tf-btns">' +
+            '<button class="tf-btn" data-action="float-pin" id="pip-toggle" title="Ouvrir une vraie fen\u00eatre qui reste affich\u00e9e au-dessus des autres onglets">\ud83d\udccc \u00c9pingler</button>' +
             '<button class="tf-btn" data-action="float-min" title="R\u00e9duire">\u2014</button>' +
             '<button class="tf-btn" data-action="float-close" title="Masquer (le chrono continue)">\u2716</button>' +
           "</span>" +
@@ -863,6 +869,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<div class="tf-actions"><button class="btn btn-action act-doing" data-action="stop-timer" ' + attr + ">\u23f8\ufe0f Pause du chrono</button></div>";
     }
     applyTfPos(wrap);
+    syncTimerButtons();
   }
   var tfDrag = null;
   document.addEventListener("mousedown", function (e) {
@@ -892,6 +899,153 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!tfDrag) return;
     tfDrag = null;
     saveState();
+  });
+  /* ---- Vraie fenêtre système pour le chrono (Picture-in-Picture / pop-up navigateur) ---- */
+  var TFW_CSS = "body{margin:0;background:#0b0d12;color:#f5e6c8;font-family:'VT323','Courier New',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:10px}.tfw-title{font-size:14px;max-width:92%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid #c25400;border-radius:6px;padding:4px 8px;background:#1e1a16}.tfw-clock{font-size:38px;color:#ff7000;letter-spacing:2px}.tfw-stop{background:#1e1a16;color:#7aa2ff;border:2px solid #7aa2ff;border-radius:6px;padding:6px 12px;font-size:16px;font-family:inherit;cursor:pointer}.tfw-stop:hover{color:#fff;background:#2a3140}.tfw-empty{color:#a08a68;font-size:15px;text-align:center;line-height:1.5}";
+  var pipWin = null, pipTick = null;
+  function closePip() {
+    if (pipTick && pipWin && !pipWin.closed) pipWin.clearInterval(pipTick);
+    if (pipWin && !pipWin.closed) pipWin.close();
+    pipWin = null; pipTick = null;
+  }
+  function buildPipWindow(pw) {
+    pipWin = pw;
+    var pd = pw.document;
+    pd.title = "Task Quest - chrono";
+    var st = pd.createElement("style");
+    st.textContent = TFW_CSS;
+    pd.head.appendChild(st);
+    pd.body.innerHTML = '<div class="tfw-title" id="pip-title"></div>' +
+      '<div class="tfw-clock" id="pip-clock"></div>' +
+      '<button class="tfw-stop" id="pip-stop">\u23f8\ufe0f Pause du chrono</button>';
+    pd.getElementById("pip-stop").addEventListener("click", function () {
+      var cur = timerFloatEntity();
+      if (cur) {
+        var sec = stopEntityTimer(cur);
+        saveState();
+        renderAll();
+        showToast("\u23f1\ufe0f " + fmtDuration(sec) + " enregistr\u00e9es sur : " + cur.title);
+      }
+      closePip();
+    });
+    pw.addEventListener("pagehide", function () { pipWin = null; if (pipTick) pipTick = null; });
+    function pipRefresh() {
+      if (!pipWin || pipWin.closed) { pipWin = null; pipTick = null; return; }
+      var cur = timerFloatEntity();
+      if (!cur) { closePip(); return; }
+      pd.getElementById("pip-title").textContent = "\ud83c\udfaf " + cur.title;
+      pd.getElementById("pip-clock").textContent = fmtClock(timerElapsedSec(cur));
+    }
+    pipRefresh();
+    pipTick = pw.setInterval(pipRefresh, 500);
+  }
+  function openFallbackTimerWin() {
+    try {
+      var u = String(location.href).split("?")[0].split("#")[0] + "?timerwin=1";
+      var win = window.open(u, "tq-timer-win", "width=300,height=190,menubar=no,toolbar=no,location=no,status=no,resizable=yes");
+      if (win) { try { win.focus(); } catch (e2) {} showToast("\ud83d\udccc Fen\u00eatre chrono ouverte : elle suit tes autres onglets."); }
+      else showToast("\u26a0\ufe0f Le navigateur a bloqu\u00e9 la fen\u00eatre : autorise les pop-ups pour Task Quest.");
+    } catch (e) {
+      showToast("\u26a0\ufe0f Impossible d'ouvrir la fen\u00eatre chrono ici.");
+    }
+  }
+  function detachTimerWindow() {
+    var x = timerFloatEntity();
+    if (!x) { showToast("\u23f1 Aucun chrono en cours \u00e0 \u00e9pingler."); return; }
+    var dpip = window.documentPictureInPicture;
+    if (dpip && dpip.requestWindow) {
+      try {
+        dpip.requestWindow({ width: 280, height: 180 }).then(function (pw) {
+          buildPipWindow(pw);
+          showToast("\ud83d\udccc Fen\u00eatre chrono \u00e9pingl\u00e9e : elle flotte au-dessus des autres onglets.");
+          syncTimerButtons();
+        }).catch(function () { openFallbackTimerWin(); });
+        return;
+      } catch (e) {}
+    }
+    openFallbackTimerWin();
+  }
+  function syncTimerButtons() {
+    var pb = document.getElementById("pip-toggle");
+    var pe = pipWin && !pipWin.closed;
+    if (pb) pb.textContent = pe ? "\u25ab Fen\u00eatre du chrono" : "\ud83d\udccc \u00c9pingler la fen\u00eatre";
+  }
+  function timerWinStopRunning() {
+    var sent = false;
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        var ch = new BroadcastChannel("task-quest-timer");
+        ch.postMessage({ type: "stop-timer" });
+        ch.close();
+        sent = true;
+      }
+    } catch (e) {}
+    if (!sent) {
+      try {
+        var s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+        if (s) {
+          (s.tasks || []).concat(s.recurring || []).forEach(function (x) {
+            if (x.timerStart) {
+              x.timeSpent = (x.timeSpent || 0) + Math.max(0, Math.round((Date.now() - x.timerStart) / 1000));
+              x.timerStart = null;
+            }
+          });
+          localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+        }
+      } catch (e2) {}
+    }
+  }
+  function initTimerWindow() {
+    document.title = "Task Quest - chrono";
+    document.body.innerHTML = '<div class="tfw-wrap" id="tfw-body"></div>';
+    function miniEntity(s) {
+      return (s.tasks || []).concat(s.recurring || []).filter(function (x) { return x.timerStart; })[0] || null;
+    }
+    function renderMini() {
+      var s = null;
+      try { s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); } catch (e) {}
+      var box = document.getElementById("tfw-body");
+      if (!box) return;
+      var x = s ? miniEntity(s) : null;
+      if (!x) {
+        box.innerHTML = '<div class="tfw-empty">Aucun chrono en cours.<br/>Lance un chrono depuis Task Quest.</div>' +
+          '<button class="tf-btn" id="tfw-close">\u2716 Fermer</button>';
+        var cb = document.getElementById("tfw-close");
+        if (cb) cb.onclick = function () { window.close(); };
+        return;
+      }
+      var sec = (x.timeSpent || 0) + (x.timerStart ? Math.max(0, (Date.now() - x.timerStart) / 1000) : 0);
+      box.innerHTML = '<div class="tfw-title">\ud83c\udfaf ' + esc(x.title) + "</div>" +
+        '<div class="tfw-clock">' + fmtClock(sec) + "</div>" +
+        '<button class="tf-btn" id="tfw-stop">\u23f8\ufe0f Pause du chrono</button>';
+      var sb = document.getElementById("tfw-stop");
+      if (sb) sb.onclick = timerWinStopRunning;
+    }
+    renderMini();
+    setInterval(renderMini, 500);
+  }
+  var tqChan = null;
+  try { tqChan = new BroadcastChannel("task-quest-timer"); } catch (e) {}
+  if (tqChan) tqChan.onmessage = function (ev) {
+    if (ev.data && ev.data.type === "stop-timer") {
+      var cur = timerFloatEntity();
+      if (cur) {
+        var sec = stopEntityTimer(cur);
+        saveState();
+        renderAll();
+        showToast("\u23f1\ufe0f " + fmtDuration(sec) + " enregistr\u00e9es sur : " + cur.title + " (fen\u00eatre \u00e9pingl\u00e9e)");
+      }
+    }
+  };
+  window.addEventListener("storage", function (ev) {
+    if (ev.key !== SAVE_KEY || !ev.newValue) return;
+    try {
+      var ns = JSON.parse(ev.newValue);
+      var wasRunning = anyTimerRunning();
+      state = migrate(ns);
+      renderAll();
+      if (wasRunning && !anyTimerRunning()) showToast("\u23f1\ufe0f Chrono arr\u00eat\u00e9 depuis la fen\u00eatre \u00e9pingl\u00e9e.");
+    } catch (e) {}
   });
   function labelsOf(t) {
     return (t.labels || []).map(function (id) {
@@ -2265,6 +2419,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return;
       }
       if (act === "delete-task") { deleteTask(el.getAttribute("data-task")); return; }
+      if (act === "float-pin") { detachTimerWindow(); return; }
       if (act === "show-timer-float") {
         state.timerFloat = state.timerFloat || timerFloatDefaults();
         state.timerFloat.hidden = false;
@@ -2997,7 +3152,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
   });
   window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec,
-    timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; } };
+    timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; },
+    openTimerWindow: detachTimerWindow };
   var LOGO = [
     "................",
     "...OO......OO...",
@@ -3016,6 +3172,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     "................",
     "................"
   ];
+  if (/[?&]timerwin=1/.test(String(location.search))) { initTimerWindow(); return; }
   document.getElementById("logo").innerHTML = spriteHTML(LOGO, "3px");
   applyTheme();
   renderAll();
