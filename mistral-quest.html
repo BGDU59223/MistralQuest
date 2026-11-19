@@ -412,6 +412,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ["recurring", "📌 Quêtes secondaires"],
     ["achievements", "🏆 Exploits"],
     ["shop", "🛒 Boutique"],
+    ["stuff", "🎒 Stuff"],
     ["stats", "📊 Stats"],
     ["archive", "🗄️ Archive"],
     ["theme", "🎨 Apparence"]
@@ -440,17 +441,26 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   };
   var SKINS = ["#f2c199", "#e0a97b", "#c9906b", "#9c6644", "#6f4626"];
   var SHOP_ITEMS = [
-    { id: "pomme",    name: "Pomme scintillante", desc: "+8 XP immédiatement",              cost: 15,  rarity: "commun",     type: "consumable", xp: 8 },
-    { id: "potion",   name: "Potion d'XP",        desc: "+15 XP immédiatement",             cost: 25,  rarity: "commun",     type: "consumable", xp: 15 },
-    { id: "epee",     name: "Épée de Mistral",    desc: "Arme · +5% XP gagné",              cost: 45,  rarity: "commun",     type: "gear", slot: "arme", bonus: 5 },
-    { id: "bouclier", name: "Bouclier pixel",     desc: "Armure · +5% XP gagné",            cost: 40,  rarity: "commun",     type: "gear", slot: "armure", bonus: 5 },
-    { id: "plume",    name: "Plume du vent",      desc: "Accessoire · +7% XP gagné",        cost: 60,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 7 },
-    { id: "botte",    name: "Bottes de vitesse",  desc: "Pieds · +8% XP gagné",             cost: 80,  rarity: "rare",       type: "gear", slot: "pieds", bonus: 8 },
-    { id: "chapeau",  name: "Casque de bataille", desc: "Casque · +8% XP gagné",            cost: 70,  rarity: "rare",       type: "gear", slot: "tete", bonus: 8 },
-    { id: "amulette", name: "Amulette solaire",   desc: "Accessoire · +10% XP gagné",       cost: 90,  rarity: "rare",       type: "gear", slot: "accessoire", bonus: 10 },
-    { id: "dragon",   name: "Insigne dragon",     desc: "Armure · +12% XP gagné",           cost: 140, rarity: "epique",     type: "gear", slot: "armure", bonus: 12 },
-    { id: "anneau",   name: "Anneau du vent",     desc: "Accessoire · +12% XP gagné",       cost: 160, rarity: "epique",     type: "gear", slot: "accessoire", bonus: 12 },
-    { id: "lame",     name: "Lame légendaire",    desc: "Arme · +15% XP gagné",             cost: 180, rarity: "epique",     type: "gear", slot: "arme", bonus: 15 }
+    { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
+    { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
+    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3% XP gagné",                  cost: 30,   rarity: "commun",  type: "gear", slot: "arme", bonus: 3 },
+    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5% XP gagné",                  cost: 45,   rarity: "commun",  type: "gear", slot: "arme", bonus: 5 },
+    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +8% XP gagné",                  cost: 80,   rarity: "rare",    type: "gear", slot: "arme", bonus: 8 },
+    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +12% XP gagné",                 cost: 150,  rarity: "rare",    type: "gear", slot: "arme", bonus: 12 },
+    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +15% XP gagné",                 cost: 240,  rarity: "epique",  type: "gear", slot: "arme", bonus: 15 },
+    { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +5% XP gagné",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure", bonus: 5 },
+    { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +9% XP gagné",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure", bonus: 9 },
+    { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12% XP gagné",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure", bonus: 12 },
+    { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +8% XP gagné",               cost: 70,   rarity: "rare",    type: "gear", slot: "tete", bonus: 8 },
+    { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +10% XP gagné",              cost: 120,  rarity: "rare",    type: "gear", slot: "tete", bonus: 10 },
+    { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +13% XP gagné",              cost: 190,  rarity: "epique",  type: "gear", slot: "tete", bonus: 13 },
+    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +4% XP gagné",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire", bonus: 4 },
+    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +7% XP gagné",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire", bonus: 7 },
+    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +10% XP gagné",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire", bonus: 10 },
+    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +12% XP gagné",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire", bonus: 12 },
+    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +12% XP gagné",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire", bonus: 12 },
+    { id: "botte",       name: "Bottes de vitesse",   desc: "Pieds · +8% XP gagné",                cost: 80,   rarity: "rare",    type: "gear", slot: "pieds", bonus: 8 },
+    { id: "bottes-vent", name: "Bottes du vent",      desc: "Pieds · +12% XP gagné",               cost: 150,  rarity: "epique",  type: "gear", slot: "pieds", bonus: 12 }
   ];
   var ACHIEVEMENTS = [
     { id: "first",   name: "Première quête",  desc: "Terminer 1 quête",                 icon: "🌱", check: function (s) { return s.stats.totalCompleted >= 1; }, gold: 10 },
@@ -611,6 +621,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       level: 1, xp: 0, gold: 30,
       streak: 0, lastCompletedDay: null,
       recurring: [], recFilter: "all",
+      consumableLast: {},
       filters: { labels: [], dates: [] },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
@@ -637,6 +648,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       };
     });
     out.recFilter = out.recFilter || "all";
+    out.consumableLast = out.consumableLast || {};
     out.hero = (s && s.hero !== undefined) ? s.hero : null;
     out.tasks = (out.tasks || []).map(function (t) {
       return {
@@ -703,6 +715,33 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }).filter(Boolean);
   }
   function xpNeeded(level) { return 100 + (level - 1) * 80; }
+  function mondayKey() {
+    var d = new Date();
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    return todayKey(d);
+  }
+  function nextWeekLabel() {
+    var d = new Date();
+    d.setDate(d.getDate() + (7 - (d.getDay() + 6) % 7));
+    return fmtDate(todayKey(d));
+  }
+  function nextMonthLabel() {
+    var d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return "01/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+  }
+  function consumableKey(it) {
+    if (it.cooldown === "weekly") return mondayKey();
+    if (it.cooldown === "monthly") return todayKey().slice(0, 7);
+    return null;
+  }
+  function consumableReady(it) {
+    var key = consumableKey(it);
+    return !it.cooldown || state.consumableLast[it.id] !== key;
+  }
+  function consumableNextLabel(it) {
+    return it.cooldown === "weekly" ? nextWeekLabel() : nextMonthLabel();
+  }
   function xpMultiplier() {
     var m = 1;
     for (var slot in state.equipment) {
@@ -1085,6 +1124,33 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }).join("");
     return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
+  function stuffView() {
+    var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
+      ' — bonus XP total équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%</p>" +
+      '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button></div>';
+    var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
+    if (!owned.length) {
+      return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>';
+    }
+    var rows = EQUIP_SLOTS.map(function (sl) {
+      var items = owned.filter(function (it) { return it.slot === sl[0]; });
+      if (!items.length) return "";
+      var cards = items.map(function (it) {
+        var equipped = state.equipment[it.slot] === it.id;
+        return '<div class="panel shop-card">' +
+          '<span class="rarity-tag rarity-' + it.rarity + '">' + it.rarity.toUpperCase() + "</span>" +
+          '<div class="shop-preview"><span style="font-size:34px">' + (({ arme: "⚔️", armure: "🛡️", tete: "🎩", accessoire: "💍", pieds: "🥾" })[it.slot] || "🎒") + "</span></div>" +
+          '<div class="shop-item-name">' + esc(it.name) + "</div>" +
+          '<div class="shop-item-desc">' + esc(it.desc) + "</div>" +
+          '<div class="shop-item-meta">' + (equipped
+            ? '<button class="btn" disabled>✅ Équipé</button><button class="btn btn-danger" data-action="equip-item" data-item="' + it.id + '" data-unequip="1">Retirer</button>'
+            : '<button class="btn btn-accent" data-action="equip-item" data-item="' + it.id + '">Équiper</button>') +
+          "</div></div>";
+      }).join("");
+      return '<h2 class="panel-title">' + sl[1].toUpperCase() + '</h2><div class="shop-grid">' + cards + "</div>";
+    }).join("");
+    return banner + rows;
+  }
   function shopView() {
     var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — l\'équipement booste discrètement ton XP gagné.</p>' +
       '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
@@ -1093,7 +1159,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var equipped = it.type === "gear" && state.equipment[it.slot] === it.id;
       var action = "";
       if (!owned) {
-        action = '<button class="btn btn-accent" data-action="buy-item" data-item="' + it.id + '"' + (state.gold < it.cost ? " disabled" : "") + ">Acheter (" + it.cost + " 🪙)</button>";
+        if (it.type === "consumable" && !consumableReady(it)) {
+          action = '<span class="lootbox-hint">✅ Consommé — de retour le ' + consumableNextLabel(it) + "</span>";
+        } else {
+          action = '<button class="btn btn-accent" data-action="buy-item" data-item="' + it.id + '"' + (state.gold < it.cost ? " disabled" : "") + ">Acheter (" + it.cost + " 🪙)</button>";
+        }
       } else if (it.type === "gear") {
         action = equipped
           ? '<button class="btn" disabled>✅ Équipé</button>'
@@ -1167,6 +1237,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (state.view === "recurring") return recurringView();
     if (state.view === "achievements") return achievementsView();
     if (state.view === "shop") return shopView();
+    if (state.view === "stuff") return stuffView();
     if (state.view === "stats") return statsView();
     if (state.view === "archive") return archiveView();
     if (state.view === "theme") return themeView();
@@ -2118,10 +2189,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
       if (act === "buy-item") {
         var it = shopById(el.getAttribute("data-item"));
-        if (it && state.gold >= it.cost) {
+        if (it && state.gold >= it.cost && consumableReady(it)) {
           if (it.type === "consumable") {
             state.gold -= it.cost;
             state = grantReward(state, Math.round(it.xp * xpMultiplier()), 0);
+            state.consumableLast[it.id] = consumableKey(it);
             showToast("Chef ! " + it.name + " : + " + Math.round(it.xp * xpMultiplier()) + " XP");
           } else {
             state.gold -= it.cost;
