@@ -162,6 +162,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   display: flex; align-items: center; gap: 8px;
 }
 .column-count { margin-left: auto; background: var(--panel); padding: 3px 8px; font-size: 10px; color: var(--muted); border-radius: 4px; }
+.col-sort-btn {
+  background: var(--panel); color: var(--muted);
+  border: 1px solid var(--accent-dark); border-radius: 4px;
+  font-family: "Press Start 2P", "VT323", monospace; font-size: 9px;
+  padding: 3px 6px; cursor: pointer; line-height: 1;
+}
+.col-sort-btn:hover { color: #ffffff; background: var(--accent-dark); }
+.col-sort-btn.col-sort-active { color: var(--accent); border-color: var(--accent); }
 .column-empty { color: var(--muted); text-align: center; padding: 20px 0; opacity: 0.6; }
 .task-card {
   background: var(--panel); border-left: 5px solid var(--muted);
@@ -683,6 +691,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       recurring: [], recFilter: "all",
       consumableLast: {},
       filters: { labels: [], dates: [] },
+      colSort: { todo: null, doing: null, done: null },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
       timerFloat: { hidden: false, minimized: false, x: null, y: null },
@@ -709,6 +718,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         timeSpent: r.timeSpent || 0, timerStart: r.timerStart || null
       };
     });
+    out.colSort = (s && s.colSort) ? { todo: s.colSort.todo || null, doing: s.colSort.doing || null, done: s.colSort.done || null } : { todo: null, doing: null, done: null };
     out.recFilter = out.recFilter || "all";
     out.consumableLast = out.consumableLast || {};
     out.timerFloat = (s && s.timerFloat) ? {
@@ -801,6 +811,27 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var label = "\u23f1 " + fmtDuration(total) + (x.timerStart ? " · chrono en cours" : " de quête");
     return '<span class="due-date">' + label + "</span>";
   }
+  /* ---- Petits sons d'interface (WebAudio, générés, aucun fichier) ---- */
+  var audioCtx = null;
+  function playTone(freq, startSec, durSec, type, vol) {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = audioCtx || new AC();
+      if (audioCtx.state === "suspended" && audioCtx.resume) audioCtx.resume();
+      var t0 = audioCtx.currentTime + (startSec || 0);
+      var osc = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      osc.type = type || "square";
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.07, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + (durSec || 0.15));
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(t0); osc.stop(t0 + (durSec || 0.15) + 0.03);
+    } catch (e) {}
+  }
+  function soundQuestCreate() { playTone(523.25, 0, 0.08); playTone(783.99, 0.08, 0.14); }
+  function soundCoins() { playTone(987.77, 0, 0.09); playTone(1318.51, 0.09, 0.3); }
   function stopEntityTimer(x) {
     if (!x || !x.timerStart) return 0;
     var sec = Math.max(0, Math.round((Date.now() - x.timerStart) / 1000));
@@ -1444,11 +1475,29 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       (actions ? '<div class="task-actions">' + actions + "</div>" : "") +
       "</div>";
   }
+  function sortColList(list, key) {
+    var mode = (state.colSort || {})[key];
+    if (!mode) return list;
+    var scored = list.map(function (t, i) { return { t: t, i: i }; });
+    scored.sort(function (a, b) {
+      var aHas = !!a.t.dueDate, bHas = !!b.t.dueDate;
+      if (aHas !== bHas) return aHas ? -1 : 1; /* sans échéance toujours à la fin */
+      var c = 0;
+      if (aHas) c = a.t.dueDate < b.t.dueDate ? -1 : a.t.dueDate > b.t.dueDate ? 1 : 0;
+      if (!c) c = a.i - b.i;
+      return mode === "asc" ? c : -c;
+    });
+    return scored.map(function (x) { return x.t; });
+  }
   function columnHTML(key) {
     var list = filterTasks(state.tasks.filter(function (t) { return t.status === key && !t.archived; }));
-    var cards = list.map(taskCardHTML).join("");
+    var mode = (state.colSort || {})[key];
+    var cards = sortColList(list, key).map(taskCardHTML).join("");
     return '<div class="column" data-drop="' + key + '">' +
-      '<div class="column-header">' + COLUMNS[key] + '<span class="column-count">' + list.length + "</span></div>" +
+      '<div class="column-header">' + COLUMNS[key] + '<span class="column-count">' + list.length + "</span>" +
+      '<button class="col-sort-btn' + (mode ? " col-sort-active" : "") + '" data-action="sort-col" data-col="' + key + '" title="Trier par échéance">' +
+      (mode === "asc" ? "\u2191" : mode === "desc" ? "\u2193" : "\u21c5") + "</button>" +
+      "</div>" +
       (cards || '<div class="column-empty">Vide</div>') + "</div>";
   }
   var DATE_FILTERS = [
@@ -1961,6 +2010,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
     if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
     showToast("🏁 Quête bouclée : +" + baseXp + " XP · +" + rc.gold + " 🪙");
+    soundCoins();
     checkAchievements();
     saveState();
     renderAll();
@@ -2227,6 +2277,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
     showToast("+ " + Math.round(baseXp) + " XP · +" + d.gold + " 🪙");
+    soundCoins();
     checkAchievements();
     saveState();
     return true;
@@ -2533,6 +2584,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           if (openRecId === spTimer.id) openRecDetailModal(spTimer.id, true);
           showToast("⏱️ " + fmtDuration(secDone) + " enregistrées sur : " + spTimer.title);
         }
+        return;
+      }
+      if (act === "sort-col") {
+        var sc = el.getAttribute("data-col");
+        state.colSort = state.colSort || { todo: null, doing: null, done: null };
+        state.colSort[sc] = state.colSort[sc] === "asc" ? "desc" : state.colSort[sc] === "desc" ? null : "asc";
+        saveState();
+        renderAll();
+        showToast(state.colSort[sc] === "asc" ? "\u2191 \u00c9ch\u00e9ance la plus urgente en premier" : state.colSort[sc] === "desc" ? "\u2193 \u00c9ch\u00e9ance la plus lointaine en premier" : "\u21c5 Ordre manuel (glisser-d\u00e9poser)");
         return;
       }
       if (act === "open-conv-modal") { openConvModal(el.getAttribute("data-task")); return; }
@@ -2882,6 +2942,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       saveState();
       renderAll();
       showToast("📜 Quête ajoutée : " + title);
+      soundQuestCreate();
       return;
     }
     if (f.id === "hero-form") {
@@ -3027,6 +3088,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         saveState();
         renderAll();
         showToast("📌 Quête épinglée au tableau : " + rTitle);
+        soundQuestCreate();
       }
       return;
     }
@@ -3255,7 +3317,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   });
   window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec,
     timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; },
-    openTimerWindow: detachTimerWindow };
+    openTimerWindow: detachTimerWindow,
+    sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins } };
   var LOGO = [
     "................",
     "...OO......OO...",
