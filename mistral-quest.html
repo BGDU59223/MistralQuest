@@ -2514,54 +2514,55 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       "......CCCC......"
     ]
   };
-  /* Héros du donjon : 2 frames de marche + 1 frame de coup (palettes de la classe/peau du joueur) */
+  /* Héros du donjon : 2 frames de marche + 1 frame de coup (palettes de la classe/peau du joueur).
+     Grille 14 colonnes constante : colonnes 10-13 réservées à l'épée (4 px de long, 2 px de large). */
   var HERO_DG_A = [
-    "...HHHH...",
-    "..HHHHHH..",
-    "..SSSSSS..",
-    "..SkSSkS..",
-    "..SSSSSS..",
-    "...SSSS...",
-    "..OOOOOO..",
-    ".OOOOOOOO.",
-    ".SOOOOOOS.",
-    "..OOOOOO..",
-    "..OO..OO..",
-    ".OO....OO.",
-    ".kk....kk.",
-    ".........."
+    "...HHHH.......",
+    "..HHHHHH......",
+    "..SSSSSS......",
+    "..SkSSkS......",
+    "..SSSSSS......",
+    "...SSSS.......",
+    "..OOOOOO......",
+    ".OOOOOOOO.....",
+    ".SOOOOOOS.....",
+    "..OOOOOO......",
+    "..OO..OO......",
+    ".OO....OO.....",
+    ".kk....kk.....",
+    ".............."
   ];
   var HERO_DG_B = [
-    "...HHHH...",
-    "..HHHHHH..",
-    "..SSSSSS..",
-    "..SkSSkS..",
-    "..SSSSSS..",
-    "...SSSS...",
-    "..OOOOOO..",
-    ".OOOOOOOO.",
-    ".SOOOOOOS.",
-    "..OOOOOO..",
-    "...OOOO...",
-    "...OO.O...",
-    "..kk.kk...",
-    ".........."
+    "...HHHH.......",
+    "..HHHHHH......",
+    "..SSSSSS......",
+    "..SkSSkS......",
+    "..SSSSSS......",
+    "...SSSS.......",
+    "..OOOOOO......",
+    ".OOOOOOOO.....",
+    ".SOOOOOOS.....",
+    "..OOOOOO......",
+    "...OOOO.......",
+    "...OO.O.......",
+    "..kk.kk.......",
+    ".............."
   ];
   var HERO_DG_S = [
-    "...HHHH...",
-    "..HHHHHH..",
-    "..SSSSSS..",
-    "..SkSSkS..",
-    "..SSSSSS..",
-    "...SSSS...",
-    "..OOOOOSS.",
-    ".OOOOOOSM.",
-    ".SOOOOOMM.",
-    "..OOOOOW..",
-    "..OO..OO..",
-    ".OO....OO.",
-    ".kk....kk.",
-    ".........."
+    "...HHHH.......",
+    "..HHHHHH......",
+    "..SSSSSS......",
+    "..SkSSkS......",
+    "..SSSSSS......",
+    "...SSSS.......",
+    "..OOOOOOSSMMMM",
+    ".OOOOOOOO.MMMM",
+    ".SOOOOOOS.....",
+    "..OOOOOO......",
+    "..OO..OO......",
+    ".OO....OO.....",
+    ".kk....kk.....",
+    ".............."
   ];
   var dg = { active: false, loop: null, x: 0, depth: 0, hp: 0, maxHp: 0, atk: 3, def: 0, purse: 0, kills: 0,
     entities: [], strikeCd: 0, nextSpawnAt: 60, nextBossAt: 1000, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
