@@ -449,11 +449,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
-  .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; }
-  .dg-hero { position: absolute; transform: translateX(-50%); z-index: 5; }
-  .dg-hero .hero-stage { width: 64px; height: 112px; }
-  .dg-hero.dg-hurt .hero-stage { filter: brightness(1.9) saturate(2); }
+  .dg-entity { position: absolute; text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
+  .dg-hero { position: absolute; transform: translateX(-50%); text-align: center; z-index: 5; }
+  .dg-hero.dg-hurt .pixel-sprite { filter: brightness(1.9) saturate(2.2); }
   .dg-entity.dg-hurt { filter: brightness(2.2); }
+  @keyframes dg-hop { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
   .dg-ename { font-size: 11px; color: var(--muted); white-space: nowrap; }
   .dg-ebar { position: relative; width: 36px; height: 6px; background: #220a08; border: 1px solid #000; margin: 0 auto 3px; border-radius: 3px; overflow: hidden; }
   .dg-ebar i { display: block; height: 100%; background: #d43d2a; }
@@ -2514,8 +2514,57 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       "......CCCC......"
     ]
   };
+  /* Héros du donjon : 2 frames de marche + 1 frame de coup (palettes de la classe/peau du joueur) */
+  var HERO_DG_A = [
+    "...HHHH...",
+    "..HHHHHH..",
+    "..SSSSSS..",
+    "..SkSSkS..",
+    "..SSSSSS..",
+    "...SSSS...",
+    "..OOOOOO..",
+    ".OOOOOOOO.",
+    ".SOOOOOOS.",
+    "..OOOOOO..",
+    "..OO..OO..",
+    ".OO....OO.",
+    ".kk....kk.",
+    ".........."
+  ];
+  var HERO_DG_B = [
+    "...HHHH...",
+    "..HHHHHH..",
+    "..SSSSSS..",
+    "..SkSSkS..",
+    "..SSSSSS..",
+    "...SSSS...",
+    "..OOOOOO..",
+    ".OOOOOOOO.",
+    ".SOOOOOOS.",
+    "..OOOOOO..",
+    "...OOOO...",
+    "...OO.O...",
+    "..kk.kk...",
+    ".........."
+  ];
+  var HERO_DG_S = [
+    "...HHHH...",
+    "..HHHHHH..",
+    "..SSSSSS..",
+    "..SkSSkS..",
+    "..SSSSSS..",
+    "...SSSS...",
+    "..OOOOOSS.",
+    ".OOOOOOSM.",
+    ".SOOOOOMM.",
+    "..OOOOOW..",
+    "..OO..OO..",
+    ".OO....OO.",
+    ".kk....kk.",
+    ".........."
+  ];
   var dg = { active: false, loop: null, x: 0, depth: 0, hp: 0, maxHp: 0, atk: 3, def: 0, purse: 0, kills: 0,
-    entities: [], strikeCd: 0, nextSpawnAt: 60, nextBossAt: 1000, keyMoving: 0, holdMoving: 0, hurtFlash: 0, lastResult: null };
+    entities: [], strikeCd: 0, nextSpawnAt: 60, nextBossAt: 1000, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
   function dungeonStart() {
     if (dg.active) return;
     var g = gearStats();
@@ -2524,7 +2573,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.atk = 3 + g.atk; dg.def = g.def;
     dg.purse = 0; dg.kills = 0; dg.entities = []; dg.strikeCd = 0;
     dg.nextSpawnAt = 60; dg.nextBossAt = 1000;
-    dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0;
+    dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2597,6 +2646,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var gspd = gearStats();
       dg.x = Math.max(0, dg.x + dir * (5 + gspd.spd * 1.5) * dt);
       dg.depth = Math.max(dg.depth, dg.x);
+      dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
@@ -2648,7 +2698,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         "</div>";
     }
     var hx = (dg.x - left) * pxm;
-    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:40px">' + heroHTML() + "</div>";
+    var dirNow = dg.holdMoving || dg.keyMoving || 0;
+    var hgrid = HERO_DG_A, hbob = 0;
+    if (dg.strikeCd > 0.30) { hgrid = HERO_DG_S; }
+    else if (dirNow) {
+      hbob = Math.floor(dg.walkT * 7) % 2;
+      hgrid = hbob ? HERO_DG_B : HERO_DG_A;
+    }
+    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
+      spriteHTML(hgrid, "5px", heroPal()) + "</div>";
     vp.innerHTML = html;
     var el;
     el = document.querySelector("[data-dg-depth]"); if (el) el.textContent = Math.round(dg.depth) + " m";
