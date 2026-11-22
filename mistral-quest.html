@@ -434,6 +434,33 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .tfw-empty { color: var(--muted); font-size: 15px; text-align: center; line-height: 1.5; }
   .pixel-sprite { display: grid; line-height: 0; }
   .pixel-sprite i { display: block; }
+  /* ---- ⚔️ La Faille (donjon) ---- */
+  .dg-home { max-width: 760px; margin: 0 auto; }
+  .dg-pitch { line-height: 1.6; }
+  .dg-record { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .dg-result { margin-top: 14px; border: 2px solid #2f7a4d; }
+  .dg-result-dead { border-color: var(--danger); }
+  .dg-stag { font-size: 12px; color: var(--accent); margin: 2px 0; }
+  .dg-wrap { max-width: 900px; margin: 0 auto; }
+  .dg-hud { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 12px; }
+  .dg-depth { font-size: 18px; color: var(--accent); }
+  .dg-hpbar { flex: 1; min-width: 130px; max-width: 280px; height: 14px; background: #2a1210; border: 2px solid #000; border-radius: 6px; overflow: hidden; }
+  .dg-hpfill { height: 100%; background: #d43d2a; transition: width .15s; }
+  .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
+  .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
+  .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
+  .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; }
+  .dg-hero { position: absolute; transform: translateX(-50%); z-index: 5; }
+  .dg-hero .hero-stage { width: 64px; height: 112px; }
+  .dg-hero.dg-hurt .hero-stage { filter: brightness(1.9) saturate(2); }
+  .dg-entity.dg-hurt { filter: brightness(2.2); }
+  .dg-ename { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .dg-ebar { position: relative; width: 36px; height: 6px; background: #220a08; border: 1px solid #000; margin: 0 auto 3px; border-radius: 3px; overflow: hidden; }
+  .dg-ebar i { display: block; height: 100%; background: #d43d2a; }
+  .dg-marker { position: absolute; bottom: 34px; color: var(--muted); font-size: 11px; transform: translateX(-50%); }
+  .dg-gate { position: absolute; bottom: 34px; color: #ff5a4a; font-weight: bold; font-size: 12px; text-align: center; transform: translateX(-50%); text-shadow: 2px 2px 0 #000; }
+  .dg-controls { display: flex; gap: 10px; align-items: center; padding: 10px 12px; flex-wrap: wrap; }
+  .dg-hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -481,6 +508,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ["achievements", "🏆 Exploits"],
     ["shop", "🛒 Boutique"],
     ["stuff", "🎒 Stuff"],
+    ["dungeon", "⚔️ La Faille"],
     ["stats", "📊 Stats"],
     ["archive", "🗄️ Archive"],
     ["theme", "🎨 Apparence"]
@@ -540,7 +568,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "rich",    name: "Richasse",        desc: "Détenir 200 pièces",               icon: "💰", check: function (s) { return s.gold >= 200; }, gold: 25 },
     { id: "streak3", name: "Série de 3",      desc: "3 jours d'affilée",                icon: "🔥", check: function (s) { return s.streak >= 3; }, gold: 30 },
     { id: "streak7", name: "Série de 7",      desc: "7 jours d'affilée",                icon: "☄️", check: function (s) { return s.streak >= 7; }, gold: 70 },
-    { id: "boss",    name: "Tueur de boss",   desc: "Vaincre un boss",                  icon: "💀", check: function (s) { return s.stats.bossKills >= 1; }, gold: 50 }
+    { id: "boss",    name: "Tueur de boss",   desc: "Vaincre un boss",                  icon: "💀", check: function (s) { return s.stats.bossKills >= 1; }, gold: 50 },
+    { id: "faille-100",  name: "Pionnier de la Faille", desc: "Atteindre 100 m dans la Faille",   icon: "🕳️", check: function (s) { return s.dungeon && s.dungeon.best >= 100; }, gold: 30 },
+    { id: "faille-500",  name: "Spéléologue",           desc: "Atteindre 500 m dans la Faille",   icon: "⛏️", check: function (s) { return s.dungeon && s.dungeon.best >= 500; }, gold: 60 },
+    { id: "faille-1000", name: "Seigneur de la Faille",  desc: "Atteindre 1000 m dans la Faille",  icon: "🐉", check: function (s) { return s.dungeon && s.dungeon.best >= 1000; }, gold: 120 }
   ];
   var THEMES = {
     nuit:   { name: "Nuit",   vars: { "--bg": "#000000", "--panel": "#161310", "--card": "#1e1a16", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68", "--danger": "#d43d2a" } },
@@ -695,6 +726,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
       timerFloat: { hidden: false, minimized: false, x: null, y: null },
+      dungeon: { best: 0, kills: 0, runs: 0 },
       theme: "nuit", view: "board", hero: null
     };
   }
@@ -718,6 +750,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         timeSpent: r.timeSpent || 0, timerStart: r.timerStart || null
       };
     });
+    out.dungeon = (s && s.dungeon) ? { best: Number(s.dungeon.best) || 0, kills: Number(s.dungeon.kills) || 0, runs: Number(s.dungeon.runs) || 0 } : { best: 0, kills: 0, runs: 0 };
     out.colSort = (s && s.colSort) ? { todo: s.colSort.todo || null, doing: s.colSort.doing || null, done: s.colSort.done || null } : { todo: null, doing: null, done: null };
     out.recFilter = out.recFilter || "all";
     out.consumableLast = out.consumableLast || {};
@@ -832,6 +865,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function soundQuestCreate() { playTone(523.25, 0, 0.08); playTone(783.99, 0.08, 0.14); }
   function soundCoins() { playTone(987.77, 0, 0.09); playTone(1318.51, 0.09, 0.3); }
+  function soundHit() { playTone(150, 0, 0.06, "sawtooth", 0.06); }
+  function soundBoss() { playTone(392, 0, 0.12); playTone(523.25, 0.12, 0.12); playTone(659.25, 0.24, 0.3); }
+  function soundDeath() { playTone(440, 0, 0.15); playTone(349.23, 0.15, 0.15); playTone(261.63, 0.3, 0.4); }
   function stopEntityTimer(x) {
     if (!x || !x.timerStart) return 0;
     var sec = Math.max(0, Math.round((Date.now() - x.timerStart) / 1000));
@@ -1153,6 +1189,23 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return m;
   }
+  /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
+  var DG_GEAR = {
+    "epee-bois": { atk: 3 }, "epee": { atk: 5 }, "epee-fer": { atk: 7 }, "epee-acier": { atk: 9 }, "lame": { atk: 14 },
+    "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
+    "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
+    "bague": { loot: 5 }, "plume": { loot: 10 }, "amulette": { loot: 15 }, "collier": { loot: 20 }, "anneau": { loot: 20 },
+    "botte": { hp: 1, spd: 1 }, "bottes-vent": { hp: 1, spd: 2 }
+  };
+  function gearStats() {
+    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0 };
+    for (var slot in state.equipment) {
+      var st = DG_GEAR[state.equipment[slot]];
+      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; }
+    }
+    return g;
+  }
+  function lootMultiplier() { return 1 + gearStats().loot / 100; }
   function shopById(id) {
     for (var i = 0; i < SHOP_ITEMS.length; i++) { if (SHOP_ITEMS[i].id === id) return SHOP_ITEMS[i]; }
     return null;
@@ -1563,9 +1616,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
   function stuffView() {
+    var gs = gearStats();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
-      ' — bonus XP total équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%</p>" +
-      '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button></div>';
+      ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
+      ' — Faille : ⚔️ atk ' + (3 + gs.atk) + " · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 🥾 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
+      '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
+      '<button class="btn btn-accent" data-action="switch-tab" data-view="dungeon">⚔️ La Faille</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
     if (!owned.length) {
       return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>';
@@ -1575,11 +1631,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (!items.length) return "";
       var cards = items.map(function (it) {
         var equipped = state.equipment[it.slot] === it.id;
+        var st = DG_GEAR[it.id] || null;
+        var stag = st ? '<div class="dg-stag">' + (st.atk ? "⚔️ atk +" + st.atk + " " : "") + (st.hp ? "❤️ PV +" + st.hp + " " : "") + (st.def ? "🛡️ def +" + st.def + " " : "") + (st.spd ? "🥾 spd +" + st.spd + " " : "") + (st.loot ? "🪙 loot +" + st.loot + "%" : "") + "</div>" : "";
         return '<div class="panel shop-card">' +
           '<span class="rarity-tag rarity-' + it.rarity + '">' + it.rarity.toUpperCase() + "</span>" +
           '<div class="shop-preview"><span style="font-size:34px">' + (({ arme: "⚔️", armure: "🛡️", tete: "🎩", accessoire: "💍", pieds: "🥾" })[it.slot] || "🎒") + "</span></div>" +
           '<div class="shop-item-name">' + esc(it.name) + "</div>" +
-          '<div class="shop-item-desc">' + esc(it.desc) + "</div>" +
+          '<div class="shop-item-desc">' + esc(it.desc) + "</div>" + stag +
           '<div class="shop-item-meta">' + (equipped
             ? '<button class="btn" disabled>✅ Équipé</button><button class="btn btn-danger" data-action="equip-item" data-item="' + it.id + '" data-unequip="1">Retirer</button>'
             : '<button class="btn btn-accent" data-action="equip-item" data-item="' + it.id + '">Équiper</button>') +
@@ -1590,7 +1648,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return banner + rows;
   }
   function shopView() {
-    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — l\'équipement booste discrètement ton XP gagné.</p>' +
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — l\'équipement booste ton XP gagné, et chaque objet donne des stats de combat dans la Faille (atk · PV · def · spd · loot).</p>' +
       '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
@@ -1674,6 +1732,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function viewHTML() {
     if (state.view === "recurring") return recurringView();
+    if (state.view === "dungeon") return dungeonView();
     if (state.view === "achievements") return achievementsView();
     if (state.view === "shop") return shopView();
     if (state.view === "stuff") return stuffView();
@@ -2398,6 +2457,272 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var tx = document.querySelector("#modal textarea[name=steps-text]");
     if (tx) drafts.steps = tx.value;
   }
+  /* ==================== ⚔️ La Faille (roguelite infinie) ==================== */
+  var DG_MONS = {
+    slime:    { name: "Slime",         hp: function (d) { return 4 + Math.floor(d / 40); },  spd: 1.1, dmg: 3, gold: 2, cell: "5px" },
+    bat:      { name: "Chauve-souris", hp: function (d) { return 3 + Math.floor(d / 55); },  spd: 2.6, dmg: 2, gold: 3, cell: "4px" },
+    skeleton: { name: "Squelette",     hp: function (d) { return 10 + Math.floor(d / 30); }, spd: 1.3, dmg: 5, gold: 6, cell: "5px" }
+  };
+  var DG_SPRITES = {
+    slime: [
+      "....GG....",
+      "..GGGGGG..",
+      ".GGGGGGGG.",
+      ".GGkGGkGG.",
+      "GGGGGGGGGG",
+      "GGGGGGGGGG",
+      ".GGGGGGGG.",
+      ".kk.kk.kk."
+    ],
+    bat: [
+      "U..........U",
+      "UU...UU...UU",
+      "UUU.UUUU.UUU",
+      ".UUUUUUUUUU.",
+      "..UUkUUkUU..",
+      "...UUUUUU...",
+      "....U..U...."
+    ],
+    skeleton: [
+      "..WWWWWW..",
+      "..WWWWWW..",
+      "..WkWWkW..",
+      "..WWWWWW..",
+      "...WkkW...",
+      "...WWWW...",
+      "..WWWWWW..",
+      ".W.WWWW.W.",
+      "...WWWW...",
+      "...W..W...",
+      "..WW..WW..",
+      "..W....W.."
+    ],
+    boss: [
+      "..C..........C..",
+      "..CC........CC..",
+      "...CCCCCCCCCC...",
+      "..CCCCCCCCCCCC..",
+      ".CCkCCCCCCCCkCC.",
+      ".CCCCCCCCCCCCCC.",
+      ".CCCCCCCCCCCCCC.",
+      "..CCCCCCCCCCCC..",
+      "..CCCCCCCCCCCC..",
+      "...CCCCCCCCCC...",
+      "...CC.CCCC.CC...",
+      "...C...CC...C...",
+      ".......CC.......",
+      "......CCCC......"
+    ]
+  };
+  var dg = { active: false, loop: null, x: 0, depth: 0, hp: 0, maxHp: 0, atk: 3, def: 0, purse: 0, kills: 0,
+    entities: [], strikeCd: 0, nextSpawnAt: 60, nextBossAt: 1000, keyMoving: 0, holdMoving: 0, hurtFlash: 0, lastResult: null };
+  function dungeonStart() {
+    if (dg.active) return;
+    var g = gearStats();
+    dg.active = true; dg.x = 0; dg.depth = 0;
+    dg.maxHp = 20 + g.hp; dg.hp = dg.maxHp;
+    dg.atk = 3 + g.atk; dg.def = g.def;
+    dg.purse = 0; dg.kills = 0; dg.entities = []; dg.strikeCd = 0;
+    dg.nextSpawnAt = 60; dg.nextBossAt = 1000;
+    dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0;
+    dg.lastResult = null;
+    state.view = "dungeon";
+    soundBoss();
+    renderAll();
+    if (dg.loop) clearInterval(dg.loop);
+    dg.loop = setInterval(function () { dungeonTick(0.05); }, 50);
+  }
+  function dungeonEnd(retreat) {
+    if (!dg.active) return;
+    dg.active = false;
+    if (dg.loop) { clearInterval(dg.loop); dg.loop = null; }
+    var run = { depth: Math.round(dg.depth), gold: Math.round(dg.purse), kills: dg.kills, retreat: !!retreat };
+    state.dungeon.runs += 1;
+    state.dungeon.kills += dg.kills;
+    state.dungeon.best = Math.max(state.dungeon.best, run.depth);
+    if (retreat) state.gold += run.gold;
+    dg.lastResult = run;
+    checkAchievements();
+    saveState();
+    showToast(retreat
+      ? "🏠 Retraite : " + run.gold + " 🪙 pillés en banque"
+      : "☠️ La Faille t'a englouti à " + run.depth + " m… " + run.gold + " 🪙 pillés perdus");
+    renderAll();
+  }
+  function dungeonSpawnMonster() {
+    var d = dg.depth, roll = Math.random();
+    var type = "slime";
+    if (d >= 350 && roll < 0.35) type = "skeleton";
+    else if (d >= 150 && roll < 0.6) type = "bat";
+    var m = DG_MONS[type];
+    var hp = m.hp(d);
+    dg.entities.push({ t: type, x: dg.x + 13 + Math.random() * 3, hp: hp, maxHp: hp, dmg: m.dmg, gold: m.gold, spd: m.spd, cd: 0, hurt: 0 });
+  }
+  function dungeonSpawnBoss() {
+    var d = dg.nextBossAt;
+    var hp = 60 + Math.floor(d / 3);
+    dg.entities.push({ t: "boss", boss: true, x: dg.x + 10, hp: hp, maxHp: hp, dmg: 12, gold: 40 + Math.floor(d / 10), spd: 1.9, cd: 0, hurt: 0 });
+    soundBoss();
+    showToast("💀 BOSS à " + d + " m !");
+  }
+  function dungeonStrike() {
+    if (!dg.active || dg.strikeCd > 0) return;
+    dg.strikeCd = 0.45;
+    soundHit();
+    var hit = false;
+    for (var i = 0; i < dg.entities.length; i++) {
+      var en = dg.entities[i];
+      if (en.hp > 0 && en.x - dg.x > -0.5 && en.x - dg.x < 3) {
+        en.hp -= dg.atk;
+        en.hurt = 0.18;
+        hit = true;
+      }
+    }
+    if (hit) dungeonRender();
+  }
+  function dungeonTick(dt) {
+    if (!dg.active) return;
+    for (var j = dg.entities.length - 1; j >= 0; j--) {
+      var dd = dg.entities[j];
+      if (dd.hp <= 0) {
+        dg.purse += Math.max(1, Math.round(dd.gold * lootMultiplier()));
+        dg.kills += 1;
+        if (dd.boss) { state.stats.bossKills = (state.stats.bossKills || 0) + 1; soundBoss(); }
+        dg.entities.splice(j, 1);
+        soundCoins();
+      }
+    }
+    var dir = dg.holdMoving || dg.keyMoving || 0;
+    if (dir) {
+      var gspd = gearStats();
+      dg.x = Math.max(0, dg.x + dir * (5 + gspd.spd * 1.5) * dt);
+      dg.depth = Math.max(dg.depth, dg.x);
+    }
+    if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
+    if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
+    if (dg.depth >= dg.nextBossAt) { dungeonSpawnBoss(); dg.nextBossAt += 1000; }
+    if (dg.x >= dg.nextSpawnAt) {
+      dungeonSpawnMonster();
+      dg.nextSpawnAt = dg.x + Math.max(45, 120 - Math.floor(dg.depth / 100) * 8);
+    }
+    for (var i = 0; i < dg.entities.length; i++) {
+      var en = dg.entities[i];
+      en.cd = Math.max(0, en.cd - dt);
+      if (en.hurt > 0) en.hurt = Math.max(0, en.hurt - dt);
+      var dist = en.x - dg.x;
+      if (Math.abs(dist) <= 14 && Math.abs(dist) > 1.2) {
+        en.x -= (dist > 0 ? 1 : -1) * en.spd * dt;
+      }
+      if (Math.abs(dist) <= 1.6 && en.cd <= 0) {
+        en.cd = 1.15;
+        dg.hp -= Math.max(1, Math.round(en.dmg * (1 + dg.depth / 1200) - dg.def));
+        dg.hurtFlash = 0.25;
+      }
+    }
+    if (dg.hp <= 0) { soundDeath(); dungeonEnd(false); return; }
+    dungeonRender();
+  }
+  function dungeonRender() {
+    if (!dg.active) return;
+    var vp = document.getElementById("dg-viewport");
+    if (!vp) return;
+    var viewSpan = 26, pxm = (vp.offsetWidth || 676) / viewSpan, left = dg.x - 7;
+    var html = '<div class="dg-floor"></div>';
+    var first = Math.floor(left / 100) * 100 - 100;
+    for (var mk = first; mk < left + viewSpan + 100; mk += 100) {
+      if (mk <= 0) continue;
+      var mx = (mk - left) * pxm;
+      html += (mk % 1000 === 0)
+        ? '<div class="dg-gate" style="left:' + mx + 'px">💀 BOSS<br>' + mk + " m</div>"
+        : '<div class="dg-marker" style="left:' + mx + 'px">' + mk + " m</div>";
+    }
+    for (var i = 0; i < dg.entities.length; i++) {
+      var en = dg.entities[i];
+      var ex = (en.x - left) * pxm;
+      if (ex < -80 || ex > (vp.offsetWidth || 676) + 80) continue;
+      var mon = DG_MONS[en.t];
+      var bar = en.hp < en.maxHp ? '<div class="dg-ebar"><i style="width:' + Math.max(0, Math.round(en.hp / en.maxHp * 100)) + '%"></i></div>' : "";
+      html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + '" style="left:' + ex + 'px;bottom:44px">' +
+        '<div class="dg-ename">' + (en.boss ? "💀 BOSS" : esc(mon.name)) + "</div>" + bar +
+        spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) +
+        "</div>";
+    }
+    var hx = (dg.x - left) * pxm;
+    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:40px">' + heroHTML() + "</div>";
+    vp.innerHTML = html;
+    var el;
+    el = document.querySelector("[data-dg-depth]"); if (el) el.textContent = Math.round(dg.depth) + " m";
+    el = document.querySelector("[data-dg-hpfill]"); if (el) el.style.width = Math.max(0, Math.round(dg.hp / dg.maxHp * 100)) + "%";
+    el = document.querySelector("[data-dg-hptext]"); if (el) el.textContent = Math.max(0, Math.round(dg.hp)) + " / " + dg.maxHp;
+    el = document.querySelector("[data-dg-purse]"); if (el) el.textContent = Math.round(dg.purse);
+  }
+  function dungeonRunHTML() {
+    return '<div class="dg-wrap">' +
+      '<div class="dg-hud panel">' +
+      '<span class="dg-depth">🕳️ <b data-dg-depth>0 m</b></span>' +
+      '<div class="dg-hpbar"><div class="dg-hpfill" data-dg-hpfill style="width:100%"></div></div>' +
+      '<span>❤️ <b data-dg-hptext>20</b></span>' +
+      '<span>🪙 pillage : <b data-dg-purse>0</b></span>' +
+      '<button class="btn" data-action="dg-retreat">🏠 Battre en retraite</button>' +
+      "</div>" +
+      '<div class="dg-viewport" id="dg-viewport"></div>' +
+      '<div class="dg-controls panel">' +
+      '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
+      '<button class="btn btn-big btn-accent" data-action="dg-hit" title="Frapper (Espace)">⚔️ Frapper</button>' +
+      '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
+      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>Changer d\'onglet = retraite automatique, le pillage est mis en banque.</span>' +
+      "</div></div>";
+  }
+  function dungeonView() {
+    if (dg.active) return dungeonRunHTML();
+    var dn = state.dungeon, g = gearStats();
+    var res = "";
+    if (dg.lastResult) {
+      var r = dg.lastResult;
+      res = '<div class="panel dg-result' + (r.retreat ? "" : " dg-result-dead") + '">' +
+        (r.retreat ? "🏠 Retraite réussie" : "☠️ La Faille t'a englouti…") +
+        "<br>Profondeur : " + r.depth + " m · Monstres tués : " + r.kills +
+        " · Pillage : " + (r.retreat ? "+" + r.gold + " 🪙 en banque" : r.gold + " 🪙 perdus") + "</div>";
+    }
+    return '<div class="panel dg-home">' +
+      '<h2 class="panel-title">⚔️ La Faille</h2>' +
+      '<p class="dg-pitch">Un donjon sans fin, vu de côté. Les monstres se font de plus en plus nombreux à mesure que tu descends — et un <b>💀 BOSS</b> garde chaque tranche de 1000 m.<br>' +
+      '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Si tu tombes, tu perds l\'or pillé pendant la course ; ton or de quêtes reste en banque. Bats en retraite 🏠 pour déposer ton pillage.</span></p>' +
+      '<div class="dg-record">' +
+      '<span class="hud-badge">🕳️ Record : ' + dn.best + " m</span>" +
+      '<span class="hud-badge">💀 Monstres tués : ' + dn.kills + "</span>" +
+      '<span class="hud-badge">🏃 Courses : ' + dn.runs + "</span>" +
+      '<span class="hud-badge">🚪 Prochain boss : ' + (Math.max(1000, Math.floor(dn.best / 1000) * 1000 + 1000)) + " m</span>" +
+      "</div>" +
+      '<div class="dg-record">' +
+      '<span class="hud-badge">⚔️ Attaque : ' + (3 + g.atk) + "</span>" +
+      '<span class="hud-badge">❤️ PV : ' + (20 + g.hp) + "</span>" +
+      '<span class="hud-badge">🛡️ Défense : ' + g.def + "</span>" +
+      '<span class="hud-badge">🥾 Vitesse : ' + (5 + g.spd * 1.5) + " m/s</span>" +
+      '<span class="hud-badge">🪙 Loot : +' + g.loot + "%</span>" +
+      "</div>" +
+      '<div class="dg-record"><button class="btn btn-big btn-accent" data-action="dg-enter">⚔️ Entrer dans la Faille</button></div>' +
+      res +
+      "</div>";
+  }
+  document.addEventListener("keydown", function (e) {
+    if (isTimerWin() || !dg.active) return;
+    var tag = ((e.target && e.target.tagName) || "").toLowerCase();
+    if (tag === "input" || tag === "textarea") return;
+    if (e.key === "ArrowRight" || e.key === "d") dg.keyMoving = 1;
+    else if (e.key === "ArrowLeft" || e.key === "a") dg.keyMoving = -1;
+    else if (e.key === " " || e.key === "f") { e.preventDefault(); dungeonStrike(); }
+    else if (e.key === "Escape") dungeonEnd(true);
+  });
+  document.addEventListener("keyup", function (e) {
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "ArrowLeft" || e.key === "a") dg.keyMoving = 0;
+  });
+  document.addEventListener("mousedown", function (e) {
+    if (isTimerWin()) return;
+    var b = e.target && e.target.closest ? e.target.closest("[data-dg-dir]") : null;
+    dg.holdMoving = b ? Number(b.getAttribute("data-dg-dir")) : 0;
+  });
+  document.addEventListener("mouseup", function () { dg.holdMoving = 0; });
   function renderAll() {
     if (liveTicker) { clearInterval(liveTicker); liveTicker = null; }
     document.getElementById("tabs").innerHTML = tabsHTML();
@@ -2441,7 +2766,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (el) {
       var act = el.getAttribute("data-action");
       if (act === "close-modal") { closeModal(); syncAddDrafts(); return; }
-      if (act === "switch-tab") { state.view = el.getAttribute("data-view"); saveState(); renderAll(); return; }
+      if (act === "switch-tab") {
+        var nv = el.getAttribute("data-view");
+        if (dg.active && nv !== "dungeon") dungeonEnd(true);
+        state.view = nv; saveState(); renderAll(); return;
+      }
+      if (act === "dg-enter") { dungeonStart(); return; }
+      if (act === "dg-hit") { dungeonStrike(); return; }
+      if (act === "dg-retreat") { dungeonEnd(true); return; }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
       if (act === "back") {
         var tb = taskById(el.getAttribute("data-task"));
@@ -2896,6 +3228,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       return;
     }
     if (e.target.closest(".hero-stage")) {
+      if (dg.active) return; /* pas d'édition de héros pendant une descente */
       openHeroModal();
       return;
     }
@@ -3318,7 +3651,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   window.TQ = { fmtDuration: fmtDuration, fmtClock: fmtClock, timerElapsedSec: timerElapsedSec,
     timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; },
     openTimerWindow: detachTimerWindow,
-    sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins } };
+    sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
+    dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
+      gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, check: checkAchievements } };
   var LOGO = [
     "................",
     "...OO......OO...",
