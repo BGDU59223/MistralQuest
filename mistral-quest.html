@@ -482,6 +482,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-door { min-width: 180px; }
   .dg-door-boss { border-color: var(--danger); color: #ff5a4a; }
   .dg-controls { display: flex; gap: 10px; align-items: center; padding: 10px 12px; flex-wrap: wrap; }
+  /* Icône d'aptitude façon LoL : tuile roulade avec touche affichée, grisée pendant la recharge avec décompte en direct.
+     idée en réserve : des slots de sorts achetables/customisables viendront se greffer à côté de cette tuile (≠ pouvoirs de fin de run, issue #3). */
+  .dg-ability { position: relative; width: 54px; height: 54px; min-width: 54px; padding: 0; font-size: 24px; line-height: 1; image-rendering: pixelated; }
+  .dg-ability .dg-ab-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: #fff; background: rgba(8,10,16,.62); pointer-events: none; }
+  .dg-ability.dg-ab-cd-on { filter: grayscale(1) brightness(.55); cursor: not-allowed; }
+  .dg-ab-key { display: block; font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
   .dg-hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
 </style>
 </head>
@@ -516,11 +522,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   "use strict";
   var SAVE_KEY = "mistral-quest-save-v1";
   var SUBTASK_REWARD = { xp: 18, gold: 2 };
+  var COIN = "🪙";
   var DIFFS = {
-    facile:    { label: "Facile",    xp: 10,  gold: 2,  icon: "🌱", badge: "diff-b-facile",  edge: "diff-facile" },
-    moyenne:   { label: "Moyenne",   xp: 25,  gold: 5,  icon: "⚔️", badge: "diff-b-moyenne", edge: "diff-moyenne" },
-    difficile: { label: "Difficile", xp: 50,  gold: 8,  icon: "🔥", badge: "diff-b-difficile", edge: "diff-difficile" },
-    boss:      { label: "Boss",      xp: 120, gold: 12, icon: "💀", badge: "diff-b-boss", edge: "diff-boss", boss: true }
+    facile:    { label: "Facile",    xp: 10,  gold: 10, icon: "🌱", badge: "diff-b-facile",  edge: "diff-facile" },
+    /* calibration alignee sur stepsToTierAndXP (les deux tables doivent rester en phase) : boss >= 100 pieces (demande joueur) */
+    moyenne:   { label: "Moyenne",   xp: 25,  gold: 20, icon: "⚔️", badge: "diff-b-moyenne", edge: "diff-moyenne" },
+    difficile: { label: "Difficile", xp: 50,  gold: 50, icon: "🔥", badge: "diff-b-difficile", edge: "diff-difficile" },
+    boss:      { label: "Boss",      xp: 120, gold: 100, icon: "💀", badge: "diff-b-boss", edge: "diff-boss", boss: true }
   };
   var COLUMNS = { todo: "À faire 📌", doing: "En cours 🏃", done: "Terminé 🏁" };
   var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
@@ -536,14 +544,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function stepsToTierAndXP(n) {
     if (!n || n <= 0) return { key: "libre", xp: 0, gold: 0 };
-    if (n === 1) return { key: "facile", xp: 10, gold: 2 };
-    if (n <= 3) return { key: "moyenne", xp: 25, gold: 5 };
-    if (n <= 7) return { key: "difficile", xp: 50, gold: 8 };
-    return { key: "boss", xp: 120, gold: 12 };
+    if (n === 1) return { key: "facile", xp: 10, gold: 10 };
+    if (n <= 3) return { key: "moyenne", xp: 25, gold: 20 };
+    if (n <= 7) return { key: "difficile", xp: 50, gold: 50 };
+    return { key: "boss", xp: 120, gold: 100 }; /* les prix montent en boutique : une tache boss vaut au moins 100 pieces (demande joueur) */
+  }
+  /* affichage honnete : chaque etape cochee rapporte aussi SUBTASK_REWARD.gold (encaisse au fil), on l'annonce sur la carte */
+  function stepGoldHint(n) {
+    return n > 0 ? " (+" + SUBTASK_REWARD.gold + " " + COIN + " par étape)" : "";
   }
   function autoTierBadgeHTML() {
     var d = DIFFS[stepsToTierAndXP(countStepLines(drafts.steps)).key];
-    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " \uD83E\uDE99</span>";
+    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " \uD83E\uDE99</span>" + stepGoldHint(countStepLines(drafts.steps));
   }
   var CLASSES = {
     magicien: { name: "Magicien", icon: "🧙", title: "Archimage du vent", robe: "#8f6cff", cape: "#5a3aa8" },
@@ -555,13 +567,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var SHOP_ITEMS = [
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
-    { id: "baton",        name: "Bâton en bois",      desc: "Arme de base · +3 attaque · longueur 4",                cost: 25,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 6 · lame marron",         cost: 200,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 6 · lame grise",          cost: 500,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 6 · lame dorée",         cost: 1000, rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 6 · lame blanche",        cost: 1500, rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 7",                cost: 1500, rarity: "epique",  type: "gear", slot: "arme" },
-    { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 1 · frappe large",  cost: 800, rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "baton",        name: "Bâton en bois",      desc: "Arme de base · +3 attaque · longueur 5",                cost: 25,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 7 · lame marron",         cost: 200,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 7 · lame grise",          cost: 500,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 7 · lame dorée",         cost: 1000, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 7 · lame blanche",        cost: 1500, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 8",                cost: 1500, rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 2 · frappe large",  cost: 800, rarity: "epique",  type: "gear", slot: "arme" },
     { id: "bouclier",    name: "Bouclier en bois",    desc: "Bouclier · +4 PV · +1 défense",             cost: 100,   rarity: "commun",  type: "gear", slot: "armure" },
     { id: "armure-cuir", name: "Bouclier en cuir",    desc: "Bouclier · +8 PV · +2 défense",             cost: 500,   rarity: "rare",    type: "gear", slot: "armure" },
     { id: "dragon",      name: "Bouclier en or",      desc: "Bouclier · +12 PV · +4 défense",             cost: 1000,  rarity: "epique",  type: "gear", slot: "armure" },
@@ -1214,8 +1226,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "baton": { atk: 3, len: 4, col: "B" }, "epee-bois": { atk: 3, len: 6, col: "B" }, "epee-fer": { atk: 5, len: 6, col: "M" }, "epee-or": { atk: 7, len: 6, col: "Y" }, "epee-diamant": { atk: 9, len: 6, col: "W" },
-    "katana": { atk: 7, len: 7, col: "M" }, "hache": { atk: 14, len: 1, wide: 3 },
+    "baton": { atk: 3, len: 5, col: "B" }, "epee-bois": { atk: 3, len: 7, col: "B" }, "epee-fer": { atk: 5, len: 7, col: "M" }, "epee-or": { atk: 7, len: 7, col: "Y" }, "epee-diamant": { atk: 9, len: 7, col: "W" },
+    "katana": { atk: 7, len: 8, col: "M" }, "hache": { atk: 14, len: 2, wide: 3 },
+    /* +1 pixel de longueur sur TOUTES les armes (retour joueur). Idee en reserve : d'autres types d'armes a venir (longueurs/degats varies). */
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
     "bague": { as: 5 }, "plume": { as: 10 }, "amulette": { as: 15 }, "collier": { as: 20 }, "anneau": { as: 25 },
@@ -1552,7 +1565,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="task-btn act-timer" data-action="start-timer" data-task="' + t.id + '" title="Lancer le chrono">⏱️</button>' +
       (t.status === "doing" ? '<button class="task-btn act-back" data-action="back" data-task="' + t.id + '" title="Remettre en À faire">↩️</button>' : "") +
       '<button class="task-btn task-delete" data-action="delete-task" data-task="' + t.id + '" title="Supprimer">✖</button></div>' +
-      '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + labelChipsHTML(t) + "</div>" +
+      '<div class="task-meta"><span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + stepGoldHint((t.subtasks || []).length) + labelChipsHTML(t) + "</div>" +
       questProgressBarHTML(t) +
       (t.dueDate ? '<div class="due-date' + (overdue ? " overdue" : "") + '">' + (overdue ? "💀 " : "📅 ") + "Échéance : " + fmtDate(t.dueDate) + "</div>" : "") +
       (actions ? '<div class="task-actions">' + actions + "</div>" : "") +
@@ -1843,7 +1856,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function difficultyHTML(t) {
     var d = DIFFS[t.diff] || DIFFS.facile;
-    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>";
+    return '<span class="task-diff ' + d.badge + '">' + d.icon + " " + d.label.toUpperCase() + '</span><span class="task-reward">+' + d.xp + " XP · +" + d.gold + " 🪙</span>" + stepGoldHint((t.subtasks || []).length);
   }
   var fileStore = (function () {
     var db = null;
@@ -2116,8 +2129,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     state.stats.xpByDay[day] = (state.stats.xpByDay[day] || 0) + baseXp;
     state.stats.doneByDay[day] = (state.stats.doneByDay[day] || 0) + 1;
     state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
-    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
-    showToast("🏁 Quête bouclée : +" + baseXp + " XP · +" + rc.gold + " 🪙");
+    var levelBonus = Math.max(0, state.level - beforeLevel) * 10; /* bonus niveau reel (aligne sur completeTask) */
+    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +" + levelBonus + " 🪙 bonus niveau");
+    showToast("🏁 Quête bouclée : +" + baseXp + " XP · +" + (rc.gold + levelBonus) + " 🪙" + (levelBonus > 0 ? " (dont " + levelBonus + " bonus niveau)" : ""));
     soundCoins();
     checkAchievements();
     saveState();
@@ -2375,7 +2389,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var baseXp = Math.round((d.xp + streakBonus) * xpMultiplier());
     var beforeLevel = state.level;
     state = grantReward(state, baseXp, d.gold);
-    t.gain = { xp: Math.round(baseXp), gold: d.gold };
+    var levelBonus = Math.max(0, state.level - beforeLevel) * 10; /* +10 pieces par niveau franchi (bonus reel ; l'ancien toast annoncait +25 a tort) */
+    var totalGold = d.gold + levelBonus;
+    t.gain = { xp: Math.round(baseXp), gold: totalGold }; /* l'archive affiche le total reellement verse (base + bonus niveau) */
     state.stats.xpByDay[day] = (state.stats.xpByDay[day] || 0) + Math.round(baseXp);
     state.stats.doneByDay[day] = (state.stats.doneByDay[day] || 0) + 1;
     state.stats.totalCompleted = (state.stats.totalCompleted || 0) + 1;
@@ -2383,8 +2399,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       state.stats.bossKills = (state.stats.bossKills || 0) + 1;
       showToast("💀 Boss vaincu !");
     }
-    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +25 🪙 bonus");
-    showToast("+ " + Math.round(baseXp) + " XP · +" + d.gold + " 🪙");
+    if (state.level > beforeLevel) showToast("🎉 Niveau " + state.level + " ! +" + levelBonus + " 🪙 bonus niveau");
+    showToast("+ " + Math.round(baseXp) + " XP · +" + totalGold + " 🪙" + (levelBonus > 0 ? " (dont " + levelBonus + " bonus niveau)" : ""));
     soundCoins();
     checkAchievements();
     saveState();
@@ -2509,7 +2525,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   /* ==================== ⚔️ La Faille (roguelite en salles) ==================== */
   var DG_MONS = {
     slime:    { name: "Slime",         hp: function (r) { return 4 + r * 2; },  spd: 1.1, dmg: function (r) { return 3 + r; }, gold: function (r) { return 2 + r; }, cell: "5px" },
-    bat:      { name: "Chauve-souris", hp: function (r) { return 3 + r * 2; },  spd: 2.6, dmg: function (r) { return 2 + r; }, gold: function (r) { return 3 + r; }, cell: "4px" },
+    bat:      { name: "Chauve-souris", hp: function (r) { return 3 + r * 2; },  spd: 2.6, dmg: function (r) { return 2 + r; }, gold: function (r) { return 3 + r; }, cell: "4px", fly: true },
     skeleton: { name: "Squelette",     hp: function (r) { return 10 + r * 3; }, spd: 1.3, dmg: function (r) { return 4 + r; }, gold: function (r) { return 6 + r; }, cell: "5px" }
   };
   var DG_SPRITES = {
@@ -2741,6 +2757,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return Math.max(cols, g.length) * cell;
   }
   var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
+  var DG_STRIKE_GRACE = 8, DG_STRIKE_BACK = 6; /* marge de tolérance de la frappe : la lame touche même si elle effleure presque le carré du monstre (retour joueur : "je dois être collé pour toucher") */
   /* Grille du héros taillée à la longueur d’arme : corps cols 0-8, poignée cols 8-9, lame cols 10-9+len.
      Largeur constante (10+len) sur toutes les frames => le héros ne bouge pas entre marche et coup. */
   function dgHeroGrid(base, len, blade) {
@@ -2765,7 +2782,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var relF = (en.x - dg.x) * (dg.facing || 1) * pxm;
       var H = dgMonBox(en) / 2; /* carré englobant le monstre complet */
       var reach = DG_SWORD_BACK + (tot.len + (tot.wide || 0) * 0.5) * 5; /* la hache gagne une zone de frappe elargie */
-      if (en.hp > 0 && relF + H > DG_SWORD_BACK && relF - H < reach) {
+      if (en.hp > 0 && relF + H > DG_SWORD_BACK - DG_STRIKE_BACK && relF - H < reach + DG_STRIKE_GRACE) {
         en.hp -= dmg;
         en.hurt = 0.18;
         hit = true;
@@ -2787,7 +2804,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function dungeonRoll() {
     if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0) return;
-    dg.rollT = 0.5; dg.rollCd = 1; /* roulade : invincible 0,5 s, recharge 1 s */
+    dg.rollT = 0.5; dg.rollCd = 2.5; /* roulade : invincible 0,5 s, recharge 2,5 s (retour joueur : 1 s c'etait trop spamme) */
     dg.rollDir = dg.holdMoving || dg.keyMoving || dg.facing || 1; /* dash dans la direction en cours */
     dungeonRender();
   }
@@ -2890,7 +2907,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var ex = en.x * pxm;
       var mon = DG_MONS[en.t];
       var bar = en.hp < en.maxHp ? '<div class="dg-ebar"><i style="width:' + Math.max(0, Math.round(en.hp / en.maxHp * 100)) + '%"></i></div>' : "";
-      html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + '" style="left:' + ex + 'px;bottom:44px">' +
+      /* tout ce qui vole : le CENTRE de l'entite est a hauteur de la lame (~81 px au-dessus du sol), comme si l'epee la transpercait */
+      var ebot = (mon && mon.fly) ? 67 : 44; /* chauve-souris remontee : centre = 67 + 28/2 = 81 px = 46 (pieds) + milieu de la bande de lame 30-40 ; le boss (hors DG_MONS) reste au sol */
+      html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px">' +
         '<div class="dg-ename">' + (en.boss ? "💀 BOSS" : esc(mon.name)) + "</div>" + bar +
         spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) +
         "</div>";
@@ -2921,7 +2940,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (state.equipment.pieds) dgpal.k = PAL.B;
     var hx = dg.x * pxm;
     for (var f3 = 0; f3 < dg.projectiles.length; f3++) {
-      html += '<div class="dg-fb' + (dg.projectiles[f3].hostile ? "" : " dg-fb-def") + '" style="left:' + (dg.projectiles[f3].x * pxm) + 'px;bottom:58px"></div>';
+      html += '<div class="dg-fb' + (dg.projectiles[f3].hostile ? "" : " dg-fb-def") + '" style="left:' + (dg.projectiles[f3].x * pxm) + 'px;bottom:74px"></div>'; /* boules de feu : centre a hauteur de la lame (74 + 6,5 = 80,5 px) */
     }
     var rolling = dg.rollT > 0;
     var rollBlink = rolling && Math.floor(dg.rollT * 12) % 2 === 1; /* clignotement en JS : le heros est recree toutes les 50 ms, une animation CSS repartirait de zero a chaque rendu */
@@ -2933,6 +2952,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<br><button class="btn btn-big btn-accent" data-action="dg-power-continue">⚡ Continuer → Salle ' + (dg.room + 1) + '</button></div></div>';
     }
     vp.innerHTML = html;
+    /* tuile aptitude roulade (style LoL) : grisée + décompte 3·2·1 pendant la recharge, prête (non grisée) sinon */
+    var ab = document.querySelector("[data-dg-roll]");
+    if (ab) {
+      var oncd = (dg.rollCd || 0) > 0;
+      ab.className = "btn dg-ability" + (oncd ? " dg-ab-cd-on" : "");
+      var abcd = ab.querySelector("[data-dg-roll-cd]");
+      if (abcd) abcd.textContent = oncd ? String(Math.ceil(dg.rollCd)) : "";
+    }
     var tot = dungeonTotals();
     var el;
     el = document.querySelector("[data-dg-room]"); if (el) el.textContent = dg.room + (dg.room % 5 === 0 ? " 💀" : "");
@@ -2961,7 +2988,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Le BOSS crache une boule de feu toutes les 5 s : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (dash invincible 0,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span><button class="btn dg-ability" data-action="dg-roll" data-dg-roll title="Roulade — dash invincible 0,5 s, recharge 2,5 s (Espace ou tap court)">🌀<span class="dg-ab-cd" data-dg-roll-cd></span></button><span class="dg-ab-key">ESPACE</span></span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS crache une boule de feu toutes les 5 s : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (dash invincible 0,5 s, recharge 2,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -2978,7 +3006,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -3122,6 +3150,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         saveState(); renderAll(); return;
       }
       if (act === "dg-enter") { dungeonStart(); return; }
+      if (act === "dg-roll") { dungeonRoll(); return; }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
       if (act === "dg-power-continue") {
         if (dg.active && dg.phase === "choose") { dg.phase = "fight"; dungeonNextRoom(); }
