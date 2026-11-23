@@ -467,6 +467,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-choose { position: absolute; left: 0; right: 0; top: 0; bottom: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); z-index: 10; }
   .dg-choose-panel { text-align: center; color: var(--text); font-size: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
   .dg-door { min-width: 180px; }
+  .dg-offer-title { font-size: 14px; color: var(--muted); }
+  .dg-offer-item { font-size: 26px; color: var(--accent); }
+  .dg-offer-stats { font-size: 16px; color: var(--text); }
+  .dg-offer-note { font-size: 11px; color: var(--muted); }
+  .dg-offer-actions { display: flex; gap: 10px; justify-content: center; }
   .dg-door-boss { border-color: var(--danger); color: #ff5a4a; }
   .dg-itembar { padding: 6px 10px; margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; align-items: center; }
   .dg-noitems { color: var(--muted); }
@@ -550,24 +555,24 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var SHOP_ITEMS = [
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
-    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3% XP gagné",                  cost: 30,   rarity: "commun",  type: "gear", slot: "arme", bonus: 3 },
-    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5% XP gagné",                  cost: 45,   rarity: "commun",  type: "gear", slot: "arme", bonus: 5 },
-    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +8% XP gagné",                  cost: 80,   rarity: "rare",    type: "gear", slot: "arme", bonus: 8 },
-    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +12% XP gagné",                 cost: 150,  rarity: "rare",    type: "gear", slot: "arme", bonus: 12 },
-    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +15% XP gagné",                 cost: 240,  rarity: "epique",  type: "gear", slot: "arme", bonus: 15 },
-    { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +5% XP gagné",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure", bonus: 5 },
-    { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +9% XP gagné",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure", bonus: 9 },
-    { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12% XP gagné",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure", bonus: 12 },
-    { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +8% XP gagné",               cost: 70,   rarity: "rare",    type: "gear", slot: "tete", bonus: 8 },
-    { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +10% XP gagné",              cost: 120,  rarity: "rare",    type: "gear", slot: "tete", bonus: 10 },
-    { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +13% XP gagné",              cost: 190,  rarity: "epique",  type: "gear", slot: "tete", bonus: 13 },
-    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +4% XP gagné",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire", bonus: 4 },
-    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +7% XP gagné",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire", bonus: 7 },
-    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +10% XP gagné",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire", bonus: 10 },
-    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +12% XP gagné",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire", bonus: 12 },
-    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +12% XP gagné",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire", bonus: 12 },
-    { id: "botte",       name: "Bottes de vitesse",   desc: "Pieds · +8% XP gagné",                cost: 80,   rarity: "rare",    type: "gear", slot: "pieds", bonus: 8 },
-    { id: "bottes-vent", name: "Bottes du vent",      desc: "Pieds · +12% XP gagné",               cost: 150,  rarity: "epique",  type: "gear", slot: "pieds", bonus: 12 }
+    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3 atk · +5% puissance",                  cost: 30,   rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5 atk · +10% puissance",                  cost: 45,   rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +7 atk · +15% puissance",                  cost: 80,   rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +9 atk · +20% puissance",                 cost: 150,  rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +14 atk · +30% puissance",                 cost: 240,  rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +4 PV · +1 défense",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure" },
+    { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +8 PV · +2 défense",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure" },
+    { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12 PV · +4 défense",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure" },
+    { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +2 PV · +1 défense",               cost: 70,   rarity: "rare",    type: "gear", slot: "tete" },
+    { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +3 PV · +2 défense",              cost: 120,  rarity: "rare",    type: "gear", slot: "tete" },
+    { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +4 PV · +3 défense",              cost: 190,  rarity: "epique",  type: "gear", slot: "tete" },
+    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +5% vitesse d’attaque · +5% loot",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire" },
+    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +10% vitesse d’attaque · +10% loot",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +15% vitesse d’attaque · +15% loot",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +20% vitesse d’attaque · +20% loot",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +25% vitesse d’attaque · +20% loot",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire" },
+    { id: "botte",       name: "Bottes de vitesse",   desc: "Pieds · +1 PV · +1 vitesse",                cost: 80,   rarity: "rare",    type: "gear", slot: "pieds" },
+    { id: "bottes-vent", name: "Bottes du vent",      desc: "Pieds · +1 PV · +2 vitesse",               cost: 150,  rarity: "epique",  type: "gear", slot: "pieds" }
   ];
   var ACHIEVEMENTS = [
     { id: "first",   name: "Première quête",  desc: "Terminer 1 quête",                 icon: "🌱", check: function (s) { return s.stats.totalCompleted >= 1; }, gold: 10 },
@@ -1202,17 +1207,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "epee-bois": { atk: 3 }, "epee": { atk: 5 }, "epee-fer": { atk: 7 }, "epee-acier": { atk: 9 }, "lame": { atk: 14 },
+    "epee-bois": { atk: 3, pw: 5 }, "epee": { atk: 5, pw: 10 }, "epee-fer": { atk: 7, pw: 15 }, "epee-acier": { atk: 9, pw: 20 }, "lame": { atk: 14, pw: 30 },
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
-    "bague": { loot: 5 }, "plume": { loot: 10 }, "amulette": { loot: 15 }, "collier": { loot: 20 }, "anneau": { loot: 20 },
+    "bague": { loot: 5, as: 5 }, "plume": { loot: 10, as: 10 }, "amulette": { loot: 15, as: 15 }, "collier": { loot: 20, as: 20 }, "anneau": { loot: 20, as: 25 },
     "botte": { hp: 1, spd: 1 }, "bottes-vent": { hp: 1, spd: 2 }
   };
   function gearStats() {
-    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0 };
+    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, pw: 0, as: 0 };
     for (var slot in state.equipment) {
       var st = DG_GEAR[state.equipment[slot]];
-      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; }
+      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; g.pw += st.pw || 0; g.as += st.as || 0; }
     }
     return g;
   }
@@ -1630,7 +1635,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var gs = gearStats();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
-      ' — Faille : ⚔️ atk ' + (3 + gs.atk) + " · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 🥾 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
+      ' — Faille : ⚔️ atk ' + (3 + gs.atk) + " · 💥 puissance +" + gs.pw + "% · ⚡ vitesse d'attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 🥾 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
       '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
       '<button class="btn btn-accent" data-action="switch-tab" data-view="dungeon">⚔️ La Faille</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
@@ -1643,7 +1648,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var cards = items.map(function (it) {
         var equipped = state.equipment[it.slot] === it.id;
         var st = DG_GEAR[it.id] || null;
-        var stag = st ? '<div class="dg-stag">' + (st.atk ? "⚔️ atk +" + st.atk + " " : "") + (st.hp ? "❤️ PV +" + st.hp + " " : "") + (st.def ? "🛡️ def +" + st.def + " " : "") + (st.spd ? "🥾 spd +" + st.spd + " " : "") + (st.loot ? "🪙 loot +" + st.loot + "%" : "") + "</div>" : "";
+        var stag = st ? '<div class="dg-stag">' + (st.atk ? "⚔️ atk +" + st.atk + " " : "") + (st.pw ? "💥 puissance +" + st.pw + "% " : "") + (st.as ? "⚡ vitesse +" + st.as + "% " : "") + (st.hp ? "❤️ PV +" + st.hp + " " : "") + (st.def ? "🛡️ def +" + st.def + " " : "") + (st.spd ? "🥾 spd +" + st.spd + " " : "") + (st.loot ? "🪙 loot +" + st.loot + "%" : "") + "</div>" : "";
         return '<div class="panel shop-card">' +
           '<span class="rarity-tag rarity-' + it.rarity + '">' + it.rarity.toUpperCase() + "</span>" +
           '<div class="shop-preview"><span style="font-size:34px">' + (({ arme: "⚔️", armure: "🛡️", tete: "🎩", accessoire: "💍", pieds: "🥾" })[it.slot] || "🎒") + "</span></div>" +
@@ -1659,7 +1664,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return banner + rows;
   }
   function shopView() {
-    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — l\'équipement booste ton XP gagné, et chaque objet donne des stats de combat dans la Faille (atk · PV · def · spd · loot).</p>' +
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · 💪 puissance · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
       '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
@@ -2598,7 +2603,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       def: g.def + it.def,
       maxHp: 20 + g.hp + it.hp,
       spd: 5 + (g.spd + it.spd) * 1.5,
-      loot: 1 + (g.loot + it.loot) / 100
+      loot: 1 + (g.loot + it.loot) / 100,
+      pw: g.pw + (it.pw || 0),
+      as: g.as + (it.as || 0)
     };
   }
   function dungeonStart() {
@@ -2607,6 +2614,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.x = 12.5; dg.room = 1; dg.phase = "fight"; dg.reward = null;
     dg.purse = 0; dg.kills = 0; dg.items = []; dg.entities = []; dg.doors = null;
     dg.hp = dungeonTotals().maxHp;
+    dg.offer = null;
     dg.facing = 1;
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
     dg.lastResult = null;
@@ -2621,7 +2629,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!dg.active) return;
     dg.active = false;
     if (dg.loop) { clearInterval(dg.loop); dg.loop = null; }
-    var cleared = (dg.room - 1) + (dg.phase === "choose" ? 1 : 0);
+    var cleared = (dg.room - 1) + ((dg.phase === "choose" || dg.phase === "offer") ? 1 : 0);
     var run = { rooms: cleared, room: dg.room, gold: Math.round(dg.purse), kills: dg.kills, items: dg.items.length, retreat: !!retreat };
     state.dungeon.runs += 1;
     state.dungeon.kills += dg.kills;
@@ -2629,6 +2637,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (retreat) state.gold += run.gold;
     dg.lastResult = run;
     dg.items = [];
+    dg.offer = null;
     checkAchievements();
     saveState();
     showToast(retreat
@@ -2671,12 +2680,23 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var duo = [{ type: "item", label: "🎁 Objet" }, { type: "gold", label: "🪙 Pillage" }];
     dg.doors = Math.random() < 0.5 ? [duo[0], duo[1]] : [duo[1], duo[0]];
   }
+  function dungeonGrantItem(it) {
+    dg.items.push(it);
+    if (it.heal) dg.hp = dungeonTotals().maxHp;
+    else if (it.hp) dg.hp += it.hp;
+  }
   function dungeonCleared() {
-    var bonus = "";
     if (dg.reward === "item") {
-      dungeonGrantItem();
-      bonus = " · 🎁 Objet gagné";
-    } else if (dg.reward === "gold") {
+      /* objet à gagner : le joueur ouvre, voit les stats, et accepte ou refuse */
+      dg.offer = DG_RUN_ITEMS[Math.floor(Math.random() * DG_RUN_ITEMS.length)];
+      dg.reward = null;
+      dg.phase = "offer";
+      showToast("🎁 Un objet ! Regarde-le et décide.");
+      dungeonRender();
+      return;
+    }
+    var bonus = "";
+    if (dg.reward === "gold") {
       var g = 20 + dg.room * 5;
       dg.purse += g;
       bonus = " · 🪙 +" + g + " pillés";
@@ -2687,13 +2707,25 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     showToast("✅ Salle " + dg.room + " purgée" + bonus + " — choisis ta porte !");
     dungeonRender();
   }
-  function dungeonGrantItem() {
-    var it = DG_RUN_ITEMS[Math.floor(Math.random() * DG_RUN_ITEMS.length)];
-    dg.items.push(it);
-    if (it.heal) dg.hp = dungeonTotals().maxHp;
-    else if (it.hp) dg.hp += it.hp;
+  function dungeonAfterOffer(msg) {
+    dg.phase = "choose";
+    dungeonGenDoors();
+    showToast(msg);
+    dungeonRender();
+  }
+  function dungeonOfferTake() {
+    if (!dg.active || dg.phase !== "offer" || !dg.offer) return;
+    var it = dg.offer;
+    dg.offer = null;
+    dungeonGrantItem(it);
     soundCoins();
-    showToast(it.icon + " Salle au trésor : " + it.name + " — " + it.desc + " (perdu en fin de run)");
+    dungeonAfterOffer(it.icon + " " + it.name + " pris : " + it.desc);
+  }
+  function dungeonOfferRefuse() {
+    if (!dg.active || dg.phase !== "offer" || !dg.offer) return;
+    var it = dg.offer;
+    dg.offer = null;
+    dungeonAfterOffer("❌ " + it.name + " refusé — on continue !");
   }
   function dungeonChooseDoor(i) {
     if (!dg.active || dg.phase !== "choose" || !dg.doors || !dg.doors[i]) return;
@@ -2720,14 +2752,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
   function dungeonStrike() {
     if (!dg.active || dg.strikeCd > 0) return;
-    dg.strikeCd = 1;
-    var hit = false, tot = dungeonTotals(), pxm = dgPxm();
+    var tot = dungeonTotals();
+    dg.strikeCd = 1 / (1 + tot.as / 100); /* 1 coup/s de base, réduit par la vitesse d'attaque */
+    var hit = false, pxm = dgPxm(), dmg = Math.round(tot.atk * (1 + tot.pw / 100)); /* puissance d'attaque */
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       var relF = (en.x - dg.x) * (dg.facing || 1) * pxm;
       var H = dgMonBox(en) / 2; /* carré englobant le monstre complet */
       if (en.hp > 0 && relF + H > DG_SWORD_BACK && relF - H < DG_SWORD_TIP) {
-        en.hp -= tot.atk;
+        en.hp -= dmg;
         en.hurt = 0.18;
         hit = true;
       }
@@ -2807,6 +2840,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var hx = dg.x * pxm;
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", heroPal()) + "</div></div>";
+    if (dg.phase === "offer" && dg.offer) {
+      var of = dg.offer;
+      html += '<div class="dg-choose"><div class="dg-choose-panel dg-offer-panel">' +
+        '<div class="dg-offer-title">🎁 On a mis la main sur…</div>' +
+        '<div class="dg-offer-item">' + of.icon + " " + of.name + "</div>" +
+        '<div class="dg-offer-stats">' + of.desc + "</div>" +
+        '<div class="dg-offer-note">Objet de manche — perdu à la mort ou en fin de course</div>' +
+        '<div class="dg-offer-actions"><button class="btn btn-accent" data-action="dg-offer-take">✅ Garder</button>' +
+        '<button class="btn btn-danger" data-action="dg-offer-refuse">❌ Laisser</button></div>' +
+        "</div></div>";
+    }
     if (dg.phase === "choose" && dg.doors) {
       var doors = dg.doors.map(function (doo, idx) {
         var lab = doo.type === "boss" ? "💀 Salle du boss · gros pillage 🪙"
@@ -2867,7 +2911,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run (ouvre-le, regarde ses stats, garde-le ou laisse-le) ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Les objets gagnés en run sont <b>perdus à la mort ou en fin de course</b> ; le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -2876,7 +2920,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🚪 Prochain boss : salle ' + (Math.max(5, (Math.floor(dn.best / 5) + 1) * 5)) + "</span>" +
       "</div>" +
       '<div class="dg-record">' +
-      '<span class="hud-badge">⚔️ Attaque : ' + (3 + g.atk) + "</span>" +
+      '<span class="hud-badge">⚔️ Attaque : ' + Math.round((3 + g.atk) * (1 + g.pw / 100)) + '</span>' +
+      '<span class="hud-badge">💥 Puissance : +' + g.pw + "%</span>" +
+      '<span class="hud-badge">⚡ Vitesse d\'attaque : +' + g.as + "%</span>" +
       '<span class="hud-badge">❤️ PV : ' + (20 + g.hp) + "</span>" +
       '<span class="hud-badge">🛡️ Défense : ' + g.def + "</span>" +
       '<span class="hud-badge">🥾 Vitesse : ' + (5 + g.spd * 1.5) + " m/s</span>" +
@@ -2994,6 +3040,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (act === "dg-enter") { dungeonStart(); return; }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
       if (act === "dg-door") { dungeonChooseDoor(parseInt(el.getAttribute("data-side"), 10) || 0); return; }
+      if (act === "dg-offer-take") { dungeonOfferTake(); return; }
+      if (act === "dg-offer-refuse") { dungeonOfferRefuse(); return; }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
       if (act === "back") {
         var tb = taskById(el.getAttribute("data-task"));
@@ -3874,6 +3922,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
     dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
       choose: dungeonChooseDoor, setup: dungeonSetupRoom, doorgen: dungeonGenDoors, totals: dungeonTotals,
+      offerTake: dungeonOfferTake, offerRefuse: dungeonOfferRefuse,
       gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, monbox: dgMonBox, pxm: dgPxm, check: checkAchievements } };
   var LOGO = [
     "................",
