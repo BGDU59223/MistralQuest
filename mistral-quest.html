@@ -1214,7 +1214,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "baton": { atk: 3, len: 4 }, "epee-bois": { atk: 3, len: 6, col: "B" }, "epee-fer": { atk: 5, len: 6, col: "M" }, "epee-or": { atk: 7, len: 6, col: "Y" }, "epee-diamant": { atk: 9, len: 6, col: "W" },
+    "baton": { atk: 3, len: 4, col: "B" }, "epee-bois": { atk: 3, len: 6, col: "B" }, "epee-fer": { atk: 5, len: 6, col: "M" }, "epee-or": { atk: 7, len: 6, col: "Y" }, "epee-diamant": { atk: 9, len: 6, col: "W" },
     "katana": { atk: 7, len: 7, col: "M" }, "hache": { atk: 14, len: 1, wide: 3 },
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
@@ -2897,7 +2897,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
     var hbase = HERO_DG_A, hbob = 0;
-    var swinging = dg.strikeCd > dg.strikeDur * 0.75; /* la lame n'apparait que pendant la frappe (clignotement : apparait dans le quart du cycle apres le coup, disparait ensuite) */
+    var swinging = dg.strikeCd > dg.strikeDur * 0.70; /* la lame n'apparait que pendant la frappe : elle apparait 0,3 s au moment du coup puis disparait jusqu'au prochain (clignotement lisible) */
     if (swinging) { hbase = HERO_DG_S; }
     else if (dirNow) {
       hbob = Math.floor(dg.walkT * 7) % 2;
@@ -2905,7 +2905,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var wid2 = state.equipment ? state.equipment["arme"] : null;
     var wg2 = wid2 ? DG_GEAR[wid2] : null;
-    var bladeCol = swinging ? ((wg2 && wg2.col) || ".") : "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
+    var bladeCol = swinging ? (wg2 ? (wg2.col || "M") : ".") : "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
     /* le héros de la Faille = ton personnage : chauve/cheveux, torse nu, casque, armure, bottes si équipés */
     var fem = state.hero && state.hero.gender === "femme";
     if (!fem && !state.equipment.tete) {
