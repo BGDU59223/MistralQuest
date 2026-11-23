@@ -2685,6 +2685,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.phase = "choose";
     dungeonGenDoors();
     showToast("✅ Salle " + dg.room + " purgée" + bonus + " — choisis ta porte !");
+    dungeonRender();
   }
   function dungeonGrantItem() {
     var it = DG_RUN_ITEMS[Math.floor(Math.random() * DG_RUN_ITEMS.length)];
@@ -2777,7 +2778,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     if (dg.hp <= 0) { soundDeath(); dungeonEnd(false); return; }
     if (dg.phase === "fight" && dg.entities.length === 0) dungeonCleared();
-    dungeonRender();
+    /* phase "choose" : écran figé (aucun re-rendu) — sinon les boutons de porte sont recréés toutes les 50 ms et le clic du navigateur n'aboutit jamais */
+    if (dg.phase === "fight") dungeonRender();
   }
   function dungeonRender() {
     if (!dg.active) return;
