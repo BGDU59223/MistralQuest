@@ -447,8 +447,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-hpbar { flex: 1; min-width: 130px; max-width: 280px; height: 14px; background: #2a1210; border: 2px solid #000; border-radius: 6px; overflow: hidden; }
   .dg-hpfill { height: 100%; background: #d43d2a; transition: width .15s; }
   .dg-arena { position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
-  .dg-attack { position: absolute; right: 14px; bottom: 14px; width: 78px; height: 78px; border-radius: 50%; font-size: 34px; line-height: 1; background: radial-gradient(circle at 35% 30%, #6b2a19, #2a120c); border: 3px solid #000; box-shadow: 0 4px 0 #000, inset 0 0 0 2px rgba(255, 112, 0, .4); color: #ffdd99; cursor: pointer; z-index: 7; pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-  .dg-attack:active { transform: translateY(2px); filter: brightness(1.3); }
+  .dg-reward-badge { color: var(--accent); font-weight: 700; }
   .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
@@ -2603,7 +2602,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function dungeonStart() {
     if (dg.active) return;
     dg.active = true;
-    dg.x = 3; dg.room = 1; dg.phase = "fight";
+    dg.x = 12.5; dg.room = 1; dg.phase = "fight"; dg.reward = null;
     dg.purse = 0; dg.kills = 0; dg.items = []; dg.entities = []; dg.doors = null;
     dg.hp = dungeonTotals().maxHp;
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
@@ -2611,7 +2610,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     state.view = "dungeon";
     soundBoss();
     renderAll();
-    dungeonSetupRoom(1);
+    dungeonSetupRoom(1, Math.random() < 0.5 ? "item" : "gold");
     if (dg.loop) clearInterval(dg.loop);
     dg.loop = setInterval(function () { dungeonTick(0.05); }, 50);
   }
@@ -2634,17 +2633,20 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       : "☠️ La Faille t'a englouti salle " + dg.room + "… " + run.gold + " 🪙 et tes objets de run sont perdus");
     renderAll();
   }
-  function dungeonSetupRoom(room) {
+  function dungeonSetupRoom(room, reward) {
+    dg.x = 12.5;
     dg.entities = [];
     if (room % 5 === 0) {
       var hp = 60 + room * 15, dd = 10 + room;
-      dg.entities.push({ t: "boss", boss: true, x: 18, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0 });
+      dg.entities.push({ t: "boss", boss: true, x: 18.5, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0 });
+      dg.reward = "boss";
       soundBoss();
-      showToast("💀 Salle " + room + " : BOSS !");
+      showToast("💀 Salle " + room + " : BOSS ! Gros pillage à la clé");
     } else {
       var count = Math.min(8, 2 + Math.floor((room - 1) / 2));
       for (var i = 0; i < count; i++) dungeonSpawnMonster(room, i, count);
-      showToast("⚔️ Salle " + room + " : " + count + " monstre(s) !");
+      dg.reward = reward === "item" ? "item" : (reward === "gold" ? "gold" : (Math.random() < 0.5 ? "item" : "gold"));
+      showToast("⚔️ Salle " + room + " : " + count + " monstre(s) · Récompense : " + (dg.reward === "item" ? "🎁 Objet" : "🪙 Pillage"));
     }
     dg.phase = "fight";
   }
@@ -2654,20 +2656,32 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     else if (room >= 3 && roll < 0.6) type = "bat";
     var m = DG_MONS[type];
     var hp = m.hp(room);
-    var x = Math.min(23, 7 + idx * (16 / Math.max(1, count)) + Math.random());
+    var slot = Math.floor(idx / 2);
+    var x = idx % 2 === 0
+      ? Math.min(8.8, 2.2 + slot * 1.9 + Math.random() * 0.8)
+      : Math.max(16.2, 23.3 - slot * 1.9 - Math.random() * 0.8);
     dg.entities.push({ t: type, x: x, hp: hp, maxHp: hp, dmg: m.dmg(room), gold: m.gold(room), spd: m.spd, cd: 0, hurt: 0 });
   }
   function dungeonGenDoors() {
     var next = dg.room + 1;
     if (next % 5 === 0) { dg.doors = [{ type: "boss" }]; return; }
-    var a = Math.random() < 0.4 ? "item" : "combat";
-    var b = Math.random() < 0.4 ? "item" : "combat";
-    dg.doors = [{ type: a }, { type: b }];
+    var duo = [{ type: "item", label: "🎁 Objet" }, { type: "gold", label: "🪙 Pillage" }];
+    dg.doors = Math.random() < 0.5 ? [duo[0], duo[1]] : [duo[1], duo[0]];
   }
   function dungeonCleared() {
+    var bonus = "";
+    if (dg.reward === "item") {
+      dungeonGrantItem();
+      bonus = " · 🎁 Objet gagné";
+    } else if (dg.reward === "gold") {
+      var g = 20 + dg.room * 5;
+      dg.purse += g;
+      bonus = " · 🪙 +" + g + " pillés";
+    }
+    dg.reward = null;
     dg.phase = "choose";
     dungeonGenDoors();
-    showToast("✅ Salle " + dg.room + " purgée — choisis ta porte !");
+    showToast("✅ Salle " + dg.room + " purgée" + bonus + " — choisis ta porte !");
   }
   function dungeonGrantItem() {
     var it = DG_RUN_ITEMS[Math.floor(Math.random() * DG_RUN_ITEMS.length)];
@@ -2682,13 +2696,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var door = dg.doors[i];
     dg.doors = null;
     dg.room += 1;
-    if (dg.room % 5 === 0) door.type = "boss";
-    if (door.type === "item") {
-      dungeonGrantItem();
-      dungeonGenDoors();
-    } else {
-      dungeonSetupRoom(dg.room);
-    }
+    if (dg.room % 5 === 0) door = { type: "boss" };
+    dungeonSetupRoom(dg.room, door.type);
     dungeonRender();
   }
   function dungeonStrike() {
@@ -2725,7 +2734,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
-    if (dgAtkTouch !== null) dungeonStrike(); /* coup maintenu : répétition auto cadencée par strikeCd */
+    var inRange = false;
+    for (var k = 0; k < dg.entities.length; k++) {
+      var ed = dg.entities[k];
+      if (ed.hp > 0 && ed.x - dg.x > -0.5 && ed.x - dg.x < 3.2) { inRange = true; break; }
+    }
+    if (inRange) dungeonStrike(); /* frappe en continu au contact, cadencée par strikeCd */
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
@@ -2773,9 +2787,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       spriteHTML(hgrid, "5px", heroPal()) + "</div>";
     if (dg.phase === "choose" && dg.doors) {
       var doors = dg.doors.map(function (doo, idx) {
-        return doo.type === "boss"
-          ? '<button class="btn btn-big dg-door dg-door-boss" data-action="dg-door" data-side="' + idx + '">💀 Salle du boss</button>'
-          : '<button class="btn btn-big dg-door" data-action="dg-door" data-side="' + idx + '">❓ Salle mystère</button>';
+        var lab = doo.type === "boss" ? "💀 Salle du boss · gros pillage 🪙"
+          : doo.type === "item" ? "🚪 Monstres · récompense 🎁 Objet"
+          : "🚪 Monstres · récompense 🪙 Pillage";
+        return '<button class="btn btn-big dg-door' + (doo.type === "boss" ? " dg-door-boss" : "") + '" data-action="dg-door" data-side="' + idx + '">' + lab + "</button>";
       }).join("");
       html += '<div class="dg-choose"><div class="dg-choose-panel">Salle ' + dg.room + ' purgée !<br>Quelle porte prends-tu ?' + doors + "</div></div>";
     }
@@ -2786,6 +2801,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     el = document.querySelector("[data-dg-hpfill]"); if (el) el.style.width = Math.max(0, Math.round(dg.hp / tot.maxHp * 100)) + "%";
     el = document.querySelector("[data-dg-hptext]"); if (el) el.textContent = Math.max(0, Math.round(dg.hp)) + " / " + tot.maxHp;
     el = document.querySelector("[data-dg-purse]"); if (el) el.textContent = Math.round(dg.purse);
+    el = document.querySelector("[data-dg-reward]");
+    if (el) el.textContent = dg.reward === "item" ? "🎁 Objet à la clé" : dg.reward === "gold" ? "🪙 Pillage à la clé" : dg.reward === "boss" ? "💀 Jackpot à la clé" : "";
     el = document.querySelector("[data-dg-items]");
     if (el) el.innerHTML = dg.items.length
       ? dg.items.map(function (it) { return '<span class="hud-badge">' + it.icon + " " + esc(it.name) + " (" + esc(it.desc) + ")</span>"; }).join("")
@@ -2800,16 +2817,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-hpbar"><div class="dg-hpfill" data-dg-hpfill style="width:100%"></div></div>' +
       '<span>❤️ <b data-dg-hptext>' + tot.maxHp + "</b></span>" +
       '<span>⚔️ <b data-dg-atk>' + tot.atk + "</b></span>" +
+      '<span class="dg-reward-badge" data-dg-reward></span>' +
       '<span>🪙 pillage : <b data-dg-purse>0</b></span>' +
       '<button class="btn" data-action="dg-retreat">🏠 Battre en retraite</button>' +
       "</div>" +
       '<div class="dg-itembar panel" data-dg-items><span class="dg-noitems">Aucun objet de run — les salles ❓ cachent parfois un trésor</span></div>' +
-      '<div class="dg-arena" data-dg-arena><div class="dg-viewport" id="dg-viewport"></div><button class="dg-attack" data-dg-attack title="Frapper (Espace)">⚔️</button></div>' +
+      '<div class="dg-arena" data-dg-arena><div class="dg-viewport" id="dg-viewport"></div></div>' +
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
-      '<button class="btn btn-big btn-accent" data-action="dg-hit" title="Frapper (Espace)">⚔️ Frapper</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger, bouton ⚔️ en bas à droite pour frapper.</span>' + +
+      '<span class="dg-hint">Ton héros frappe automatiquement au contact. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
       "Les objets de run (❓) sont perdus à la mort ou en fin de course. Le pillage sauf si tu tombes 🏠.<br>" +
       "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
       "</div></div>";
@@ -2828,7 +2845,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : purge chaque salle de ses monstres (de plus en plus nombreux et coriaces), puis <b>choisis entre 2 portes mystère</b> — des monstres… ou un objet pour la manche en cours. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe en continu</b> dès qu\u2019un monstre est à portée, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Les objets gagnés en run sont <b>perdus à la mort ou en fin de course</b> ; le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -2861,14 +2878,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   });
   document.addEventListener("mousedown", function (e) {
     if (isTimerWin()) return;
-    var a = e.target && e.target.closest ? e.target.closest("[data-dg-attack]") : null;
-    if (a) { dungeonStrike(); return; }
     var b = e.target && e.target.closest ? e.target.closest("[data-dg-dir]") : null;
     dg.holdMoving = b ? Number(b.getAttribute("data-dg-dir")) : 0;
   });
   document.addEventListener("mouseup", function () { dg.holdMoving = 0; });
   /* — Contrôles tactiles (mobile) : moitié gauche/droite de la salle = déplacement, bouton ⚔️ = coup */
-  var dgMoveTouch = null, dgAtkTouch = null;
+  var dgMoveTouch = null;
   function dgArenaEl() { return document.querySelector("[data-dg-arena]"); }
   function dgTouchDir(clientX) {
     var vp = dgArenaEl();
@@ -2881,10 +2896,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i];
       var tgt = t.target || e.target;
-      if (tgt && tgt.closest && tgt.closest("[data-dg-attack]")) {
-        e.preventDefault();
-        if (dgAtkTouch === null) { dgAtkTouch = t.identifier; dungeonStrike(); }
-      } else if (tgt && tgt.closest && tgt.closest("[data-dg-arena]")) {
+      if (tgt && tgt.closest && tgt.closest("[data-dg-arena]")) {
         e.preventDefault();
         dgMoveTouch = t.identifier;
         dg.holdMoving = dgTouchDir(t.clientX);
@@ -2905,7 +2917,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     for (var i = 0; i < e.changedTouches.length; i++) {
       var id = e.changedTouches[i].identifier;
       if (id === dgMoveTouch) { dgMoveTouch = null; dg.holdMoving = 0; }
-      if (id === dgAtkTouch) dgAtkTouch = null;
     }
   }
   document.addEventListener("touchend", dgTouchUp, { passive: true });
@@ -2959,7 +2970,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         state.view = nv; saveState(); renderAll(); return;
       }
       if (act === "dg-enter") { dungeonStart(); return; }
-      if (act === "dg-hit") { dungeonStrike(); return; }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
       if (act === "dg-door") { dungeonChooseDoor(parseInt(el.getAttribute("data-side"), 10) || 0); return; }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
