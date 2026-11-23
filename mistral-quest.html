@@ -555,22 +555,22 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var SHOP_ITEMS = [
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
-    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3 atk · +5% puissance",                  cost: 30,   rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5 atk · +10% puissance",                  cost: 45,   rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +7 atk · +15% puissance",                  cost: 80,   rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +9 atk · +20% puissance",                 cost: 150,  rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +14 atk · +30% puissance",                 cost: 240,  rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3 attaque",                  cost: 30,   rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5 attaque",                  cost: 45,   rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +7 attaque",                  cost: 80,   rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +9 attaque",                 cost: 150,  rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +14 attaque",                 cost: 240,  rarity: "epique",  type: "gear", slot: "arme" },
     { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +4 PV · +1 défense",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure" },
     { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +8 PV · +2 défense",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure" },
     { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12 PV · +4 défense",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure" },
     { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +2 PV · +1 défense",               cost: 70,   rarity: "rare",    type: "gear", slot: "tete" },
     { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +3 PV · +2 défense",              cost: 120,  rarity: "rare",    type: "gear", slot: "tete" },
     { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +4 PV · +3 défense",              cost: 190,  rarity: "epique",  type: "gear", slot: "tete" },
-    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +5% vitesse d’attaque · +5% loot",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire" },
-    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +10% vitesse d’attaque · +10% loot",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +15% vitesse d’attaque · +15% loot",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +20% vitesse d’attaque · +20% loot",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +25% vitesse d’attaque · +20% loot",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire" },
+    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +5% vitesse d’attaque",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire" },
+    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +10% vitesse d’attaque",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +15% vitesse d’attaque",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +20% vitesse d’attaque",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +25% vitesse d’attaque",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire" },
     { id: "botte",       name: "Bottes de vitesse",   desc: "Pieds · +1 PV · +1 vitesse",                cost: 80,   rarity: "rare",    type: "gear", slot: "pieds" },
     { id: "bottes-vent", name: "Bottes du vent",      desc: "Pieds · +1 PV · +2 vitesse",               cost: 150,  rarity: "epique",  type: "gear", slot: "pieds" }
   ];
@@ -1207,17 +1207,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "epee-bois": { atk: 3, pw: 5 }, "epee": { atk: 5, pw: 10 }, "epee-fer": { atk: 7, pw: 15 }, "epee-acier": { atk: 9, pw: 20 }, "lame": { atk: 14, pw: 30 },
+    "epee-bois": { atk: 3 }, "epee": { atk: 5 }, "epee-fer": { atk: 7 }, "epee-acier": { atk: 9 }, "lame": { atk: 14 },
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
-    "bague": { loot: 5, as: 5 }, "plume": { loot: 10, as: 10 }, "amulette": { loot: 15, as: 15 }, "collier": { loot: 20, as: 20 }, "anneau": { loot: 20, as: 25 },
+    "bague": { as: 5 }, "plume": { as: 10 }, "amulette": { as: 15 }, "collier": { as: 20 }, "anneau": { as: 25 },
     "botte": { hp: 1, spd: 1 }, "bottes-vent": { hp: 1, spd: 2 }
   };
   function gearStats() {
-    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, pw: 0, as: 0 };
+    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0 };
     for (var slot in state.equipment) {
       var st = DG_GEAR[state.equipment[slot]];
-      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; g.pw += st.pw || 0; g.as += st.as || 0; }
+      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; g.as += st.as || 0; }
     }
     return g;
   }
@@ -1635,7 +1635,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var gs = gearStats();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
-      ' — Faille : ⚔️ atk ' + (3 + gs.atk) + " · 💥 puissance +" + gs.pw + "% · ⚡ vitesse d'attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 🥾 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
+      ' — Faille : ⚔️ attaque ' + (3 + gs.atk) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 🥾 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
       '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
       '<button class="btn btn-accent" data-action="switch-tab" data-view="dungeon">⚔️ La Faille</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
@@ -1648,7 +1648,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var cards = items.map(function (it) {
         var equipped = state.equipment[it.slot] === it.id;
         var st = DG_GEAR[it.id] || null;
-        var stag = st ? '<div class="dg-stag">' + (st.atk ? "⚔️ atk +" + st.atk + " " : "") + (st.pw ? "💥 puissance +" + st.pw + "% " : "") + (st.as ? "⚡ vitesse +" + st.as + "% " : "") + (st.hp ? "❤️ PV +" + st.hp + " " : "") + (st.def ? "🛡️ def +" + st.def + " " : "") + (st.spd ? "🥾 spd +" + st.spd + " " : "") + (st.loot ? "🪙 loot +" + st.loot + "%" : "") + "</div>" : "";
+        var stag = st ? '<div class="dg-stag">' + (st.atk ? "⚔️ attaque +" + st.atk + " " : "") + (st.as ? "⚡ vitesse d’attaque +" + st.as + "% " : "") + (st.hp ? "❤️ PV +" + st.hp + " " : "") + (st.def ? "🛡️ def +" + st.def + " " : "") + (st.spd ? "🥾 spd +" + st.spd + " " : "") + (st.loot ? "🪙 loot +" + st.loot + "%" : "") + "</div>" : "";
         return '<div class="panel shop-card">' +
           '<span class="rarity-tag rarity-' + it.rarity + '">' + it.rarity.toUpperCase() + "</span>" +
           '<div class="shop-preview"><span style="font-size:34px">' + (({ arme: "⚔️", armure: "🛡️", tete: "🎩", accessoire: "💍", pieds: "🥾" })[it.slot] || "🎒") + "</span></div>" +
@@ -1664,7 +1664,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return banner + rows;
   }
   function shopView() {
-    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · 💪 puissance · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
       '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
@@ -2604,7 +2604,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       maxHp: 20 + g.hp + it.hp,
       spd: 5 + (g.spd + it.spd) * 1.5,
       loot: 1 + (g.loot + it.loot) / 100,
-      pw: g.pw + (it.pw || 0),
       as: g.as + (it.as || 0)
     };
   }
@@ -2754,7 +2753,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!dg.active || dg.strikeCd > 0) return;
     var tot = dungeonTotals();
     dg.strikeCd = 1 / (1 + tot.as / 100); /* 1 coup/s de base, réduit par la vitesse d'attaque */
-    var hit = false, pxm = dgPxm(), dmg = Math.round(tot.atk * (1 + tot.pw / 100)); /* puissance d'attaque */
+    var hit = false, pxm = dgPxm(), dmg = tot.atk;
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       var relF = (en.x - dg.x) * (dg.facing || 1) * pxm;
@@ -2920,8 +2919,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🚪 Prochain boss : salle ' + (Math.max(5, (Math.floor(dn.best / 5) + 1) * 5)) + "</span>" +
       "</div>" +
       '<div class="dg-record">' +
-      '<span class="hud-badge">⚔️ Attaque : ' + Math.round((3 + g.atk) * (1 + g.pw / 100)) + '</span>' +
-      '<span class="hud-badge">💥 Puissance : +' + g.pw + "%</span>" +
+      '<span class="hud-badge">⚔️ Attaque : ' + (3 + g.atk) + '</span>' +
       '<span class="hud-badge">⚡ Vitesse d\'attaque : +' + g.as + "%</span>" +
       '<span class="hud-badge">❤️ PV : ' + (20 + g.hp) + "</span>" +
       '<span class="hud-badge">🛡️ Défense : ' + g.def + "</span>" +
