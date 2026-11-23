@@ -457,8 +457,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-ename { font-size: 11px; color: var(--muted); white-space: nowrap; }
   .dg-ebar { position: relative; width: 36px; height: 6px; background: #220a08; border: 1px solid #000; margin: 0 auto 3px; border-radius: 3px; overflow: hidden; }
   .dg-ebar i { display: block; height: 100%; background: #d43d2a; }
-  .dg-marker { position: absolute; bottom: 34px; color: var(--muted); font-size: 11px; transform: translateX(-50%); }
-  .dg-gate { position: absolute; bottom: 34px; color: #ff5a4a; font-weight: bold; font-size: 12px; text-align: center; transform: translateX(-50%); text-shadow: 2px 2px 0 #000; }
+  .dg-wall { position: absolute; top: 0; bottom: 36px; width: 8px; background: #0d0a08; box-shadow: 0 0 0 3px #000; z-index: 6; }
+  .dg-wall-l { left: 0; }
+  .dg-wall-r { right: 0; }
+  .dg-choose { position: absolute; left: 0; right: 0; top: 0; bottom: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .55); z-index: 10; }
+  .dg-choose-panel { text-align: center; color: var(--text); font-size: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .dg-door { min-width: 180px; }
+  .dg-door-boss { border-color: var(--danger); color: #ff5a4a; }
+  .dg-itembar { padding: 6px 10px; margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; align-items: center; }
+  .dg-noitems { color: var(--muted); }
   .dg-controls { display: flex; gap: 10px; align-items: center; padding: 10px 12px; flex-wrap: wrap; }
   .dg-hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
 </style>
@@ -569,9 +576,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "streak3", name: "Série de 3",      desc: "3 jours d'affilée",                icon: "🔥", check: function (s) { return s.streak >= 3; }, gold: 30 },
     { id: "streak7", name: "Série de 7",      desc: "7 jours d'affilée",                icon: "☄️", check: function (s) { return s.streak >= 7; }, gold: 70 },
     { id: "boss",    name: "Tueur de boss",   desc: "Vaincre un boss",                  icon: "💀", check: function (s) { return s.stats.bossKills >= 1; }, gold: 50 },
-    { id: "faille-100",  name: "Pionnier de la Faille", desc: "Atteindre 100 m dans la Faille",   icon: "🕳️", check: function (s) { return s.dungeon && s.dungeon.best >= 100; }, gold: 30 },
-    { id: "faille-500",  name: "Spéléologue",           desc: "Atteindre 500 m dans la Faille",   icon: "⛏️", check: function (s) { return s.dungeon && s.dungeon.best >= 500; }, gold: 60 },
-    { id: "faille-1000", name: "Seigneur de la Faille",  desc: "Atteindre 1000 m dans la Faille",  icon: "🐉", check: function (s) { return s.dungeon && s.dungeon.best >= 1000; }, gold: 120 }
+    { id: "faille-3",   name: "Pionnier de la Faille",  desc: "Purger 3 salles",                  icon: "🕳️", check: function (s) { return s.dungeon && s.dungeon.best >= 3; }, gold: 30 },
+    { id: "faille-6",   name: "Spéléologue",            desc: "Purger 6 salles",                  icon: "⛏️", check: function (s) { return s.dungeon && s.dungeon.best >= 6; }, gold: 60 },
+    { id: "faille-10",  name: "Seigneur de la Faille",   desc: "Purger 10 salles",                 icon: "🐉", check: function (s) { return s.dungeon && s.dungeon.best >= 10; }, gold: 120 }
   ];
   var THEMES = {
     nuit:   { name: "Nuit",   vars: { "--bg": "#000000", "--panel": "#161310", "--card": "#1e1a16", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68", "--danger": "#d43d2a" } },
@@ -2457,12 +2464,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var tx = document.querySelector("#modal textarea[name=steps-text]");
     if (tx) drafts.steps = tx.value;
   }
-  /* ==================== ⚔️ La Faille (roguelite infinie) ==================== */
+  /* ==================== ⚔️ La Faille (roguelite en salles) ==================== */
   var DG_MONS = {
-    slime:    { name: "Slime",         hp: function (d) { return 4 + Math.floor(d / 40); },  spd: 1.1, dmg: 3, gold: 2, cell: "5px" },
-    bat:      { name: "Chauve-souris", hp: function (d) { return 3 + Math.floor(d / 55); },  spd: 2.6, dmg: 2, gold: 3, cell: "4px" },
-    skeleton: { name: "Squelette",     hp: function (d) { return 10 + Math.floor(d / 30); }, spd: 1.3, dmg: 5, gold: 6, cell: "5px" }
+    slime:    { name: "Slime",         hp: function (r) { return 4 + r * 2; },  spd: 1.1, dmg: function (r) { return 3 + r; }, gold: function (r) { return 2 + r; }, cell: "5px" },
+    bat:      { name: "Chauve-souris", hp: function (r) { return 3 + r * 2; },  spd: 2.6, dmg: function (r) { return 2 + r; }, gold: function (r) { return 3 + r; }, cell: "4px" },
+    skeleton: { name: "Squelette",     hp: function (r) { return 10 + r * 3; }, spd: 1.3, dmg: function (r) { return 4 + r; }, gold: function (r) { return 6 + r; }, cell: "5px" }
   };
+  /* Objets de run : gagnés dans les salles au trésor, perdus à la mort ou en fin de course */
+  var DG_RUN_ITEMS = [
+    { id: "run-lame",   icon: "⚔️", name: "Lame affûtée",   desc: "attaque +3", atk: 3 },
+    { id: "run-coeur",  icon: "❤️", name: "Cœur de pierre", desc: "PV max +8",  hp: 8 },
+    { id: "run-ecaille",icon: "🛡️", name: "Écailles de fer", desc: "défense +2", def: 2 },
+    { id: "run-semelle",icon: "🥾", name: "Semelles d'air", desc: "vitesse +2", spd: 2 },
+    { id: "run-bourse", icon: "🪙", name: "Bourse doublée", desc: "loot +30%",  loot: 30 },
+    { id: "run-elixir", icon: "🧪", name: "Élixir rouge",   desc: "soigne tout", heal: true }
+  ];
   var DG_SPRITES = {
     slime: [
       "....GG....",
@@ -2564,21 +2580,35 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".kk....kk.....",
     ".............."
   ];
-  var dg = { active: false, loop: null, x: 0, depth: 0, hp: 0, maxHp: 0, atk: 3, def: 0, purse: 0, kills: 0,
-    entities: [], strikeCd: 0, nextSpawnAt: 60, nextBossAt: 1000, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+  var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
+    entities: [], doors: null, items: [], strikeCd: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+  function dungeonItemStats() {
+    var t = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0 };
+    dg.items.forEach(function (it) { t.atk += it.atk || 0; t.hp += it.hp || 0; t.def += it.def || 0; t.spd += it.spd || 0; t.loot += it.loot || 0; });
+    return t;
+  }
+  function dungeonTotals() {
+    var g = gearStats(), it = dungeonItemStats();
+    return {
+      atk: 3 + g.atk + it.atk,
+      def: g.def + it.def,
+      maxHp: 20 + g.hp + it.hp,
+      spd: 5 + (g.spd + it.spd) * 1.5,
+      loot: 1 + (g.loot + it.loot) / 100
+    };
+  }
   function dungeonStart() {
     if (dg.active) return;
-    var g = gearStats();
-    dg.active = true; dg.x = 0; dg.depth = 0;
-    dg.maxHp = 20 + g.hp; dg.hp = dg.maxHp;
-    dg.atk = 3 + g.atk; dg.def = g.def;
-    dg.purse = 0; dg.kills = 0; dg.entities = []; dg.strikeCd = 0;
-    dg.nextSpawnAt = 60; dg.nextBossAt = 1000;
-    dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
+    dg.active = true;
+    dg.x = 3; dg.room = 1; dg.phase = "fight";
+    dg.purse = 0; dg.kills = 0; dg.items = []; dg.entities = []; dg.doors = null;
+    dg.hp = dungeonTotals().maxHp;
+    dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
     renderAll();
+    dungeonSetupRoom(1);
     if (dg.loop) clearInterval(dg.loop);
     dg.loop = setInterval(function () { dungeonTick(0.05); }, 50);
   }
@@ -2586,44 +2616,87 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!dg.active) return;
     dg.active = false;
     if (dg.loop) { clearInterval(dg.loop); dg.loop = null; }
-    var run = { depth: Math.round(dg.depth), gold: Math.round(dg.purse), kills: dg.kills, retreat: !!retreat };
+    var cleared = (dg.room - 1) + (dg.phase === "choose" ? 1 : 0);
+    var run = { rooms: cleared, room: dg.room, gold: Math.round(dg.purse), kills: dg.kills, items: dg.items.length, retreat: !!retreat };
     state.dungeon.runs += 1;
     state.dungeon.kills += dg.kills;
-    state.dungeon.best = Math.max(state.dungeon.best, run.depth);
+    state.dungeon.best = Math.max(state.dungeon.best, cleared);
     if (retreat) state.gold += run.gold;
     dg.lastResult = run;
+    dg.items = [];
     checkAchievements();
     saveState();
     showToast(retreat
-      ? "🏠 Retraite : " + run.gold + " 🪙 pillés en banque"
-      : "☠️ La Faille t'a englouti à " + run.depth + " m… " + run.gold + " 🪙 pillés perdus");
+      ? "🏠 Retraite : " + run.gold + " 🪙 pillés en banque (objets de run perdus)"
+      : "☠️ La Faille t'a englouti salle " + dg.room + "… " + run.gold + " 🪙 et tes objets de run sont perdus");
     renderAll();
   }
-  function dungeonSpawnMonster() {
-    var d = dg.depth, roll = Math.random();
-    var type = "slime";
-    if (d >= 350 && roll < 0.35) type = "skeleton";
-    else if (d >= 150 && roll < 0.6) type = "bat";
-    var m = DG_MONS[type];
-    var hp = m.hp(d);
-    dg.entities.push({ t: type, x: dg.x + 13 + Math.random() * 3, hp: hp, maxHp: hp, dmg: m.dmg, gold: m.gold, spd: m.spd, cd: 0, hurt: 0 });
+  function dungeonSetupRoom(room) {
+    dg.entities = [];
+    if (room % 5 === 0) {
+      var hp = 60 + room * 15, dd = 10 + room;
+      dg.entities.push({ t: "boss", boss: true, x: 18, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0 });
+      soundBoss();
+      showToast("💀 Salle " + room + " : BOSS !");
+    } else {
+      var count = Math.min(8, 2 + Math.floor((room - 1) / 2));
+      for (var i = 0; i < count; i++) dungeonSpawnMonster(room, i, count);
+      showToast("⚔️ Salle " + room + " : " + count + " monstre(s) !");
+    }
+    dg.phase = "fight";
   }
-  function dungeonSpawnBoss() {
-    var d = dg.nextBossAt;
-    var hp = 60 + Math.floor(d / 3);
-    dg.entities.push({ t: "boss", boss: true, x: dg.x + 10, hp: hp, maxHp: hp, dmg: 12, gold: 40 + Math.floor(d / 10), spd: 1.9, cd: 0, hurt: 0 });
-    soundBoss();
-    showToast("💀 BOSS à " + d + " m !");
+  function dungeonSpawnMonster(room, idx, count) {
+    var roll = Math.random(), type = "slime";
+    if (room >= 6 && roll < 0.4) type = "skeleton";
+    else if (room >= 3 && roll < 0.6) type = "bat";
+    var m = DG_MONS[type];
+    var hp = m.hp(room);
+    var x = Math.min(23, 7 + idx * (16 / Math.max(1, count)) + Math.random());
+    dg.entities.push({ t: type, x: x, hp: hp, maxHp: hp, dmg: m.dmg(room), gold: m.gold(room), spd: m.spd, cd: 0, hurt: 0 });
+  }
+  function dungeonGenDoors() {
+    var next = dg.room + 1;
+    if (next % 5 === 0) { dg.doors = [{ type: "boss" }]; return; }
+    var a = Math.random() < 0.4 ? "item" : "combat";
+    var b = Math.random() < 0.4 ? "item" : "combat";
+    dg.doors = [{ type: a }, { type: b }];
+  }
+  function dungeonCleared() {
+    dg.phase = "choose";
+    dungeonGenDoors();
+    showToast("✅ Salle " + dg.room + " purgée — choisis ta porte !");
+  }
+  function dungeonGrantItem() {
+    var it = DG_RUN_ITEMS[Math.floor(Math.random() * DG_RUN_ITEMS.length)];
+    dg.items.push(it);
+    if (it.heal) dg.hp = dungeonTotals().maxHp;
+    else if (it.hp) dg.hp += it.hp;
+    soundCoins();
+    showToast(it.icon + " Salle au trésor : " + it.name + " — " + it.desc + " (perdu en fin de run)");
+  }
+  function dungeonChooseDoor(i) {
+    if (!dg.active || dg.phase !== "choose" || !dg.doors || !dg.doors[i]) return;
+    var door = dg.doors[i];
+    dg.doors = null;
+    dg.room += 1;
+    if (dg.room % 5 === 0) door.type = "boss";
+    if (door.type === "item") {
+      dungeonGrantItem();
+      dungeonGenDoors();
+    } else {
+      dungeonSetupRoom(dg.room);
+    }
+    dungeonRender();
   }
   function dungeonStrike() {
     if (!dg.active || dg.strikeCd > 0) return;
     dg.strikeCd = 0.45;
     soundHit();
-    var hit = false;
+    var hit = false, tot = dungeonTotals();
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
-      if (en.hp > 0 && en.x - dg.x > -0.5 && en.x - dg.x < 3) {
-        en.hp -= dg.atk;
+      if (en.hp > 0 && en.x - dg.x > -0.5 && en.x - dg.x < 3.2) {
+        en.hp -= tot.atk;
         en.hurt = 0.18;
         hit = true;
       }
@@ -2632,10 +2705,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function dungeonTick(dt) {
     if (!dg.active) return;
+    var tot = dungeonTotals();
     for (var j = dg.entities.length - 1; j >= 0; j--) {
       var dd = dg.entities[j];
       if (dd.hp <= 0) {
-        dg.purse += Math.max(1, Math.round(dd.gold * lootMultiplier()));
+        dg.purse += Math.max(1, Math.round(dd.gold * tot.loot));
         dg.kills += 1;
         if (dd.boss) { state.stats.bossKills = (state.stats.bossKills || 0) + 1; soundBoss(); }
         dg.entities.splice(j, 1);
@@ -2644,53 +2718,38 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dir = dg.holdMoving || dg.keyMoving || 0;
     if (dir) {
-      var gspd = gearStats();
-      dg.x = Math.max(0, dg.x + dir * (5 + gspd.spd * 1.5) * dt);
-      dg.depth = Math.max(dg.depth, dg.x);
+      dg.x = Math.min(23.5, Math.max(1.5, dg.x + dir * tot.spd * dt));
       dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
-    if (dg.depth >= dg.nextBossAt) { dungeonSpawnBoss(); dg.nextBossAt += 1000; }
-    if (dg.x >= dg.nextSpawnAt) {
-      dungeonSpawnMonster();
-      dg.nextSpawnAt = dg.x + Math.max(45, 120 - Math.floor(dg.depth / 100) * 8);
-    }
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       en.cd = Math.max(0, en.cd - dt);
       if (en.hurt > 0) en.hurt = Math.max(0, en.hurt - dt);
       var dist = en.x - dg.x;
       if (Math.abs(dist) <= 14 && Math.abs(dist) > 1.2) {
-        en.x -= (dist > 0 ? 1 : -1) * en.spd * dt;
+        en.x = Math.min(23.8, Math.max(1, en.x - (dist > 0 ? 1 : -1) * en.spd * dt));
       }
       if (Math.abs(dist) <= 1.6 && en.cd <= 0) {
         en.cd = 1.15;
-        dg.hp -= Math.max(1, Math.round(en.dmg * (1 + dg.depth / 1200) - dg.def));
+        dg.hp -= Math.max(1, en.dmg - tot.def);
         dg.hurtFlash = 0.25;
       }
     }
     if (dg.hp <= 0) { soundDeath(); dungeonEnd(false); return; }
+    if (dg.phase === "fight" && dg.entities.length === 0) dungeonCleared();
     dungeonRender();
   }
   function dungeonRender() {
     if (!dg.active) return;
     var vp = document.getElementById("dg-viewport");
     if (!vp) return;
-    var viewSpan = 26, pxm = (vp.offsetWidth || 676) / viewSpan, left = dg.x - 7;
-    var html = '<div class="dg-floor"></div>';
-    var first = Math.floor(left / 100) * 100 - 100;
-    for (var mk = first; mk < left + viewSpan + 100; mk += 100) {
-      if (mk <= 0) continue;
-      var mx = (mk - left) * pxm;
-      html += (mk % 1000 === 0)
-        ? '<div class="dg-gate" style="left:' + mx + 'px">💀 BOSS<br>' + mk + " m</div>"
-        : '<div class="dg-marker" style="left:' + mx + 'px">' + mk + " m</div>";
-    }
+    var pxm = (vp.offsetWidth || 676) / 26;
+    var html = '<div class="dg-wall dg-wall-l"></div><div class="dg-wall dg-wall-r"></div><div class="dg-floor"></div>';
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
-      var ex = (en.x - left) * pxm;
-      if (ex < -80 || ex > (vp.offsetWidth || 676) + 80) continue;
+      var ex = en.x * pxm;
       var mon = DG_MONS[en.t];
       var bar = en.hp < en.maxHp ? '<div class="dg-ebar"><i style="width:' + Math.max(0, Math.round(en.hp / en.maxHp * 100)) + '%"></i></div>' : "";
       html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + '" style="left:' + ex + 'px;bottom:44px">' +
@@ -2698,7 +2757,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) +
         "</div>";
     }
-    var hx = (dg.x - left) * pxm;
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
     var hgrid = HERO_DG_A, hbob = 0;
     if (dg.strikeCd > 0.30) { hgrid = HERO_DG_S; }
@@ -2706,30 +2764,50 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       hbob = Math.floor(dg.walkT * 7) % 2;
       hgrid = hbob ? HERO_DG_B : HERO_DG_A;
     }
+    var hx = dg.x * pxm;
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
       spriteHTML(hgrid, "5px", heroPal()) + "</div>";
+    if (dg.phase === "choose" && dg.doors) {
+      var doors = dg.doors.map(function (doo, idx) {
+        return doo.type === "boss"
+          ? '<button class="btn btn-big dg-door dg-door-boss" data-action="dg-door" data-side="' + idx + '">💀 Salle du boss</button>'
+          : '<button class="btn btn-big dg-door" data-action="dg-door" data-side="' + idx + '">❓ Salle mystère</button>';
+      }).join("");
+      html += '<div class="dg-choose"><div class="dg-choose-panel">Salle ' + dg.room + ' purgée !<br>Quelle porte prends-tu ?' + doors + "</div></div>";
+    }
     vp.innerHTML = html;
+    var tot = dungeonTotals();
     var el;
-    el = document.querySelector("[data-dg-depth]"); if (el) el.textContent = Math.round(dg.depth) + " m";
-    el = document.querySelector("[data-dg-hpfill]"); if (el) el.style.width = Math.max(0, Math.round(dg.hp / dg.maxHp * 100)) + "%";
-    el = document.querySelector("[data-dg-hptext]"); if (el) el.textContent = Math.max(0, Math.round(dg.hp)) + " / " + dg.maxHp;
+    el = document.querySelector("[data-dg-room]"); if (el) el.textContent = dg.room + (dg.room % 5 === 0 ? " 💀" : "");
+    el = document.querySelector("[data-dg-hpfill]"); if (el) el.style.width = Math.max(0, Math.round(dg.hp / tot.maxHp * 100)) + "%";
+    el = document.querySelector("[data-dg-hptext]"); if (el) el.textContent = Math.max(0, Math.round(dg.hp)) + " / " + tot.maxHp;
     el = document.querySelector("[data-dg-purse]"); if (el) el.textContent = Math.round(dg.purse);
+    el = document.querySelector("[data-dg-items]");
+    if (el) el.innerHTML = dg.items.length
+      ? dg.items.map(function (it) { return '<span class="hud-badge">' + it.icon + " " + esc(it.name) + " (" + esc(it.desc) + ")</span>"; }).join("")
+      : '<span class="dg-noitems">Aucun objet de run — les salles ❓ cachent parfois un trésor</span>';
+    el = document.querySelector("[data-dg-atk]"); if (el) el.textContent = tot.atk;
   }
   function dungeonRunHTML() {
+    var tot = dungeonTotals();
     return '<div class="dg-wrap">' +
       '<div class="dg-hud panel">' +
-      '<span class="dg-depth">🕳️ <b data-dg-depth>0 m</b></span>' +
+      '<span class="dg-depth">🕳️ Salle <b data-dg-room>1</b></span>' +
       '<div class="dg-hpbar"><div class="dg-hpfill" data-dg-hpfill style="width:100%"></div></div>' +
-      '<span>❤️ <b data-dg-hptext>20</b></span>' +
+      '<span>❤️ <b data-dg-hptext>' + tot.maxHp + "</b></span>" +
+      '<span>⚔️ <b data-dg-atk>' + tot.atk + "</b></span>" +
       '<span>🪙 pillage : <b data-dg-purse>0</b></span>' +
       '<button class="btn" data-action="dg-retreat">🏠 Battre en retraite</button>' +
       "</div>" +
+      '<div class="dg-itembar panel" data-dg-items><span class="dg-noitems">Aucun objet de run — les salles ❓ cachent parfois un trésor</span></div>' +
       '<div class="dg-viewport" id="dg-viewport"></div>' +
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big btn-accent" data-action="dg-hit" title="Frapper (Espace)">⚔️ Frapper</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>Changer d\'onglet = retraite automatique, le pillage est mis en banque.</span>' +
+      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>' +
+      "Les objets de run (❓) sont perdus à la mort ou en fin de course. Le pillage sauf si tu tombes 🏠.<br>" +
+      "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
       "</div></div>";
   }
   function dungeonView() {
@@ -2740,18 +2818,19 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var r = dg.lastResult;
       res = '<div class="panel dg-result' + (r.retreat ? "" : " dg-result-dead") + '">' +
         (r.retreat ? "🏠 Retraite réussie" : "☠️ La Faille t'a englouti…") +
-        "<br>Profondeur : " + r.depth + " m · Monstres tués : " + r.kills +
-        " · Pillage : " + (r.retreat ? "+" + r.gold + " 🪙 en banque" : r.gold + " 🪙 perdus") + "</div>";
+        "<br>Salles purgées : " + r.rooms + " · Monstres tués : " + r.kills +
+        " · Pillage : " + (r.retreat ? "+" + r.gold + " 🪙 en banque" : r.gold + " 🪙 perdus") +
+        (r.items ? " · Objets de run perdus : " + r.items : "") + "</div>";
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un donjon sans fin, vu de côté. Les monstres se font de plus en plus nombreux à mesure que tu descends — et un <b>💀 BOSS</b> garde chaque tranche de 1000 m.<br>' +
-      '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Si tu tombes, tu perds l\'or pillé pendant la course ; ton or de quêtes reste en banque. Bats en retraite 🏠 pour déposer ton pillage.</span></p>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : purge chaque salle de ses monstres (de plus en plus nombreux et coriaces), puis <b>choisis entre 2 portes mystère</b> — des monstres… ou un objet pour la manche en cours. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Les objets gagnés en run sont <b>perdus à la mort ou en fin de course</b> ; le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
-      '<span class="hud-badge">🕳️ Record : ' + dn.best + " m</span>" +
+      '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
       '<span class="hud-badge">💀 Monstres tués : ' + dn.kills + "</span>" +
-      '<span class="hud-badge">🏃 Courses : ' + dn.runs + "</span>" +
-      '<span class="hud-badge">🚪 Prochain boss : ' + (Math.max(1000, Math.floor(dn.best / 1000) * 1000 + 1000)) + " m</span>" +
+      '<span class="hud-badge">🏃 Runs : ' + dn.runs + "</span>" +
+      '<span class="hud-badge">🚪 Prochain boss : salle ' + (Math.max(5, (Math.floor(dn.best / 5) + 1) * 5)) + "</span>" +
       "</div>" +
       '<div class="dg-record">' +
       '<span class="hud-badge">⚔️ Attaque : ' + (3 + g.atk) + "</span>" +
@@ -2833,6 +2912,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (act === "dg-enter") { dungeonStart(); return; }
       if (act === "dg-hit") { dungeonStrike(); return; }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
+      if (act === "dg-door") { dungeonChooseDoor(parseInt(el.getAttribute("data-side"), 10) || 0); return; }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
       if (act === "back") {
         var tb = taskById(el.getAttribute("data-task"));
@@ -3712,7 +3792,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     openTimerWindow: detachTimerWindow,
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
     dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
-      gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, check: checkAchievements } };
+      choose: dungeonChooseDoor, setup: dungeonSetupRoom, doorgen: dungeonGenDoors, totals: dungeonTotals,
+      gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, check: checkAchievements } };
   var LOGO = [
     "................",
     "...OO......OO...",
