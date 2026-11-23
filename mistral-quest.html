@@ -466,8 +466,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
   .dg-hero { position: absolute; transform: translateX(-50%); text-align: center; z-index: 5; }
   .dg-hero.dg-hurt .pixel-sprite { filter: brightness(1.9) saturate(2.2); }
-@keyframes dgrollblink { 50% { opacity: 0.15; } }
-.dg-hero.dg-roll .dg-hero-body { animation: dgrollblink 0.2s steps(1) infinite; }
+.dg-roll-badge { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-size: 16px; pointer-events: none; }
   .dg-entity.dg-hurt { filter: brightness(2.2); }
   @keyframes dg-hop { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
   .dg-ename { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -2613,7 +2612,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".............."
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
-    entities: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+    entities: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, rollDir: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
   function dungeonTotals() {
     var g = gearStats();
     return {
@@ -2635,7 +2634,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.hp = dungeonTotals().maxHp;
     dg.rewardGold = 0;
     dg.facing = 1;
-    dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0;
+    dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0; dg.rollDir = 0;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2774,6 +2773,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function dungeonRoll() {
     if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0) return;
     dg.rollT = 0.5; dg.rollCd = 1; /* roulade : invincible 0,5 s, recharge 1 s */
+    dg.rollDir = dg.holdMoving || dg.keyMoving || dg.facing || 1; /* dash dans la direction en cours */
     dungeonRender();
   }
   function dungeonTick(dt) {
@@ -2790,7 +2790,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
     }
     var dir = dg.holdMoving || dg.keyMoving || 0;
-    if (dir) {
+    if (dg.rollT > 0) {
+      /* roulade = dash : file dans la direction figee au lancement, traverse les monstres (invincible) */
+      dg.facing = dg.rollDir || 1;
+      dg.x = Math.min(23.5, Math.max(1.5, dg.x + dg.facing * tot.spd * 2.6 * dt));
+    } else if (dir) {
       dg.facing = dir;
       dg.x = Math.min(23.5, Math.max(1.5, dg.x + dir * tot.spd * dt));
       dg.walkT += dt;
@@ -2867,8 +2871,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (state.equipment.armure) dgpal.O = PAL.m; else dgpal.O = dgpal.S; /* torse nu si pas de stuff */
     if (state.equipment.pieds) dgpal.k = PAL.B;
     var hx = dg.x * pxm;
-    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (dg.rollT > 0 ? " dg-roll" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
-      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div></div>";
+    var rolling = dg.rollT > 0;
+    var rollBlink = rolling && Math.floor(dg.rollT * 12) % 2 === 1; /* clignotement en JS : le heros est recree toutes les 50 ms, une animation CSS repartirait de zero a chaque rendu */
+    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
+      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + (rolling ? '<div class="dg-roll-badge">💨</div>' : "") + "</div>";
     if (dg.phase === "choose") {
       /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
       html += '<div class="dg-choose"><div class="dg-choose-panel">💀 Boss vaincu — salle ' + dg.room + ' purgée !<br>⚡ Un pouvoir s\'offre à toi…<span class="lootbox-hint"><br>(liste de pouvoirs en préparation)</span>' +
@@ -2903,7 +2909,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (invincible 0,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (dash invincible 0,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -2920,7 +2926,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — invincible 0,5 s pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b>, et après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b>, et après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
