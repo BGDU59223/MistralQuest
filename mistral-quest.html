@@ -57,7 +57,13 @@ h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
 }
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
   .tab-gear { margin-left: auto; }
-  .dg-hub { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .dg-hub-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; max-width: 900px; margin: 0 auto; }
+.dg-hub-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; aspect-ratio: 1/1; width: 100%; max-width: 220px; margin: 0 auto; cursor: pointer; text-align: center; }
+.dg-hub-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+.dg-hub-icon { font-size: 42px; line-height: 1; }
+.dg-hub-name { font-size: 16px; font-weight: bold; color: var(--accent); }
+.dg-hub-sub { font-size: 12px; color: var(--muted); text-align: center; }
+@media (max-width: 640px) { .dg-hub-grid { grid-template-columns: 1fr; } .dg-hub-tile { max-width: 160px; } }
 .tab {
   font-size: 10px; padding: 10px 14px; background: var(--card);
   color: var(--muted); border: 2px solid transparent; cursor: pointer;
@@ -301,6 +307,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
 }
 .modal-close:hover { color: var(--danger); }
 #modal.modal-wide { width: 980px; width: min(980px, 94vw); }
+#modal.modal-tall { height: 660px; height: min(660px, 88vh); }
+@media (max-width: 820px) { #modal.modal-tall { height: 94vh; } }
 .task-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; margin-top: 12px; align-items: start; }
 @media (max-width: 820px) { #modal.modal-wide { width: 94vw; } .task-split { grid-template-columns: 1fr; } }
 .pane { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; }
@@ -545,10 +553,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
     { id: "baton",        name: "Bâton en bois",      desc: "Arme de base · +3 attaque · longueur 4",                cost: 25,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 5 · lame marron",         cost: 40,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 5 · lame grise",          cost: 70,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 5 · lame dorée",         cost: 120, rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 5 · lame blanche",        cost: 180, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 6 · lame marron",         cost: 40,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 6 · lame grise",          cost: 70,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 6 · lame dorée",         cost: 120, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 6 · lame blanche",        cost: 180, rarity: "rare",    type: "gear", slot: "arme" },
     { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 7",                cost: 230, rarity: "epique",  type: "gear", slot: "arme" },
     { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 1 · frappe large",  cost: 280, rarity: "epique",  type: "gear", slot: "arme" },
     { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +4 PV · +1 défense",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure" },
@@ -1203,7 +1211,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "baton": { atk: 3, len: 4 }, "epee-bois": { atk: 3, len: 5, col: "B" }, "epee-fer": { atk: 5, len: 5, col: "M" }, "epee-or": { atk: 7, len: 5, col: "Y" }, "epee-diamant": { atk: 9, len: 5, col: "W" },
+    "baton": { atk: 3, len: 4 }, "epee-bois": { atk: 3, len: 6, col: "B" }, "epee-fer": { atk: 5, len: 6, col: "M" }, "epee-or": { atk: 7, len: 6, col: "Y" }, "epee-diamant": { atk: 9, len: 6, col: "W" },
     "katana": { atk: 7, len: 7, col: "M" }, "hache": { atk: 14, len: 1, wide: 3 },
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
@@ -1649,7 +1657,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
       ' — Faille : ⚔️ attaque ' + (3 + gs.atk) + " · 📏 longueur " + (gs.len || 4) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 👟 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
       '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
-      '<button class="btn btn-accent" data-action="switch-tab" data-view="dungeon">⚔️ La Faille</button></div>';
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour à La Faille</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
     if (!owned.length) {
       return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>';
@@ -1778,10 +1786,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
       '<div class="tabs" style="margin-bottom:14px">' + tabs + "</div>" + body;
   }
-  function openSettingsModal() { openModal(settingsHTML(), true); }
-  function openModal(html, wide) {
+  function openSettingsModal() { openModal(settingsHTML(), true, true); }
+  function openModal(html, wide, tall) {
     var el = document.getElementById("modal");
-    el.className = "modal panel" + (wide ? " modal-wide" : "");
+    el.className = "modal panel" + (wide ? " modal-wide" : "") + (tall ? " modal-tall" : "");
     el.innerHTML = html;
     document.getElementById("modal-overlay").classList.remove("hidden");
     var inp = el.querySelector("input, textarea");
@@ -2731,12 +2739,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
   /* Grille du héros taillée à la longueur d’arme : corps cols 0-8, poignée cols 8-9, lame cols 10-9+len.
      Largeur constante (10+len) sur toutes les frames => le héros ne bouge pas entre marche et coup. */
-  function dgHeroGrid(base, len, blade, lunge) {
-    var off = lunge ? 2 : 0, W = 10 + len + off, out = [], y, row, i;
+  function dgHeroGrid(base, len, blade) {
+    var W = 10 + len, out = [], y, row, i;
     for (y = 0; y < base.length; y++) {
       row = base[y].substring(0, 10);
       if (y === 6) row = row.substring(0, 8) + "SS";
-      if (y === 6 || y === 7) { for (i = 0; i < off; i++) row += "."; for (i = 0; i < len; i++) row += blade; }
+      if (y === 6 || y === 7) { for (i = 0; i < len; i++) row += blade; }
       while (row.length < W) row += ".";
       out.push(row);
     }
@@ -2827,7 +2835,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
     var hbase = HERO_DG_A, hbob = 0;
-    var swinging = dg.strikeCd > dg.strikeDur * 0.75; /* la lame s'allonge pendant le premier quart du cycle de frappe */
+    var swinging = dg.strikeCd > dg.strikeDur * 0.75; /* la lame n'apparait que pendant la frappe (clignotement : apparait dans le quart du cycle apres le coup, disparait ensuite) */
     if (swinging) { hbase = HERO_DG_S; }
     else if (dirNow) {
       hbob = Math.floor(dg.walkT * 7) % 2;
@@ -2835,8 +2843,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var wid2 = state.equipment ? state.equipment["arme"] : null;
     var wg2 = wid2 ? DG_GEAR[wid2] : null;
-    var bladeCol = (wg2 && wg2.col) || "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
-    var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol, swinging);
+    var bladeCol = swinging ? ((wg2 && wg2.col) || ".") : "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
+    var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol);
     /* le héros de la Faille = ton personnage : casque, armure, bottes si équipés */
     var dgpal = heroPal();
     if (state.equipment.tete) dgpal.H = PAL.M;
@@ -2913,11 +2921,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🥾 Vitesse : ' + (5 + g.spd * 1.5) + " m/s</span>" +
       '<span class="hud-badge">🪙 Loot : +' + g.loot + "%</span>" +
       "</div>" +
-      '<div class="dg-record dg-hub">' +
-      '<button class="btn btn-big btn-accent" data-action="dg-enter">⚔️ Entrer dans la Faille</button>' +
-      '<button class="btn btn-big" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
-      '<button class="btn btn-big" data-action="switch-tab" data-view="stuff">🎒 Stuff</button>' +
-      "</div>" +
+      '<div class="dg-hub-grid">' +
+      '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">La Faille</span><span class="dg-hub-sub">Entrer dans la Faille</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="shop"><span class="dg-hub-icon">🛒</span><span class="dg-hub-name">Boutique</span><span class="dg-hub-sub">Dépenser ton or</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="stuff"><span class="dg-hub-icon">🎒</span><span class="dg-hub-name">Le stuff</span><span class="dg-hub-sub">Équiper ton héros</span></div>' +
+"</div>" +
       res +
       "</div>";
   }
@@ -3028,7 +3036,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         state.view = nv; saveState(); renderAll(); return;
       }
       if (act === "open-settings") { openSettingsModal(); return; }
-      if (act === "set-setting") { settingsTab = el.getAttribute("data-tab"); openModal(settingsHTML(), true); return; }
+      if (act === "set-setting") { settingsTab = el.getAttribute("data-tab"); openModal(settingsHTML(), true, true); return; }
       if (act === "set-quest-mode") {
         state.boardMode = el.getAttribute("data-mode") === "secondaire" ? "secondaire" : "main";
         saveState(); renderAll(); return;
@@ -3077,7 +3085,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           tu.archived = false;
           saveState();
           renderAll();
-          if (settingsTab === "archive" && !document.getElementById("modal-overlay").classList.contains("hidden")) openModal(settingsHTML(), true);
+          if (settingsTab === "archive" && !document.getElementById("modal-overlay").classList.contains("hidden")) openModal(settingsHTML(), true, true);
           showToast("↩ Quête de retour dans Terminé");
         }
         return;
