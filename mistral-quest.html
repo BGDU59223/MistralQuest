@@ -56,6 +56,8 @@ h1, h2, h3, .brand-name, .tab, .btn, .column-header, .hud-badge, .task-diff,
   border-radius: 4px;
 }
 .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-gear { margin-left: auto; }
+  .dg-hub { width: 100%; flex-wrap: wrap; gap: 8px; }
 .tab {
   font-size: 10px; padding: 10px 14px; background: var(--card);
   color: var(--muted); border: 2px solid transparent; cursor: pointer;
@@ -513,15 +515,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
   var TABS = [
     ["board", "🗺️ Quêtes"],
-    ["recurring", "📌 Quêtes secondaires"],
-    ["achievements", "🏆 Exploits"],
-    ["shop", "🛒 Boutique"],
-    ["stuff", "🎒 Stuff"],
-    ["dungeon", "⚔️ La Faille"],
-    ["stats", "📊 Stats"],
-    ["archive", "🗄️ Archive"],
-    ["theme", "🎨 Apparence"]
+    ["dungeon", "⚔️ La Faille"]
   ];
+  var SETTINGS_TABS = [["stats", "📊 Stat"], ["achievements", "🏆 Exploits"], ["archive", "🗄️ Archive"], ["theme", "🎨 Apparence"]];
   var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🪖 Casque"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Bottes"]];
   var DIFFS = Object.assign(DIFFS, { libre: { label: "Libre", xp: 0, gold: 0, icon: "✨", badge: "diff-b-libre", edge: "diff-libre" } });
   function countStepLines(txt) {
@@ -548,12 +544,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var SHOP_ITEMS = [
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
-    { id: "baton",       name: "Bâton en bois",       desc: "Arme · +3 attaque · longueur 4",    cost: 25,   rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-bois",   name: "Épée en bois",        desc: "Arme · +3 attaque · longueur 5",    cost: 35,   rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee",        name: "Épée de Mistral",     desc: "Arme · +5 attaque · longueur 6",    cost: 45,   rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-fer",    name: "Épée de fer",         desc: "Arme · +7 attaque · longueur 7",    cost: 80,   rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "epee-acier",  name: "Épée d'acier",        desc: "Arme · +9 attaque · longueur 8",    cost: 150,  rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "lame",        name: "Lame légendaire",     desc: "Arme · +14 attaque · longueur 9",   cost: 240,  rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "baton",        name: "Bâton en bois",      desc: "Arme de base · +3 attaque · longueur 4",                cost: 25,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 5 · lame marron",         cost: 40,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 5 · lame grise",          cost: 70,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 5 · lame dorée",         cost: 120, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 5 · lame blanche",        cost: 180, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 7",                cost: 230, rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 1 · frappe large",  cost: 280, rarity: "epique",  type: "gear", slot: "arme" },
     { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +4 PV · +1 défense",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure" },
     { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +8 PV · +2 défense",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure" },
     { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12 PV · +4 défense",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure" },
@@ -737,7 +734,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
       timerFloat: { hidden: false, minimized: false, x: null, y: null },
       dungeon: { best: 0, kills: 0, runs: 0 },
-      theme: "nuit", view: "board", hero: null
+      theme: "nuit", view: "board", hero: null, boardMode: "main"
     };
   }
   function migrate(s) {
@@ -751,6 +748,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.labels = out.labels || [];
     out.equipment = out.equipment || {};
     out.achievements = out.achievements || [];
+    var remapArmes = { "epee": "epee-fer", "epee-fer": "epee-or", "epee-acier": "epee-diamant", "lame": "hache" };
+    out.inventory = (out.inventory || []).map(function (id) { return remapArmes[id] || id; });
+    for (var sl2 in out.equipment) { if (remapArmes[out.equipment[sl2]]) out.equipment[sl2] = remapArmes[out.equipment[sl2]]; }
     out.recurring = (out.recurring || []).map(function (r) {
       return {
         id: r.id, title: r.title || "Quête secondaire", recurrence: r.recurrence || "weekly",
@@ -763,6 +763,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.dungeon = (s && s.dungeon) ? { best: Number(s.dungeon.best) || 0, kills: Number(s.dungeon.kills) || 0, runs: Number(s.dungeon.runs) || 0 } : { best: 0, kills: 0, runs: 0 };
     out.colSort = (s && s.colSort) ? { todo: s.colSort.todo || null, doing: s.colSort.doing || null, done: s.colSort.done || null } : { todo: null, doing: null, done: null };
     out.recFilter = out.recFilter || "all";
+    out.boardMode = out.boardMode === "secondaire" ? "secondaire" : "main";
+    out.view = ["board", "dungeon", "shop", "stuff"].indexOf(out.view) !== -1 ? out.view : "board";
     out.consumableLast = out.consumableLast || {};
     out.timerFloat = (s && s.timerFloat) ? {
       hidden: !!s.timerFloat.hidden,
@@ -1201,17 +1203,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   /* Stats de combat de la Faille : chaque objet de la boutique apporte atk/hp/def/spd/loot */
   var DG_GEAR = {
-    "baton": { atk: 3, len: 4 }, "epee-bois": { atk: 3, len: 5 }, "epee": { atk: 5, len: 6 }, "epee-fer": { atk: 7, len: 7 }, "epee-acier": { atk: 9, len: 8 }, "lame": { atk: 14, len: 9 },
+    "baton": { atk: 3, len: 4 }, "epee-bois": { atk: 3, len: 5, col: "B" }, "epee-fer": { atk: 5, len: 5, col: "M" }, "epee-or": { atk: 7, len: 5, col: "Y" }, "epee-diamant": { atk: 9, len: 5, col: "W" },
+    "katana": { atk: 7, len: 7, col: "M" }, "hache": { atk: 14, len: 1, wide: 3 },
     "bouclier": { hp: 4, def: 1 }, "armure-cuir": { hp: 8, def: 2 }, "dragon": { hp: 12, def: 4 },
     "chapeau": { hp: 2, def: 1 }, "casque-fer": { hp: 3, def: 2 }, "casque-acier": { hp: 4, def: 3 },
     "bague": { as: 5 }, "plume": { as: 10 }, "amulette": { as: 15 }, "collier": { as: 20 }, "anneau": { as: 25 },
     "botte": { hp: 1, spd: 1 }, "bottes-vent": { hp: 1, spd: 2 }
   };
   function gearStats() {
-    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0, len: 0 };
+    var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0, len: 0, wide: 0 };
     for (var slot in state.equipment) {
       var st = DG_GEAR[state.equipment[slot]];
-      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; g.as += st.as || 0; g.len += st.len || 0; }
+      if (st) { g.atk += st.atk || 0; g.hp += st.hp || 0; g.def += st.def || 0; g.spd += st.spd || 0; g.loot += st.loot || 0; g.as += st.as || 0; g.len += st.len || 0; g.wide += st.wide || 0; }
     }
     return g;
   }
@@ -1282,6 +1285,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     p.C = cl.cape;
     return p;
   }
+  function weaponPal() {
+    var p = heroPal();
+    var g = state.equipment.arme ? DG_GEAR[state.equipment.arme] : null;
+    if (g && g.col) p.W = PAL[g.col];
+    return p;
+  }
   function heroHTML() {
     var pal = heroPal();
     var fem = state.hero && state.hero.gender === "femme";
@@ -1291,7 +1300,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       + '<div class="hero-layer" style="z-index:1;bottom:0">' + spriteHTML(fem ? BODY_F : BODY_M, cell, pal) + "</div>"
       + (state.equipment.pieds ? '<div class="hero-layer" style="z-index:2;bottom:0">' + spriteHTML(BOOTS_L, cell, pal) + "</div>" : "")
       + (state.equipment.armure ? '<div class="hero-layer" style="z-index:3;bottom:0">' + spriteHTML(ARMOR_L, cell, pal) + "</div>" : "")
-      + (state.equipment.arme ? '<div class="hero-layer" style="z-index:3;bottom:0">' + spriteHTML(WEAPON_L, cell, pal) + "</div>" : "")
+      + (state.equipment.arme ? '<div class="hero-layer" style="z-index:3;bottom:0">' + spriteHTML(WEAPON_L, cell, weaponPal()) + "</div>" : "")
       + (state.equipment.tete ? '<div class="hero-layer" style="z-index:4;bottom:0">' + spriteHTML(HELMET_L, cell, pal) + "</div>" : "")
       + '<div class="hero-layer hero-pet" style="z-index:5">' + spriteHTML(PET, "3px", pal) + "</div>"
       + "</div>";
@@ -1470,9 +1479,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function recurringView() {
     var list = visibleRecurring();
     var cards = list.map(recurringCardHTML).join("");
-    return '<div class="board-actions">' +
+    return questModeBar() +
+      '<div class="board-actions" style="margin-top:0">' +
       '<button class="btn btn-accent btn-big" data-action="open-add-rec-modal">➕ Nouvelle quête secondaire</button>' +
-      '<button class="btn btn-big" data-action="switch-tab" data-view="board">← Retour au board</button>' +
       "<span class=\"spacer\"></span></div>" +
       recFilterBarHTML() +
       '<div class="rec-board">' +
@@ -1484,7 +1493,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function tabsHTML() {
     return TABS.map(function (t) {
       return '<button class="tab' + (state.view === t[0] ? " tab-active" : "") + '" data-action="switch-tab" data-view="' + t[0] + '">' + t[1] + "</button>";
-    }).join("");
+    }).join("") + '<button class="tab tab-gear" data-action="open-settings" title="Stat, Exploits, Archive, Apparence">⚙️ Paramètres</button>';
   }
   function labelChipsHTML(t) {
     return labelsOf(t).map(function (l) {
@@ -1599,9 +1608,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       return labelsOk && datesOk;
     });
   }
+  function questModeBar() {
+    var main = state.boardMode !== "secondaire";
+    return '<div class="board-actions quest-mode-bar" style="margin-top:0">' +
+      '<span class="lootbox-hint">Mode :</span>' +
+      '<button class="chip' + (main ? " chip-active" : "") + '" data-action="set-quest-mode" data-mode="main">🗺️ Quêtes principales</button>' +
+      '<button class="chip' + (!main ? " chip-active" : "") + '" data-action="set-quest-mode" data-mode="secondaire">📌 Quêtes secondaires</button>' +
+      "<span class=\"spacer\"></span></div>";
+  }
   function boardView() {
     return '<div class="board-wrap">' +
       '<div class="board-main">' +
+      questModeBar() +
       '<div class="board-actions" style="margin-top:0">' +
       '<button class="btn btn-accent btn-big" data-action="open-add-modal">➕ Ajouter une quête</button>' +
       '<button class="btn btn-big" data-action="open-labels-modal">🏷️ Libellés</button>' +
@@ -1659,7 +1677,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function shopView() {
     var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · 📏 longueur d’arme · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
-      '<button class="btn" data-action="switch-tab" data-view="board">← Retour au board</button></div>';
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour à La Faille</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
       var equipped = it.type === "gear" && state.equipment[it.slot] === it.id;
@@ -1741,16 +1759,26 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return '<h2 class="panel-title">ARCHIVE (' + list.length + ')</h2>' + rows;
   }
   function viewHTML() {
-    if (state.view === "recurring") return recurringView();
     if (state.view === "dungeon") return dungeonView();
-    if (state.view === "achievements") return achievementsView();
     if (state.view === "shop") return shopView();
     if (state.view === "stuff") return stuffView();
-    if (state.view === "stats") return statsView();
-    if (state.view === "archive") return archiveView();
-    if (state.view === "theme") return themeView();
-    return boardView();
+    return state.boardMode === "secondaire" ? recurringView() : boardView();
   }
+  /* --- Menu parametres : Stat, Exploits, Archive, Apparence --- */
+  var settingsTab = "stats";
+  function settingsHTML() {
+    var tabs = SETTINGS_TABS.map(function (t) {
+      return '<button class="tab' + (settingsTab === t[0] ? " tab-active" : "") + '" data-action="set-setting" data-tab="' + t[0] + '">' + t[1] + "</button>";
+    }).join("");
+    var body = "";
+    if (settingsTab === "stats") body = statsView();
+    else if (settingsTab === "achievements") body = achievementsView();
+    else if (settingsTab === "theme") body = themeView();
+    else body = archiveView();
+    return '<span class="modal-close" data-action="close-modal" title="Fermer">✖</span>' +
+      '<div class="tabs" style="margin-bottom:14px">' + tabs + "</div>" + body;
+  }
+  function openSettingsModal() { openModal(settingsHTML(), true); }
   function openModal(html, wide) {
     var el = document.getElementById("modal");
     el.className = "modal panel" + (wide ? " modal-wide" : "");
@@ -2575,7 +2603,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".............."
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
-    entities: [], doors: null, strikeCd: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+    entities: [], strikeCd: 0, strikeDur: 1, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
   function dungeonTotals() {
     var g = gearStats();
     return {
@@ -2585,14 +2613,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       spd: 5 + g.spd * 1.5,
       loot: 1 + g.loot / 100,
       as: g.as,
-      len: g.len || 4
+      len: g.len || 4,
+      wide: g.wide
     };
   }
   function dungeonStart() {
     if (dg.active) return;
     dg.active = true;
     dg.x = 12.5; dg.room = 1; dg.phase = "fight"; dg.reward = null;
-    dg.purse = 0; dg.kills = 0; dg.entities = []; dg.doors = null;
+    dg.purse = 0; dg.kills = 0; dg.entities = [];
     dg.hp = dungeonTotals().maxHp;
     dg.rewardGold = 0;
     dg.facing = 1;
@@ -2654,17 +2683,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       : Math.max(16.2, 23.3 - slot * 1.9 - Math.random() * 0.8);
     dg.entities.push({ t: type, x: x, hp: hp, maxHp: hp, dmg: m.dmg(room), gold: m.gold(room), spd: m.spd, cd: 0, hurt: 0 });
   }
-  function dungeonGenDoors() {
-    var next = dg.room + 1;
-    if (next % 5 === 0) { dg.doors = [{ type: "boss" }]; return; }
-    /* deux portes, montants de pillage annonces et differents ; idee en reserve : des pouvoirs a ramasser apres chaque boss */
-    var base = 20 + next * 5;
-    var duo = [
-      { type: "gold", gold: base + Math.floor(Math.random() * 9) },
-      { type: "gold", gold: base + 10 + Math.floor(Math.random() * 15) }
-    ];
-    dg.doors = Math.random() < 0.5 ? [duo[0], duo[1]] : [duo[1], duo[0]];
-  }
   function dungeonCleared() {
     var bonus = "";
     if (dg.reward === "gold") {
@@ -2673,19 +2691,28 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       bonus = " · 🪙 +" + g + " pillés";
     }
     dg.reward = null;
-    dg.phase = "choose";
-    dungeonGenDoors();
-    showToast("✅ Salle " + dg.room + " purgée" + bonus + " — choisis ta porte !");
-    dungeonRender();
+    dg.rewardGold = 0;
+    if (dg.room % 5 === 0) {
+      /* apres un boss : ecran des pouvoirs (placeholder — liste de pouvoirs a venir, issue #3) */
+      dg.phase = "choose";
+      showToast("💀 Salle " + dg.room + " purgée — le boss est vaincu !");
+      dungeonRender();
+      return;
+    }
+    showToast("✅ Salle " + dg.room + " purgée" + bonus);
+    dungeonNextRoom();
   }
-  function dungeonChooseDoor(i) {
-    if (!dg.active || dg.phase !== "choose" || !dg.doors || !dg.doors[i]) return;
-    var door = dg.doors[i];
-    dg.doors = null;
+  function dungeonNextRoom() {
     dg.room += 1;
-    dg.rewardGold = door.gold || 20 + dg.room * 5;
-    if (dg.room % 5 === 0) door = { type: "boss" };
-    dungeonSetupRoom(dg.room, door.type);
+    var next = dg.room;
+    if (next % 5 === 0) {
+      dg.rewardGold = 0; /* salle du boss : jackpot gagné en tuant le boss */
+    } else {
+      var base = 20 + next * 5;
+      dg.rewardGold = base + 6 + Math.floor(Math.random() * 15); /* pillage annonce */
+    }
+    /* idee en reserve : un pouvoir a choisir apres chaque boss (issue #3) */
+    dungeonSetupRoom(next, next % 5 === 0 ? "boss" : "gold");
     dungeonRender();
   }
   /* — Hitboxes réelles : carré englobant chaque monstre, rectangle pleine longueur pour l’épée — */
@@ -2704,12 +2731,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
   /* Grille du héros taillée à la longueur d’arme : corps cols 0-8, poignée cols 8-9, lame cols 10-9+len.
      Largeur constante (10+len) sur toutes les frames => le héros ne bouge pas entre marche et coup. */
-  function dgHeroGrid(base, len, blade) {
-    var W = 10 + len, out = [], y, row, i;
+  function dgHeroGrid(base, len, blade, lunge) {
+    var off = lunge ? 2 : 0, W = 10 + len + off, out = [], y, row, i;
     for (y = 0; y < base.length; y++) {
       row = base[y].substring(0, 10);
       if (y === 6) row = row.substring(0, 8) + "SS";
-      if (y === 6 || y === 7) { for (i = 0; i < len; i++) row += blade; }
+      if (y === 6 || y === 7) { for (i = 0; i < off; i++) row += "."; for (i = 0; i < len; i++) row += blade; }
       while (row.length < W) row += ".";
       out.push(row);
     }
@@ -2718,13 +2745,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   function dungeonStrike() {
     if (!dg.active || dg.strikeCd > 0) return;
     var tot = dungeonTotals();
-    dg.strikeCd = 1 / (1 + tot.as / 100); /* 1 coup/s de base, réduit par la vitesse d'attaque */
+    var cd = 1 / (1 + tot.as / 100); /* 1 coup/s de base, reduit par la vitesse d'attaque des accessoires */
+    dg.strikeCd = cd; dg.strikeDur = cd;
     var hit = false, pxm = dgPxm(), dmg = tot.atk;
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       var relF = (en.x - dg.x) * (dg.facing || 1) * pxm;
       var H = dgMonBox(en) / 2; /* carré englobant le monstre complet */
-      if (en.hp > 0 && relF + H > DG_SWORD_BACK && relF - H < DG_SWORD_BACK + tot.len * 5) {
+      var reach = DG_SWORD_BACK + (tot.len + (tot.wide || 0) * 0.5) * 5; /* la hache gagne une zone de frappe elargie */
+      if (en.hp > 0 && relF + H > DG_SWORD_BACK && relF - H < reach) {
         en.hp -= dmg;
         en.hurt = 0.18;
         hit = true;
@@ -2798,24 +2827,28 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
     var hbase = HERO_DG_A, hbob = 0;
-    if (dg.strikeCd > 0.75) { hbase = HERO_DG_S; } /* swing visible les 0,25 premières secondes du coup (cadence 1 s) */
+    var swinging = dg.strikeCd > dg.strikeDur * 0.75; /* la lame s'allonge pendant le premier quart du cycle de frappe */
+    if (swinging) { hbase = HERO_DG_S; }
     else if (dirNow) {
       hbob = Math.floor(dg.walkT * 7) % 2;
       hbase = hbob ? HERO_DG_B : HERO_DG_A;
     }
     var wid2 = state.equipment ? state.equipment["arme"] : null;
-    var bladeCol = (wid2 === "baton" || wid2 === "epee-bois") ? "B" : "M";
-    var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol);
+    var wg2 = wid2 ? DG_GEAR[wid2] : null;
+    var bladeCol = (wg2 && wg2.col) || "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
+    var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol, swinging);
+    /* le héros de la Faille = ton personnage : casque, armure, bottes si équipés */
+    var dgpal = heroPal();
+    if (state.equipment.tete) dgpal.H = PAL.M;
+    if (state.equipment.armure) dgpal.O = PAL.m;
+    if (state.equipment.pieds) dgpal.k = PAL.B;
     var hx = dg.x * pxm;
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
-      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", heroPal()) + "</div></div>";
-    if (dg.phase === "choose" && dg.doors) {
-      var doors = dg.doors.map(function (doo, idx) {
-        var lab = doo.type === "boss" ? "💀 Salle du boss · gros pillage 🪙"
-          : "🚪 Monstres · pillage 🪙 " + doo.gold + " à la clé";
-        return '<button class="btn btn-big dg-door' + (doo.type === "boss" ? " dg-door-boss" : "") + '" data-action="dg-door" data-side="' + idx + '">' + lab + "</button>";
-      }).join("");
-      html += '<div class="dg-choose"><div class="dg-choose-panel">Salle ' + dg.room + ' purgée !<br>Quelle porte prends-tu ?' + doors + "</div></div>";
+      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div></div>";
+    if (dg.phase === "choose") {
+      /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
+      html += '<div class="dg-choose"><div class="dg-choose-panel">💀 Boss vaincu — salle ' + dg.room + ' purgée !<br>⚡ Un pouvoir s\'offre à toi…<span class="lootbox-hint"><br>(liste de pouvoirs en préparation)</span>' +
+        '<br><button class="btn btn-big btn-accent" data-action="dg-power-continue">⚡ Continuer → Salle ' + (dg.room + 1) + '</button></div></div>';
     }
     vp.innerHTML = html;
     var tot = dungeonTotals();
@@ -2827,6 +2860,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     el = document.querySelector("[data-dg-reward]");
     if (el) el.textContent = dg.reward === "gold" ? "🪙 " + dg.rewardGold + " pillés à la clé" : dg.reward === "boss" ? "💀 Jackpot à la clé" : "";
     el = document.querySelector("[data-dg-atk]"); if (el) el.textContent = tot.atk + "";
+    el = document.querySelector("[data-dg-as]"); if (el) el.textContent = tot.as ? "+" + tot.as + "%" : "1 coup/s";
   }
   function dungeonRunHTML() {
     var tot = dungeonTotals();
@@ -2836,6 +2870,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-hpbar"><div class="dg-hpfill" data-dg-hpfill style="width:100%"></div></div>' +
       '<span>❤️ <b data-dg-hptext>' + tot.maxHp + "</b></span>" +
       '<span>⚔️ <b data-dg-atk>' + tot.atk + "</b></span>" +
+      '<span>⚡ <b data-dg-as>' + tot.as + "%</b></span>" +
       '<span class="dg-reward-badge" data-dg-reward></span>' +
       '<span>🪙 pillage : <b data-dg-purse>0</b></span>' +
       '<button class="btn" data-action="dg-retreat">🏠 Battre en retraite</button>' +
@@ -2844,9 +2879,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s, dans la direction où il se déplace. L’épée touche dès que sa pleine longueur effleure le carré du monstre. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
-      "Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l\'or de qu\u00eates reste en banque.<br>" +
-      "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Clavier : ◀ ▶ (ou A / D) · Échap retraite. Tactile : moitié gauche / droite de la salle.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -2863,7 +2896,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont le pillage est annoncé</b>. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b>, et après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -2880,7 +2913,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🥾 Vitesse : ' + (5 + g.spd * 1.5) + " m/s</span>" +
       '<span class="hud-badge">🪙 Loot : +' + g.loot + "%</span>" +
       "</div>" +
-      '<div class="dg-record"><button class="btn btn-big btn-accent" data-action="dg-enter">⚔️ Entrer dans la Faille</button></div>' +
+      '<div class="dg-record dg-hub">' +
+      '<button class="btn btn-big btn-accent" data-action="dg-enter">⚔️ Entrer dans la Faille</button>' +
+      '<button class="btn btn-big" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
+      '<button class="btn btn-big" data-action="switch-tab" data-view="stuff">🎒 Stuff</button>' +
+      "</div>" +
       res +
       "</div>";
   }
@@ -2986,12 +3023,22 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (act === "close-modal") { closeModal(); syncAddDrafts(); return; }
       if (act === "switch-tab") {
         var nv = el.getAttribute("data-view");
+        if (nv === "recurring") { nv = "board"; state.boardMode = "secondaire"; }
         if (dg.active && nv !== "dungeon") dungeonEnd(true);
         state.view = nv; saveState(); renderAll(); return;
       }
+      if (act === "open-settings") { openSettingsModal(); return; }
+      if (act === "set-setting") { settingsTab = el.getAttribute("data-tab"); openModal(settingsHTML(), true); return; }
+      if (act === "set-quest-mode") {
+        state.boardMode = el.getAttribute("data-mode") === "secondaire" ? "secondaire" : "main";
+        saveState(); renderAll(); return;
+      }
       if (act === "dg-enter") { dungeonStart(); return; }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
-      if (act === "dg-door") { dungeonChooseDoor(parseInt(el.getAttribute("data-side"), 10) || 0); return; }
+      if (act === "dg-power-continue") {
+        if (dg.active && dg.phase === "choose") { dg.phase = "fight"; dungeonNextRoom(); }
+        return;
+      }
       if (act === "advance") { advanceTask(el.getAttribute("data-task")); return; }
       if (act === "back") {
         var tb = taskById(el.getAttribute("data-task"));
@@ -3020,7 +3067,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           saveState();
           closeModal();
           renderAll();
-          showToast("🗄️ Quête archivée — visible dans l'onglet Archive");
+          showToast("🗄️ Quête archivée — visible dans le menu ⚙️ → Archive");
         }
         return;
       }
@@ -3030,6 +3077,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           tu.archived = false;
           saveState();
           renderAll();
+          if (settingsTab === "archive" && !document.getElementById("modal-overlay").classList.contains("hidden")) openModal(settingsHTML(), true);
           showToast("↩ Quête de retour dans Terminé");
         }
         return;
@@ -3871,7 +3919,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     openTimerWindow: detachTimerWindow,
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
     dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
-      choose: dungeonChooseDoor, setup: dungeonSetupRoom, doorgen: dungeonGenDoors, totals: dungeonTotals,
+      next: dungeonNextRoom, setup: dungeonSetupRoom, totals: dungeonTotals,
       gear: gearStats, equip: function () { return state.equipment; }, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, monbox: dgMonBox, pxm: dgPxm, check: checkAchievements } };
   var LOGO = [
     "................",
