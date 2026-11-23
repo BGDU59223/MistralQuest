@@ -448,6 +448,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-hpfill { height: 100%; background: #d43d2a; transition: width .15s; }
   .dg-arena { position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
   .dg-reward-badge { color: var(--accent); font-weight: 700; }
+  .dg-hero-body { display: inline-block; }
+  .dg-hero-body.dg-face-l { transform: scaleX(-1); }
   .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
@@ -2605,6 +2607,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.x = 12.5; dg.room = 1; dg.phase = "fight"; dg.reward = null;
     dg.purse = 0; dg.kills = 0; dg.items = []; dg.entities = []; dg.doors = null;
     dg.hp = dungeonTotals().maxHp;
+    dg.facing = 1;
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
     dg.lastResult = null;
     state.view = "dungeon";
@@ -2702,18 +2705,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function dungeonStrike() {
     if (!dg.active || dg.strikeCd > 0) return;
-    dg.strikeCd = 0.45;
-    soundHit();
+    dg.strikeCd = 0.5;
     var hit = false, tot = dungeonTotals();
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
-      if (en.hp > 0 && en.x - dg.x > -0.5 && en.x - dg.x < 3.2) {
+      var rel = (en.x - dg.x) * (dg.facing || 1);
+      if (en.hp > 0 && rel > -0.5 && rel < 3.2) {
         en.hp -= tot.atk;
         en.hurt = 0.18;
         hit = true;
       }
     }
-    if (hit) dungeonRender();
+    if (hit) { soundHit(); dungeonRender(); }
   }
   function dungeonTick(dt) {
     if (!dg.active) return;
@@ -2730,16 +2733,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dir = dg.holdMoving || dg.keyMoving || 0;
     if (dir) {
+      dg.facing = dir;
       dg.x = Math.min(23.5, Math.max(1.5, dg.x + dir * tot.spd * dt));
       dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
-    var inRange = false;
+    var anyAlive = false;
     for (var k = 0; k < dg.entities.length; k++) {
-      var ed = dg.entities[k];
-      if (ed.hp > 0 && ed.x - dg.x > -0.5 && ed.x - dg.x < 3.2) { inRange = true; break; }
+      if (dg.entities[k].hp > 0) { anyAlive = true; break; }
     }
-    if (inRange) dungeonStrike(); /* frappe en continu au contact, cadencée par strikeCd */
+    if (anyAlive) dungeonStrike(); /* frappe automatique toutes les 0,5 s, dans la direction du déplacement */
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
@@ -2784,7 +2787,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var hx = dg.x * pxm;
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
-      spriteHTML(hgrid, "5px", heroPal()) + "</div>";
+      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", heroPal()) + "</div></div>";
     if (dg.phase === "choose" && dg.doors) {
       var doors = dg.doors.map(function (doo, idx) {
         var lab = doo.type === "boss" ? "💀 Salle du boss · gros pillage 🪙"
@@ -2826,7 +2829,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement au contact. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 0,5 s, dans la direction où il se déplace. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
       "Les objets de run (❓) sont perdus à la mort ou en fin de course. Le pillage sauf si tu tombes 🏠.<br>" +
       "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
       "</div></div>";
@@ -2845,7 +2848,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe en continu</b> dès qu\u2019un monstre est à portée, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 0,5 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Les objets gagnés en run sont <b>perdus à la mort ou en fin de course</b> ; le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
