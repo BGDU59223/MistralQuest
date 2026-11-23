@@ -446,6 +446,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-depth { font-size: 18px; color: var(--accent); }
   .dg-hpbar { flex: 1; min-width: 130px; max-width: 280px; height: 14px; background: #2a1210; border: 2px solid #000; border-radius: 6px; overflow: hidden; }
   .dg-hpfill { height: 100%; background: #d43d2a; transition: width .15s; }
+  .dg-arena { position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
+  .dg-attack { position: absolute; right: 14px; bottom: 14px; width: 78px; height: 78px; border-radius: 50%; font-size: 34px; line-height: 1; background: radial-gradient(circle at 35% 30%, #6b2a19, #2a120c); border: 3px solid #000; box-shadow: 0 4px 0 #000, inset 0 0 0 2px rgba(255, 112, 0, .4); color: #ffdd99; cursor: pointer; z-index: 7; pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .dg-attack:active { transform: translateY(2px); filter: brightness(1.3); }
   .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
@@ -2722,6 +2725,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
+    if (dgAtkTouch !== null) dungeonStrike(); /* coup maintenu : répétition auto cadencée par strikeCd */
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
@@ -2800,12 +2804,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="btn" data-action="dg-retreat">🏠 Battre en retraite</button>' +
       "</div>" +
       '<div class="dg-itembar panel" data-dg-items><span class="dg-noitems">Aucun objet de run — les salles ❓ cachent parfois un trésor</span></div>' +
-      '<div class="dg-viewport" id="dg-viewport"></div>' +
+      '<div class="dg-arena" data-dg-arena><div class="dg-viewport" id="dg-viewport"></div><button class="dg-attack" data-dg-attack title="Frapper (Espace)">⚔️</button></div>' +
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big btn-accent" data-action="dg-hit" title="Frapper (Espace)">⚔️ Frapper</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>' +
+      '<span class="dg-hint">Clavier : ◀ ▶ (ou A / D) se déplacer · Espace frapper · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger, bouton ⚔️ en bas à droite pour frapper.</span>' + +
       "Les objets de run (❓) sont perdus à la mort ou en fin de course. Le pillage sauf si tu tombes 🏠.<br>" +
       "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
       "</div></div>";
@@ -2857,10 +2861,55 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   });
   document.addEventListener("mousedown", function (e) {
     if (isTimerWin()) return;
+    var a = e.target && e.target.closest ? e.target.closest("[data-dg-attack]") : null;
+    if (a) { dungeonStrike(); return; }
     var b = e.target && e.target.closest ? e.target.closest("[data-dg-dir]") : null;
     dg.holdMoving = b ? Number(b.getAttribute("data-dg-dir")) : 0;
   });
   document.addEventListener("mouseup", function () { dg.holdMoving = 0; });
+  /* — Contrôles tactiles (mobile) : moitié gauche/droite de la salle = déplacement, bouton ⚔️ = coup */
+  var dgMoveTouch = null, dgAtkTouch = null;
+  function dgArenaEl() { return document.querySelector("[data-dg-arena]"); }
+  function dgTouchDir(clientX) {
+    var vp = dgArenaEl();
+    if (!vp) return 0;
+    var r = vp.getBoundingClientRect();
+    return (clientX - r.left) * 2 < r.width ? -1 : 1;
+  }
+  document.addEventListener("touchstart", function (e) {
+    if (isTimerWin() || !dg.active || dg.phase !== "fight") return; /* phase "choose" : les taps passent aux portes */
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var t = e.changedTouches[i];
+      var tgt = t.target || e.target;
+      if (tgt && tgt.closest && tgt.closest("[data-dg-attack]")) {
+        e.preventDefault();
+        if (dgAtkTouch === null) { dgAtkTouch = t.identifier; dungeonStrike(); }
+      } else if (tgt && tgt.closest && tgt.closest("[data-dg-arena]")) {
+        e.preventDefault();
+        dgMoveTouch = t.identifier;
+        dg.holdMoving = dgTouchDir(t.clientX);
+      }
+    }
+  }, { passive: false });
+  document.addEventListener("touchmove", function (e) {
+    if (isTimerWin() || !dg.active || dgMoveTouch === null) return;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var t = e.changedTouches[i];
+      if (t.identifier !== dgMoveTouch) continue;
+      e.preventDefault();
+      dg.holdMoving = dgTouchDir(t.clientX);
+    }
+  }, { passive: false });
+  function dgTouchUp(e) {
+    if (isTimerWin() || !dg.active) return;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var id = e.changedTouches[i].identifier;
+      if (id === dgMoveTouch) { dgMoveTouch = null; dg.holdMoving = 0; }
+      if (id === dgAtkTouch) dgAtkTouch = null;
+    }
+  }
+  document.addEventListener("touchend", dgTouchUp, { passive: true });
+  document.addEventListener("touchcancel", dgTouchUp, { passive: true });
   function renderAll() {
     if (liveTicker) { clearInterval(liveTicker); liveTicker = null; }
     document.getElementById("tabs").innerHTML = tabsHTML();
