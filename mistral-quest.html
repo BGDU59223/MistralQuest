@@ -444,7 +444,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .tfw-empty { color: var(--muted); font-size: 15px; text-align: center; line-height: 1.5; }
   .pixel-sprite { display: grid; line-height: 0; }
   .pixel-sprite i { display: block; }
-  /* ---- ⚔️ La Faille (donjon) ---- */
+  /* ---- 🏰 Le Château (donjon) ---- */
   .dg-home { max-width: 760px; margin: 0 auto; }
   .dg-pitch { line-height: 1.6; }
   .dg-record { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
@@ -460,7 +460,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-reward-badge { color: var(--accent); font-weight: 700; }
   .dg-hero-body { display: inline-block; }
   .dg-hero-body.dg-face-l { transform: scaleX(-1); }
-  .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
+  .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; image-rendering: pixelated;
+    /* decor du Chateau : pixel art du joueur (fenetres + torches), repete sur la largeur, voile sombre pour garder les monstres lisibles */
+    background: linear-gradient(rgba(8,6,12,.58), rgba(8,6,12,.74)), url("data:image/png;base64,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") left bottom / auto 100% repeat-x, background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
   .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
@@ -488,6 +490,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-ability .dg-ab-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: #fff; background: rgba(8,10,16,.62); pointer-events: none; }
   .dg-ability.dg-ab-cd-on { filter: grayscale(1) brightness(.55); cursor: not-allowed; }
   .dg-ab-key { display: block; font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
+  .dg-arrow { position: absolute; font-size: 14px; z-index: 4; pointer-events: none; color: #e8e3d0; filter: drop-shadow(0 0 3px rgba(63,167,255,.6)); }
+  .dg-stun .pixel-sprite { filter: saturate(.15) brightness(.9); }
+  .dg-penitVuln .pixel-sprite { filter: brightness(1.4) saturate(2) hue-rotate(-30deg); }
   .dg-thrown { position: absolute; bottom: 64px; font-size: 20px; transform: translateX(-50%); z-index: 3; filter: drop-shadow(0 0 4px rgba(255,214,74,.7)); pointer-events: none; }
   .dg-hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
 </style>
@@ -535,7 +540,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   var LABEL_COLORS = ["#ff7000", "#ffd54a", "#7aa2ff", "#6fdc8c", "#ff6b9d", "#b58cff", "#4fd6d2", "#c0c8d8"];
   var TABS = [
     ["board", "🗺️ Quêtes"],
-    ["dungeon", "⚔️ La Faille"]
+    ["dungeon", "🏰 Le Château"]
   ];
   var SETTINGS_TABS = [["stats", "📊 Stat"], ["achievements", "🏆 Exploits"], ["archive", "🗄️ Archive"], ["theme", "🎨 Apparence"]];
   var EQUIP_SLOTS = [["arme", "⚔️ Arme"], ["armure", "🛡️ Armure"], ["tete", "🪖 Casque"], ["accessoire", "💍 Accessoire"], ["pieds", "🥾 Bottes"]];
@@ -600,9 +605,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "streak3", name: "Série de 3",      desc: "3 jours d'affilée",                icon: "🔥", check: function (s) { return s.streak >= 3; }, gold: 30 },
     { id: "streak7", name: "Série de 7",      desc: "7 jours d'affilée",                icon: "☄️", check: function (s) { return s.streak >= 7; }, gold: 70 },
     { id: "boss",    name: "Tueur de boss",   desc: "Vaincre un boss",                  icon: "💀", check: function (s) { return s.stats.bossKills >= 1; }, gold: 50 },
-    { id: "faille-3",   name: "Pionnier de la Faille",  desc: "Purger 3 salles",                  icon: "🕳️", check: function (s) { return s.dungeon && s.dungeon.best >= 3; }, gold: 30 },
+    { id: "faille-3",   name: "Pionnier du Château",  desc: "Purger 3 salles",                  icon: "🕳️", check: function (s) { return s.dungeon && s.dungeon.best >= 3; }, gold: 30 },
     { id: "faille-6",   name: "Spéléologue",            desc: "Purger 6 salles",                  icon: "⛏️", check: function (s) { return s.dungeon && s.dungeon.best >= 6; }, gold: 60 },
-    { id: "faille-10",  name: "Seigneur de la Faille",   desc: "Purger 10 salles",                 icon: "🐉", check: function (s) { return s.dungeon && s.dungeon.best >= 10; }, gold: 120 }
+    { id: "faille-10",  name: "Seigneur du Château",   desc: "Purger 10 salles",                 icon: "🐉", check: function (s) { return s.dungeon && s.dungeon.best >= 10; }, gold: 120 }
   ];
   var THEMES = {
     nuit:   { name: "Nuit",   vars: { "--bg": "#000000", "--panel": "#161310", "--card": "#1e1a16", "--accent": "#ff7000", "--accent-dark": "#c25400", "--text": "#f5e6c8", "--muted": "#a08a68", "--danger": "#d43d2a" } },
@@ -1243,12 +1248,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
      Les cooldowns NE se reinitialisent PAS entre les salles : dg.spellCd survit a dungeonSetupRoom. */
   var MAGIC_SPELLS = {
     fureur: { id: "fureur", name: "Fureur", icon: "\u26A1", desc: "+50 % vitesse d\u2019attaque pendant 5 s", cd: 20, cost: 0 },
-    jet:    { id: "jet",    name: "Lancer d\u2019arme", icon: "\u2694\uFE0F", desc: "Ta lame file et transperce chaque ennemi (60 % de tes d\u00e9g\u00e2ts chacun) \u2014 tes coups automatiques continuent", cd: 8, cost: 0 }
+    jet:    { id: "jet",    name: "Lancer d\u2019arme", icon: "\u2694\uFE0F", desc: "Ta lame file et transperce chaque ennemi (60 % de tes d\u00e9g\u00e2ts chacun) \u2014 tes coups automatiques continuent", cd: 8, cost: 0 },
+    intimidation: { id: "intimidation", name: "Intimidation", icon: "\uD83D\uDC41\uFE0F", desc: "Immobilise TOUS les ennemis de la salle pendant 3 s (un boss fige ne tire plus)", cd: 20, cost: 25 }
   };
   /* Sorts SPECIAUX de run : gagnes uniquement apres avoir vaincu un boss, perdus a la fin de la partie (touche R). */
   var RUN_SPELLS = {
     nova: { id: "nova", name: "Nova de feu", icon: "\u2604\uFE0F", desc: "Frappe TOUS les ennemis de la salle (250 % de tes d\u00e9g\u00e2ts chacun)", cd: 25 },
-    soin: { id: "soin", name: "Souffle vital", icon: "\uD83D\uDC9A", desc: "R\u00e9cup\u00e8re 50 % de tes PV max", cd: 30 }
+    soin: { id: "soin", name: "Souffle vital", icon: "\uD83D\uDC9A", desc: "R\u00e9cup\u00e8re 50 % de tes PV max", cd: 30 },
+    icare: { id: "icare", name: "Icare", icon: "\uD83E\uDEB6", desc: "Tu voles pendant 5 s (le contact ne te touche pas) et tu fais pleuvoir une rang\u00e9e de fl\u00e8ches par seconde (30 % de ton attaque chacune)", cd: 60 },
+    penit: { id: "penit", name: "Rituel de la P\u00e9nitence", icon: "\uD83D\uDD6F\uFE0F", desc: "Aucun d\u00e9g\u00e2t pendant 10 s, puis tu subis 100 % de d\u00e9g\u00e2ts en PLUS pendant 5 s", cd: 60 }
   };
   function gearStats() {
     var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0, len: 0, wide: 0 };
@@ -1686,7 +1694,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   /* --- Boutique Magie : apprendre des sorts en depensant de l'XP (le niveau ne baisse jamais) --- */
   function magicView() {
     var banner = '<div class="shop-banner"><p>\u2728 La boutique de Magie : tes sorts s\u2019ach\u00e8tent avec de l\u2019XP. XP \u00e0 d\u00e9penser : <b>' + state.xp + '</b> (ton niveau ne baisse jamais \u2014 seul l\u2019XP courant est d\u00e9pens\u00e9).<br>Apr\u00e8s l\u2019apprentissage, attribue tes sorts aux touches <b>Z</b> / <b>E</b> dans le Stuff 🎒 ; la touche <b>R</b> est r\u00e9serv\u00e9e au sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss (perdu \u00e0 la fin de la partie).</p>' +
-      '<button class="btn" data-action="switch-tab" data-view="dungeon">\u2190 Retour \u00e0 La Faille</button>' +
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">\u2190 Retour au Ch\u00e2teau</button>' +
       '<button class="btn" data-action="switch-tab" data-view="stuff">\U0001F392 Le Stuff (attribuer Z/E)</button></div>';
     var cards = Object.keys(MAGIC_SPELLS).map(function (mid) {
       var sp = MAGIC_SPELLS[mid];
@@ -1707,7 +1715,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function spellAssignPanel() {
     var learned = (state.spells || []).filter(function (mid) { return MAGIC_SPELLS[mid]; });
-    if (!learned.length) return '<div class="panel"><h2 class="panel-title">\u2728 SORTS</h2><p class="lootbox-hint" style="margin:0">Aucun sort appris \u2014 file \u00e0 la boutique <b>\u2728 Magie</b> de La Faille pour apprendre tes premiers sorts (ils co\u00fbtent de l\u2019XP).</p></div>';
+    if (!learned.length) return '<div class="panel"><h2 class="panel-title">\u2728 SORTS</h2><p class="lootbox-hint" style="margin:0">Aucun sort appris \u2014 file \u00e0 la boutique <b>\u2728 Magie</b> du Château pour apprendre tes premiers sorts (ils co\u00fbtent de l\u2019XP).</p></div>';
     var picks = ["z", "e"].map(function (slot) {
       var opts = '<option value="">\u2014 aucun \u2014</option>' + learned.map(function (mid) {
         return '<option value="' + mid + '"' + (state.spellSlots[slot] === mid ? " selected" : "") + ">" + esc(MAGIC_SPELLS[mid].name) + " (" + MAGIC_SPELLS[mid].cd + " s)</option>";
@@ -1716,7 +1724,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         '<select data-spell-slot="' + slot + '">' + opts + "</select></label>";
     }).join("");
     return '<div class="panel"><h2 class="panel-title">\u2728 SORTS \\— TOUCHES DE LANCEMENT</h2>' +
-      '<p class="lootbox-hint" style="margin:0 0 8px">Choisis quel sort part sur Z et E quand tu es dans la Faille (la touche R, elle, porte le sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss).</p>' +
+      '<p class="lootbox-hint" style="margin:0 0 8px">Choisis quel sort part sur Z et E quand tu es dans le Château (la touche R, elle, porte le sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss).</p>' +
       '<div class="spell-slots">' + picks + "</div>" +
       (dg.runSpellId ? '<p class="lootbox-hint" style="margin:0">Touche R : ' + RUN_SPELLS[dg.runSpellId].name + " (ce run)</p>" : "") + "</div>";
   }
@@ -1725,9 +1733,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var spellPanel = spellAssignPanel();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
-      ' — Faille : ⚔️ attaque ' + (3 + gs.atk) + " · 📏 longueur " + (gs.len || 4) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 👟 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
+      ' — Château : ⚔️ attaque ' + (3 + gs.atk) + " · 📏 longueur " + (gs.len || 4) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 👟 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
       '<button class="btn" data-action="switch-tab" data-view="shop">🛒 Boutique</button>' +
-      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour à La Faille</button></div>';
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour au Château</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
     if (!owned.length) {
       return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>' + spellPanel;
@@ -1754,8 +1762,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return banner + rows + spellPanel;
   }
   function shopView() {
-    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · 📏 longueur d’arme · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
-      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour à La Faille</button></div>';
+    var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour le Château : ⚔️ attaque · 📏 longueur d’arme · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour au Château</button></div>';
     var cards = SHOP_ITEMS.map(function (it) {
       var owned = state.inventory.indexOf(it.id) !== -1;
       var equipped = it.type === "gear" && state.equipment[it.slot] === it.id;
@@ -2577,7 +2585,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var tx = document.querySelector("#modal textarea[name=steps-text]");
     if (tx) drafts.steps = tx.value;
   }
-  /* ==================== ⚔️ La Faille (roguelite en salles) ==================== */
+  /* ==================== 🏰 Le Château (roguelite en salles) ==================== */
   var DG_MONS = {
     slime:    { name: "Slime",         hp: function (r) { return 4 + r * 2; },  spd: 1.1, dmg: function (r) { return 3 + r; }, gold: function (r) { return 2 + r; }, cell: "5px" },
     bat:      { name: "Chauve-souris", hp: function (r) { return 3 + r * 2; },  spd: 2.6, dmg: function (r) { return 2 + r; }, gold: function (r) { return 3 + r; }, cell: "4px", fly: true },
@@ -2686,7 +2694,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
     entities: [], projectiles: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, rollDir: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null,
-    spellCd: { z: 0, e: 0, r: 0 }, hasteT: 0, thrown: null, runSpellId: null, pendingRunSpell: null };
+    spellCd: { z: 0, e: 0, r: 0 }, hasteT: 0, thrown: null, runSpellId: null, pendingRunSpell: null, icareT: 0, icareAcc: 0, penitT: 0, penitVulnT: 0, rain: [] };
   function dungeonTotals() {
     var g = gearStats();
     return {
@@ -2711,6 +2719,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0; dg.rollDir = 0;
     dg.spellCd = { z: 0, e: 0, r: 0 }; /* cooldowns de sorts remis a zero au DEMARRAGE de la run uniquement (pas entre les salles) */
     dg.hasteT = 0; dg.thrown = null; dg.runSpellId = null; dg.pendingRunSpell = null;
+    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = [];
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2736,14 +2745,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     saveState();
     showToast(retreat
       ? "🏠 Retraite : " + run.gold + " 🪙 pillés en banque"
-      : "☠️ La Faille t'a englouti salle " + dg.room + "… " + run.gold + " 🪙 perdus");
+      : "☠️ Le Château t'a englouti salle " + dg.room + "… " + run.gold + " 🪙 perdus");
     renderAll();
   }
   function dungeonSetupRoom(room, reward) {
     dg.x = 12.5;
     dg.entities = [];
     dg.projectiles = []; /* les boules de feu du boss ne survivent pas a la salle */
-    dg.thrown = null; /* la lame lancee ne traverse pas les salles (les cooldowns de sorts, eux, continuent) */
+    dg.thrown = null; /* la lame lancee ne traverse pas les salles */
+    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = []; /* les EFFETS de sorts (Icare, Penitence) se reinitialisent au changement de salle — les COOLDOWNS, eux, continuent */
     if (room % 5 === 0) {
       var hp = 60 + room * 15, dd = 10 + room;
       dg.entities.push({ t: "boss", boss: true, x: 18.5, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0, spellCd: 5 });
@@ -2867,6 +2877,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (hit) { soundHit(); dungeonRender(); }
   }
   /* --- Sorts : lancement sur Z / E (sorts appris) ou R (sort special de run) --- */
+  /* Icare : une rangee de fleches par seconde — chaque rangee touche TOUS les ennemis (30 % de l'attaque) */
+  function dgIcareVolley() {
+    var volAtk = Math.max(1, Math.round(dungeonTotals().atk * 0.3));
+    for (var vi = 0; vi < dg.entities.length; vi++) {
+      var ve = dg.entities[vi];
+      if (ve.hp > 0) { ve.hp -= volAtk; ve.hurt = 0.15; }
+    }
+    soundHit();
+    for (var va = 0; va < 7; va++) dg.rain.push({ x: 1.5 + Math.random() * 22.5, y: -6 });
+  }
   function dungeonSpellDef(slot) {
     if (slot === "r") return dg.runSpellId ? RUN_SPELLS[dg.runSpellId] : null;
     var mid = state.spellSlots && state.spellSlots[slot];
@@ -2890,6 +2910,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
     } else if (slot === "r" && sp.id === "soin") {
       dg.hp = Math.min(tot.maxHp, dg.hp + tot.maxHp * 0.5);
+    } else if (sp.id === "intimidation") {
+      for (var iI = 0; iI < dg.entities.length; iI++) { var enI = dg.entities[iI]; if (enI.hp > 0) enI.stunT = 3; }
+    } else if (slot === "r" && sp.id === "icare") {
+      dg.icareT = 5; dg.icareAcc = 0; dg.rain = [];
+      dgIcareVolley(); /* premiere rangee immediate, puis une par seconde pendant les 5 s de vol */
+    } else if (slot === "r" && sp.id === "penit") {
+      dg.penitT = 10; dg.penitVulnT = 0;
     }
     showToast("\u2728 " + sp.name + " !");
     dungeonRender();
@@ -2927,6 +2954,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.rollT > 0) dg.rollT = Math.max(0, dg.rollT - dt);
     if (dg.rollCd > 0) dg.rollCd = Math.max(0, dg.rollCd - dt);
     if (dg.hasteT > 0) dg.hasteT = Math.max(0, dg.hasteT - dt); /* Fureur : +50 % de vitesse d'attaque temporaire */
+    if (dg.icareT > 0) {
+      dg.icareT = Math.max(0, dg.icareT - dt); dg.icareAcc += dt;
+      if (dg.icareAcc >= 1) { dg.icareAcc = 0; dgIcareVolley(); } /* Icare : une rangee par seconde */
+    }
+    if (dg.penitT > 0) { dg.penitT = Math.max(0, dg.penitT - dt); if (dg.penitT === 0) dg.penitVulnT = 5; } /* Penitence : immunité 10 s puis vulnérabilité 5 s */
+    else if (dg.penitVulnT > 0) dg.penitVulnT = Math.max(0, dg.penitVulnT - dt);
+    for (var ra = dg.rain.length - 1; ra >= 0; ra--) { dg.rain[ra].y += dt * 300; if (dg.rain[ra].y > 196) dg.rain.splice(ra, 1); }
     for (var sc in dg.spellCd) { if (dg.spellCd[sc] > 0) dg.spellCd[sc] = Math.max(0, dg.spellCd[sc] - dt); } /* les recharges de sorts coulent meme pendant les changements de salle */
     var anyAlive = false;
     for (var k = 0; k < dg.entities.length; k++) {
@@ -2938,6 +2972,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var en = dg.entities[i];
       en.cd = Math.max(0, en.cd - dt);
       if (en.hurt > 0) en.hurt = Math.max(0, en.hurt - dt);
+      if (en.stunT > 0) { en.stunT = Math.max(0, en.stunT - dt); continue; } /* Intimidation : immobilise (meme un boss fige ne tire plus) */
       var dist = en.x - dg.x;
       var stopGap = (dgMonBox(en) / 2 + DG_HERO_HALF + 0.5) / dgPxm();
       if (en.boss && dg.phase === "fight") {
@@ -2953,9 +2988,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         en.x = Math.min(23.8, Math.max(1, en.x - (dist > 0 ? 1 : -1) * en.spd * dt));
       }
       /* attaque au contact : carré du monstre touche le corps du héros */
-      if (dg.rollT <= 0 && Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
+      if (dg.rollT <= 0 && dg.icareT <= 0 && dg.penitT <= 0 && Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
+        var hitD = Math.max(1, en.dmg - tot.def);
+        if (dg.penitVulnT > 0) hitD *= 2; /* Rituel de la Penitence : phase de vulnerabilite */
         en.cd = 1.15;
-        dg.hp -= Math.max(1, en.dmg - tot.def);
+        dg.hp -= hitD;
         dg.hurtFlash = 0.25;
       }
     }
@@ -2965,8 +3002,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       pj.x += pj.dir * pj.spd * dt;
       if (pj.x < 0.3 || pj.x > 25.7) { dg.projectiles.splice(f, 1); continue; }
       if (pj.hostile) {
-        if (dg.rollT <= 0 && Math.abs(pj.x - dg.x) * dgPxm() < DG_HERO_HALF + 4) {
-          dg.hp -= Math.max(1, pj.dmg - tot.def);
+        if (dg.rollT <= 0 && dg.icareT <= 0 && dg.penitT <= 0 && Math.abs(pj.x - dg.x) * dgPxm() < DG_HERO_HALF + 4) {
+          var fbD = Math.max(1, pj.dmg - tot.def);
+          if (dg.penitVulnT > 0) fbD *= 2;
+          dg.hp -= fbD;
           dg.hurtFlash = 0.25;
           dg.projectiles.splice(f, 1);
           soundHit();
@@ -3037,9 +3076,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var bar = en.hp < en.maxHp ? '<div class="dg-ebar"><i style="width:' + Math.max(0, Math.round(en.hp / en.maxHp * 100)) + '%"></i></div>' : "";
       /* tout ce qui vole : le CENTRE de l'entite est a hauteur de la lame (~81 px au-dessus du sol), comme si l'epee la transpercait */
       var ebot = (mon && mon.fly) ? 67 : 44; /* chauve-souris remontee : centre = 67 + 28/2 = 81 px = 46 (pieds) + milieu de la bande de lame 30-40 ; le boss (hors DG_MONS) reste au sol */
-      html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px">' +
+      html += '<div class="dg-entity' + (en.hurt > 0 ? " dg-hurt" : "") + (en.stunT > 0 ? " dg-stun" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px">' +
         '<div class="dg-ename">' + (en.boss ? "💀 BOSS" : esc(mon.name)) + "</div>" + bar +
-        spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) +
+        spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) + (en.stunT > 0 ? '<div class="dg-roll-badge">⛓️</div>' : "") +
         "</div>";
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
@@ -3074,10 +3113,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       /* lame lancee (Lancer d'arme) : file a hauteur de lame, transperce les ennemis */
       html += '<div class="dg-thrown" style="left:' + (dg.thrown.x * pxm) + 'px">⚔️</div>';
     }
+    for (var ra2 = 0; ra2 < dg.rain.length; ra2++) {
+      html += '<span class="dg-arrow" style="left:' + (dg.rain[ra2].x * pxm) + 'px;top:' + Math.round(dg.rain[ra2].y) + 'px">⬇</span>';
+    }
     var rolling = dg.rollT > 0;
     var rollBlink = rolling && Math.floor(dg.rollT * 12) % 2 === 1; /* clignotement en JS : le heros est recree toutes les 50 ms, une animation CSS repartirait de zero a chaque rendu */
-    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
-      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + (rolling ? '<div class="dg-roll-badge">💨</div>' : "") + "</div>";
+    var flyOff = dg.icareT > 0 ? 46 : 0; /* Icare : heros envole au-dessus du sol */
+    var heroBadge = rolling ? '<div class="dg-roll-badge">💨</div>'
+      : dg.icareT > 0 ? '<div class="dg-roll-badge">🕊️</div>'
+      : dg.penitT > 0 ? '<div class="dg-roll-badge">🕯️</div>'
+      : dg.penitVulnT > 0 ? '<div class="dg-roll-badge">💢</div>' : "";
+    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + (dg.penitVulnT > 0 ? " dg-penitVuln" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2 + flyOff) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
+      '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + heroBadge + "</div>";
     if (dg.phase === "choose") {
       /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
       var rsp = dg.runSpellId ? RUN_SPELLS[dg.runSpellId] : null;
@@ -3137,13 +3184,13 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.lastResult) {
       var r = dg.lastResult;
       res = '<div class="panel dg-result' + (r.retreat ? "" : " dg-result-dead") + '">' +
-        (r.retreat ? "🏠 Retraite réussie" : "☠️ La Faille t'a englouti…") +
+        (r.retreat ? "🏠 Retraite réussie" : "☠️ Le Château t'a englouti…") +
         "<br>Salles purgées : " + r.rooms + " · Monstres tués : " + r.kills +
         " · Pillage : " + (r.retreat ? "+" + r.gold + " 🪙 en banque" : r.gold + " 🪙 perdus") +
         (r.items ? " · Objets de run perdus : " + r.items : "") + "</div>";
     }
     return '<div class="panel dg-home">' +
-      '<h2 class="panel-title">⚔️ La Faille</h2>' +
+      '<h2 class="panel-title">🏰 Le Château</h2>' +
       '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Tes <b>sorts appris</b> à la boutique <b>✨ Magie</b> (coûtent de l’XP) se lancent sur <b>Z / E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
@@ -3162,7 +3209,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🪙 Loot : +' + g.loot + "%</span>" +
       "</div>" +
       '<div class="dg-hub-grid">' +
-      '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">La Faille</span><span class="dg-hub-sub">Entrer dans la Faille</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">Le Château</span><span class="dg-hub-sub">Entrer dans le château</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="shop"><span class="dg-hub-icon">🛒</span><span class="dg-hub-name">Boutique</span><span class="dg-hub-sub">Dépenser ton or</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="magic"><span class="dg-hub-icon">✨</span><span class="dg-hub-name">Magie</span><span class="dg-hub-sub">Apprendre des sorts (XP)</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="stuff"><span class="dg-hub-icon">🎒</span><span class="dg-hub-name">Le stuff</span><span class="dg-hub-sub">Équiper ton héros</span></div>' +
