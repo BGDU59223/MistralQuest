@@ -453,7 +453,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-viewport { position: relative; height: 240px; border: 3px solid #000; border-radius: 10px; overflow: hidden; background: linear-gradient(#120d0a 0%, #1c1410 55%, #241a12 100%); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
-  .dg-entity { position: absolute; text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
+  .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
   .dg-hero { position: absolute; transform: translateX(-50%); text-align: center; z-index: 5; }
   .dg-hero.dg-hurt .pixel-sprite { filter: brightness(1.9) saturate(2.2); }
   .dg-entity.dg-hurt { filter: brightness(2.2); }
@@ -2703,14 +2703,29 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dungeonSetupRoom(dg.room, door.type);
     dungeonRender();
   }
+  /* — Hitboxes réelles : carré englobant chaque monstre, rectangle pleine longueur pour l’épée — */
+  var DG_HERO_CELL = 5, DG_HERO_HALF = 15, DG_SWORD_BACK = 15, DG_SWORD_TIP = 35; /* px écran (épée : cols 10-13, rangées 6-7, band verticale 30-40 px au-dessus des pieds) */
+  function dgPxm() {
+    var vp = document.getElementById("dg-viewport");
+    return ((vp && vp.offsetWidth) || 676) / 26;
+  }
+  function dgMonBox(en) { /* côté du carré englobant le monstre complet, en px */
+    var g = DG_SPRITES[en.t];
+    var cols = 0;
+    for (var i = 0; i < g.length; i++) cols = Math.max(cols, g[i].replace(/\s+$/, "").length);
+    var cell = en.boss ? 6 : (parseInt(DG_MONS[en.t].cell, 10) || 5);
+    return Math.max(cols, g.length) * cell;
+  }
+  var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
   function dungeonStrike() {
     if (!dg.active || dg.strikeCd > 0) return;
-    dg.strikeCd = 0.5;
-    var hit = false, tot = dungeonTotals();
+    dg.strikeCd = 1;
+    var hit = false, tot = dungeonTotals(), pxm = dgPxm();
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
-      var rel = (en.x - dg.x) * (dg.facing || 1);
-      if (en.hp > 0 && rel > -0.5 && rel < 3.2) {
+      var relF = (en.x - dg.x) * (dg.facing || 1) * pxm;
+      var H = dgMonBox(en) / 2; /* carré englobant le monstre complet */
+      if (en.hp > 0 && relF + H > DG_SWORD_BACK && relF - H < DG_SWORD_TIP) {
         en.hp -= tot.atk;
         en.hurt = 0.18;
         hit = true;
@@ -2742,17 +2757,19 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     for (var k = 0; k < dg.entities.length; k++) {
       if (dg.entities[k].hp > 0) { anyAlive = true; break; }
     }
-    if (anyAlive) dungeonStrike(); /* frappe automatique toutes les 0,5 s, dans la direction du déplacement */
+    if (anyAlive) dungeonStrike(); /* frappe automatique toutes les 1 s, dans la direction du déplacement */
     if (dg.hurtFlash > 0) dg.hurtFlash = Math.max(0, dg.hurtFlash - dt);
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       en.cd = Math.max(0, en.cd - dt);
       if (en.hurt > 0) en.hurt = Math.max(0, en.hurt - dt);
       var dist = en.x - dg.x;
-      if (Math.abs(dist) <= 14 && Math.abs(dist) > 1.2) {
+      var stopGap = (dgMonBox(en) / 2 + DG_HERO_HALF + 0.5) / dgPxm();
+      if (Math.abs(dist) <= 14 && Math.abs(dist) > stopGap) {
         en.x = Math.min(23.8, Math.max(1, en.x - (dist > 0 ? 1 : -1) * en.spd * dt));
       }
-      if (Math.abs(dist) <= 1.6 && en.cd <= 0) {
+      /* attaque au contact : carré du monstre touche le corps du héros */
+      if (Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
         en.cd = 1.15;
         dg.hp -= Math.max(1, en.dmg - tot.def);
         dg.hurtFlash = 0.25;
@@ -2766,7 +2783,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (!dg.active) return;
     var vp = document.getElementById("dg-viewport");
     if (!vp) return;
-    var pxm = (vp.offsetWidth || 676) / 26;
+    var pxm = dgPxm();
     var html = '<div class="dg-wall dg-wall-l"></div><div class="dg-wall dg-wall-r"></div><div class="dg-floor"></div>';
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
@@ -2780,7 +2797,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
     var hgrid = HERO_DG_A, hbob = 0;
-    if (dg.strikeCd > 0.30) { hgrid = HERO_DG_S; }
+    if (dg.strikeCd > 0.75) { hgrid = HERO_DG_S; } /* swing visible les 0,25 premières secondes du coup (cadence 1 s) */
     else if (dirNow) {
       hbob = Math.floor(dg.walkT * 7) % 2;
       hgrid = hbob ? HERO_DG_B : HERO_DG_A;
@@ -2829,7 +2846,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 0,5 s, dans la direction où il se déplace. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s, dans la direction où il se déplace. L’épée touche dès que sa pleine longueur effleure le carré du monstre. Clavier : ◀ ▶ (ou A / D) · Échap retraite.<br>Tactile : touche la moitié gauche / droite de la salle pour bouger.</span>' + +
       "Les objets de run (❓) sont perdus à la mort ou en fin de course. Le pillage sauf si tu tombes 🏠.<br>" +
       "Changer d\\'onglet = retraite automatique, pillage en banque.</span>" +
       "</div></div>";
@@ -2848,7 +2865,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 0,5 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s, dans la direction où il se déplace</b>, purge la salle puis <b>choisis entre 2 portes dont la récompense est annoncée</b> : 🎁 un objet de run ou 🪙 un pillage bonus. <b>💀 Boss à affronter toutes les 5 salles (5, 10, 15…)</b>.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (atk, PV, def, spd, loot). Les objets gagnés en run sont <b>perdus à la mort ou en fin de course</b> ; le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -3855,7 +3872,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
     dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
       choose: dungeonChooseDoor, setup: dungeonSetupRoom, doorgen: dungeonGenDoors, totals: dungeonTotals,
-      gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, check: checkAchievements } };
+      gear: gearStats, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, monbox: dgMonBox, pxm: dgPxm, check: checkAchievements } };
   var LOGO = [
     "................",
     "...OO......OO...",
