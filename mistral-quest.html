@@ -488,6 +488,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-ability .dg-ab-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: #fff; background: rgba(8,10,16,.62); pointer-events: none; }
   .dg-ability.dg-ab-cd-on { filter: grayscale(1) brightness(.55); cursor: not-allowed; }
   .dg-ab-key { display: block; font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
+  .dg-thrown { position: absolute; bottom: 64px; font-size: 20px; transform: translateX(-50%); z-index: 3; filter: drop-shadow(0 0 4px rgba(255,214,74,.7)); pointer-events: none; }
   .dg-hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
 </style>
 </head>
@@ -754,9 +755,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       filters: { labels: [], dates: [] },
       colSort: { todo: null, doing: null, done: null },
       inventory: [], equipment: {}, achievements: [], pendingLoot: 0,
+      spells: [],
       stats: { xpByDay: {}, doneByDay: {}, totalCompleted: 0, bossKills: 0 },
       timerFloat: { hidden: false, minimized: false, x: null, y: null },
       dungeon: { best: 0, kills: 0, runs: 0 },
+      spellSlots: { z: null, e: null },
       theme: "nuit", view: "board", hero: null, boardMode: "main"
     };
   }
@@ -787,7 +790,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.colSort = (s && s.colSort) ? { todo: s.colSort.todo || null, doing: s.colSort.doing || null, done: s.colSort.done || null } : { todo: null, doing: null, done: null };
     out.recFilter = out.recFilter || "all";
     out.boardMode = out.boardMode === "secondaire" ? "secondaire" : "main";
-    out.view = ["board", "dungeon", "shop", "stuff"].indexOf(out.view) !== -1 ? out.view : "board";
+    out.view = ["board", "dungeon", "shop", "stuff", "magic"].indexOf(out.view) !== -1 ? out.view : "board";
+    out.spells = (out.spells || []).filter(function (id) { return id === "fureur" || id === "jet"; });
+    out.spellSlots = (s && s.spellSlots) ? { z: s.spellSlots.z || null, e: s.spellSlots.e || null } : { z: null, e: null };
     out.consumableLast = out.consumableLast || {};
     out.timerFloat = (s && s.timerFloat) ? {
       hidden: !!s.timerFloat.hidden,
@@ -1234,6 +1239,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     "bague": { as: 5 }, "plume": { as: 10 }, "amulette": { as: 15 }, "collier": { as: 20 }, "anneau": { as: 25 },
     "botte": { hp: 1, spd: 1 }, "bottes-vent": { hp: 1, spd: 2 }
   };
+  /* --- Sorts (boutique Magie, coutent de l'XP, se relient aux touches Z/E dans le Stuff) ---
+     Les cooldowns NE se reinitialisent PAS entre les salles : dg.spellCd survit a dungeonSetupRoom. */
+  var MAGIC_SPELLS = {
+    fureur: { id: "fureur", name: "Fureur", icon: "\u26A1", desc: "+50 % vitesse d\u2019attaque pendant 5 s", cd: 20, cost: 0 },
+    jet:    { id: "jet",    name: "Lancer d\u2019arme", icon: "\u2694\uFE0F", desc: "Ta lame file et transperce chaque ennemi (60 % de tes d\u00e9g\u00e2ts chacun) \u2014 tes coups automatiques continuent", cd: 8, cost: 0 }
+  };
+  /* Sorts SPECIAUX de run : gagnes uniquement apres avoir vaincu un boss, perdus a la fin de la partie (touche R). */
+  var RUN_SPELLS = {
+    nova: { id: "nova", name: "Nova de feu", icon: "\u2604\uFE0F", desc: "Frappe TOUS les ennemis de la salle (250 % de tes d\u00e9g\u00e2ts chacun)", cd: 25 },
+    soin: { id: "soin", name: "Souffle vital", icon: "\uD83D\uDC9A", desc: "R\u00e9cup\u00e8re 50 % de tes PV max", cd: 30 }
+  };
   function gearStats() {
     var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0, len: 0, wide: 0 };
     for (var slot in state.equipment) {
@@ -1667,8 +1683,46 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }).join("");
     return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
+  /* --- Boutique Magie : apprendre des sorts en depensant de l'XP (le niveau ne baisse jamais) --- */
+  function magicView() {
+    var banner = '<div class="shop-banner"><p>\u2728 La boutique de Magie : tes sorts s\u2019ach\u00e8tent avec de l\u2019XP. XP \u00e0 d\u00e9penser : <b>' + state.xp + '</b> (ton niveau ne baisse jamais \u2014 seul l\u2019XP courant est d\u00e9pens\u00e9).<br>Apr\u00e8s l\u2019apprentissage, attribue tes sorts aux touches <b>Z</b> / <b>E</b> dans le Stuff 🎒 ; la touche <b>R</b> est r\u00e9serv\u00e9e au sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss (perdu \u00e0 la fin de la partie).</p>' +
+      '<button class="btn" data-action="switch-tab" data-view="dungeon">\u2190 Retour \u00e0 La Faille</button>' +
+      '<button class="btn" data-action="switch-tab" data-view="stuff">\U0001F392 Le Stuff (attribuer Z/E)</button></div>';
+    var cards = Object.keys(MAGIC_SPELLS).map(function (mid) {
+      var sp = MAGIC_SPELLS[mid];
+      var learned = state.spells.indexOf(mid) !== -1;
+      var slotUsed = state.spellSlots && (state.spellSlots.z === mid ? "touche Z" : state.spellSlots.e === mid ? "touche E" : "");
+      var action = learned
+        ? '<span class="lootbox-hint">\u2705 Appris \u00b7 recharge ' + sp.cd + " s" + (slotUsed ? " \u00b7 " + slotUsed : " \u00b7 attribue-le dans le Stuff") + "</span>"
+        : '<button class="btn btn-accent" data-action="learn-spell" data-spell="' + mid + '"' + (state.xp < sp.cost ? " disabled" : "") + ">Apprendre (" + sp.cost + " XP)</button>";
+      return '<div class="panel shop-card">' +
+        '<span class="rarity-tag rarity-commun">APPRENTISSAGE</span>' +
+        '<div class="shop-preview"><span style="font-size:34px">' + sp.icon + "</span></div>" +
+        '<div class="shop-item-name">' + esc(sp.name) + "</div>" +
+        '<div class="shop-item-desc">' + esc(sp.desc) + "</div>" +
+        '<div class="dg-stag">\u23f1\ufe0f recharge : ' + sp.cd + " s \u00b7 co\u00fbt : " + sp.cost + " XP</div>" +
+        '<div class="shop-item-meta">' + action + "</div></div>";
+    }).join("");
+    return banner + '<div class="shop-grid">' + cards + "</div>";
+  }
+  function spellAssignPanel() {
+    var learned = (state.spells || []).filter(function (mid) { return MAGIC_SPELLS[mid]; });
+    if (!learned.length) return '<div class="panel"><h2 class="panel-title">\u2728 SORTS</h2><p class="lootbox-hint" style="margin:0">Aucun sort appris \u2014 file \u00e0 la boutique <b>\u2728 Magie</b> de La Faille pour apprendre tes premiers sorts (ils co\u00fbtent de l\u2019XP).</p></div>';
+    var picks = ["z", "e"].map(function (slot) {
+      var opts = '<option value="">\u2014 aucun \u2014</option>' + learned.map(function (mid) {
+        return '<option value="' + mid + '"' + (state.spellSlots[slot] === mid ? " selected" : "") + ">" + esc(MAGIC_SPELLS[mid].name) + " (" + MAGIC_SPELLS[mid].cd + " s)</option>";
+      }).join("");
+      return '<label class="spell-slot">Touche ' + slot.toUpperCase() +
+        '<select data-spell-slot="' + slot + '">' + opts + "</select></label>";
+    }).join("");
+    return '<div class="panel"><h2 class="panel-title">\u2728 SORTS \\— TOUCHES DE LANCEMENT</h2>' +
+      '<p class="lootbox-hint" style="margin:0 0 8px">Choisis quel sort part sur Z et E quand tu es dans la Faille (la touche R, elle, porte le sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss).</p>' +
+      '<div class="spell-slots">' + picks + "</div>" +
+      (dg.runSpellId ? '<p class="lootbox-hint" style="margin:0">Touche R : ' + RUN_SPELLS[dg.runSpellId].name + " (ce run)</p>" : "") + "</div>";
+  }
   function stuffView() {
     var gs = gearStats();
+    var spellPanel = spellAssignPanel();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
       ' — Faille : ⚔️ attaque ' + (3 + gs.atk) + " · 📏 longueur " + (gs.len || 4) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 👟 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
@@ -1676,7 +1730,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour à La Faille</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
     if (!owned.length) {
-      return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>';
+      return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>' + spellPanel;
     }
     var rows = EQUIP_SLOTS.map(function (sl) {
       var items = owned.filter(function (it) { return it.slot === sl[0]; });
@@ -1697,7 +1751,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }).join("");
       return '<h2 class="panel-title">' + sl[1].toUpperCase() + '</h2><div class="shop-grid">' + cards + "</div>";
     }).join("");
-    return banner + rows;
+    return banner + rows + spellPanel;
   }
   function shopView() {
     var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour la Faille : ⚔️ attaque · 📏 longueur d’arme · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
@@ -1786,6 +1840,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (state.view === "dungeon") return dungeonView();
     if (state.view === "shop") return shopView();
     if (state.view === "stuff") return stuffView();
+    if (state.view === "magic") return magicView();
     return state.boardMode === "secondaire" ? recurringView() : boardView();
   }
   /* --- Menu parametres : Stat, Exploits, Archive, Apparence --- */
@@ -2630,7 +2685,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".............."
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
-    entities: [], projectiles: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, rollDir: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+    entities: [], projectiles: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, rollDir: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null,
+    spellCd: { z: 0, e: 0, r: 0 }, hasteT: 0, thrown: null, runSpellId: null, pendingRunSpell: null };
   function dungeonTotals() {
     var g = gearStats();
     return {
@@ -2639,7 +2695,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       maxHp: 20 + g.hp,
       spd: 5 + g.spd * 1.5,
       loot: 1 + g.loot / 100,
-      as: g.as,
+      as: g.as + (dg.hasteT > 0 ? 50 : 0), /* sort Fureur : +50 % tant que le sort est actif */
       len: g.len || 4,
       wide: g.wide
     };
@@ -2653,6 +2709,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.rewardGold = 0;
     dg.facing = 1;
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0; dg.rollDir = 0;
+    dg.spellCd = { z: 0, e: 0, r: 0 }; /* cooldowns de sorts remis a zero au DEMARRAGE de la run uniquement (pas entre les salles) */
+    dg.hasteT = 0; dg.thrown = null; dg.runSpellId = null; dg.pendingRunSpell = null;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2685,6 +2743,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.x = 12.5;
     dg.entities = [];
     dg.projectiles = []; /* les boules de feu du boss ne survivent pas a la salle */
+    dg.thrown = null; /* la lame lancee ne traverse pas les salles (les cooldowns de sorts, eux, continuent) */
     if (room % 5 === 0) {
       var hp = 60 + room * 15, dd = 10 + room;
       dg.entities.push({ t: "boss", boss: true, x: 18.5, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0, spellCd: 5 });
@@ -2721,9 +2780,14 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.reward = null;
     dg.rewardGold = 0;
     if (dg.room % 5 === 0) {
-      /* apres un boss : ecran des pouvoirs (placeholder — liste de pouvoirs a venir, issue #3) */
+      /* apres un boss : le heros gagne un SORT SPECIAL de run (touche R), perdu a la fin de la partie.
+         idee en reserve : un ecran de pouvoirs avec une liste enrichie reste a prevoir (issue #3). */
       dg.phase = "choose";
+      var pool = Object.keys(RUN_SPELLS);
+      dg.runSpellId = pool[Math.floor(Math.random() * pool.length)];
+      dg.spellCd.r = 0;
       showToast("💀 Salle " + dg.room + " purgée — le boss est vaincu !");
+      showToast("✨ Sort spécial de run gagné : " + RUN_SPELLS[dg.runSpellId].name + " (touche R) !");
       dungeonRender();
       return;
     }
@@ -2802,6 +2866,34 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     if (hit) { soundHit(); dungeonRender(); }
   }
+  /* --- Sorts : lancement sur Z / E (sorts appris) ou R (sort special de run) --- */
+  function dungeonSpellDef(slot) {
+    if (slot === "r") return dg.runSpellId ? RUN_SPELLS[dg.runSpellId] : null;
+    var mid = state.spellSlots && state.spellSlots[slot];
+    return mid ? MAGIC_SPELLS[mid] : null;
+  }
+  function dungeonCast(slot) {
+    if (!dg.active || dg.phase !== "fight") return;
+    var sp = dungeonSpellDef(slot);
+    if (!sp) { showToast("\u26a0\ufe0f Aucun sort sur cette touche \u2014 apprends-en \u00e0 la boutique Magie et attribue-le dans le Stuff."); return; }
+    if ((dg.spellCd[slot] || 0) > 0) return; /* recharge en cours (ne se remet PAS a zero entre les salles) */
+    var tot = dungeonTotals();
+    dg.spellCd[slot] = sp.cd;
+    if (sp.id === "fureur") {
+      dg.hasteT = 5;
+    } else if (sp.id === "jet") {
+      dg.thrown = { x: dg.x + (dg.facing || 1), dir: dg.facing || 1, spd: 16, hitmap: [] }; /* la lame vole : les auto-attaques continuent */
+    } else if (slot === "r" && sp.id === "nova") {
+      for (var i = 0; i < dg.entities.length; i++) {
+        var enN = dg.entities[i];
+        if (enN.hp > 0) { enN.hp -= Math.max(1, Math.round(tot.atk * 2.5)); enN.hurt = 0.3; }
+      }
+    } else if (slot === "r" && sp.id === "soin") {
+      dg.hp = Math.min(tot.maxHp, dg.hp + tot.maxHp * 0.5);
+    }
+    showToast("\u2728 " + sp.name + " !");
+    dungeonRender();
+  }
   function dungeonRoll() {
     if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0) return;
     dg.rollT = 0.5; dg.rollCd = 2.5; /* roulade : invincible 0,5 s, recharge 2,5 s (retour joueur : 1 s c'etait trop spamme) */
@@ -2834,6 +2926,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
     if (dg.rollT > 0) dg.rollT = Math.max(0, dg.rollT - dt);
     if (dg.rollCd > 0) dg.rollCd = Math.max(0, dg.rollCd - dt);
+    if (dg.hasteT > 0) dg.hasteT = Math.max(0, dg.hasteT - dt); /* Fureur : +50 % de vitesse d'attaque temporaire */
+    for (var sc in dg.spellCd) { if (dg.spellCd[sc] > 0) dg.spellCd[sc] = Math.max(0, dg.spellCd[sc] - dt); } /* les recharges de sorts coulent meme pendant les changements de salle */
     var anyAlive = false;
     for (var k = 0; k < dg.entities.length; k++) {
       if (dg.entities[k].hp > 0) { anyAlive = true; break; }
@@ -2890,10 +2984,44 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         }
       }
     }
+    /* Lancer d'arme : la lame file, transperce chaque ennemi (60 % des degats), les auto-attaques continuent normalement */
+    if (dg.thrown) {
+      var th = dg.thrown;
+      th.x += th.dir * th.spd * dt;
+      var atkT = Math.max(1, Math.round(tot.atk * 0.6));
+      for (var te = dg.entities.length - 1; te >= 0; te--) {
+        var te2 = dg.entities[te];
+        if (te2.hp > 0 && th.hitmap.indexOf(te2) === -1 && Math.abs(th.x - te2.x) * dgPxm() < dgMonBox(te2) / 2 + 2) {
+          th.hitmap.push(te2);
+          te2.hp -= atkT;
+          te2.hurt = 0.18;
+          soundHit();
+        }
+      }
+      if (th.x < 0.2 || th.x > 25.8) dg.thrown = null;
+    }
     if (dg.hp <= 0) { soundDeath(); dungeonEnd(false); return; }
     if (dg.phase === "fight" && dg.entities.length === 0) dungeonCleared();
     /* phase "choose" : écran figé (aucun re-rendu) — sinon les boutons de porte sont recréés toutes les 50 ms et le clic du navigateur n'aboutit jamais */
     if (dg.phase === "fight") dungeonRender();
+  }
+  /* Tuiles d'aptitudes des sorts (style LoL) : icone, grissee + decompte pendant la recharge, cachee si aucun sort */
+  function dgAbilityUpdate() {
+    ["z", "e", "r"].forEach(function (slot) {
+      var el = document.querySelector('[data-dg-ab="' + slot + '"]');
+      if (!el) return;
+      var sp = dungeonSpellDef(slot);
+      var wrap = el.parentNode;
+      if (!sp) { wrap.style.display = "none"; return; }
+      wrap.style.display = "";
+      var ic = el.querySelector('[data-dg-ab-icon="' + slot + '"]');
+      if (ic) ic.textContent = sp.icon;
+      el.title = sp.name + " — " + sp.desc + " (recharge " + sp.cd + " s)" + (slot === "r" ? " — perdu à la fin de la partie" : "");
+      var oncd2 = (dg.spellCd[slot] || 0) > 0;
+      el.className = "btn dg-ability" + (oncd2 ? " dg-ab-cd-on" : "");
+      var cdEl = el.querySelector('[data-dg-ab-cd="' + slot + '"]');
+      if (cdEl) cdEl.textContent = oncd2 ? String(Math.ceil(dg.spellCd[slot])) : "";
+    });
   }
   function dungeonRender() {
     if (!dg.active) return;
@@ -2942,13 +3070,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     for (var f3 = 0; f3 < dg.projectiles.length; f3++) {
       html += '<div class="dg-fb' + (dg.projectiles[f3].hostile ? "" : " dg-fb-def") + '" style="left:' + (dg.projectiles[f3].x * pxm) + 'px;bottom:74px"></div>'; /* boules de feu : centre a hauteur de la lame (74 + 6,5 = 80,5 px) */
     }
+    if (dg.thrown) {
+      /* lame lancee (Lancer d'arme) : file a hauteur de lame, transperce les ennemis */
+      html += '<div class="dg-thrown" style="left:' + (dg.thrown.x * pxm) + 'px">⚔️</div>';
+    }
     var rolling = dg.rollT > 0;
     var rollBlink = rolling && Math.floor(dg.rollT * 12) % 2 === 1; /* clignotement en JS : le heros est recree toutes les 50 ms, une animation CSS repartirait de zero a chaque rendu */
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + (rolling ? '<div class="dg-roll-badge">💨</div>' : "") + "</div>";
     if (dg.phase === "choose") {
       /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
-      html += '<div class="dg-choose"><div class="dg-choose-panel">💀 Boss vaincu — salle ' + dg.room + ' purgée !<br>⚡ Un pouvoir s\'offre à toi…<span class="lootbox-hint"><br>(liste de pouvoirs en préparation)</span>' +
+      var rsp = dg.runSpellId ? RUN_SPELLS[dg.runSpellId] : null;
+      html += '<div class="dg-choose"><div class="dg-choose-panel">💀 Boss vaincu — salle ' + dg.room + ' purgée !<br>✨ Sort spécial gagné : ' + (rsp ? rsp.icon + " <b>" + rsp.name + "</b> — " + rsp.desc + " (recharge " + rsp.cd + " s)" + '<span class="lootbox-hint"><br>Touche R pour l\'utiliser. Perdu à la fin de la partie — rebats un boss pour en regagner un.</span>' : "…") +
         '<br><button class="btn btn-big btn-accent" data-action="dg-power-continue">⚡ Continuer → Salle ' + (dg.room + 1) + '</button></div></div>';
     }
     vp.innerHTML = html;
@@ -2960,6 +3093,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var abcd = ab.querySelector("[data-dg-roll-cd]");
       if (abcd) abcd.textContent = oncd ? String(Math.ceil(dg.rollCd)) : "";
     }
+    dgAbilityUpdate();
     var tot = dungeonTotals();
     var el;
     el = document.querySelector("[data-dg-room]"); if (el) el.textContent = dg.room + (dg.room % 5 === 0 ? " 💀" : "");
@@ -2988,8 +3122,12 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span><button class="btn dg-ability" data-action="dg-roll" data-dg-roll title="Roulade — dash invincible 0,5 s, recharge 2,5 s (Espace ou tap court)">🌀<span class="dg-ab-cd" data-dg-roll-cd></span></button><span class="dg-ab-key">ESPACE</span></span>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS crache une boule de feu toutes les 5 s : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (dash invincible 0,5 s, recharge 2,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span><button class="btn dg-ability" data-action="dg-roll" data-dg-roll title="Roulade — dash invincible 0,5 s, recharge 2,5 s (Espace ou A, ou tap court)">🌀<span class="dg-ab-cd" data-dg-roll-cd></span></button><span class="dg-ab-key">ESPACE</span></span>' +
+      /* tuiles de sorts : Z / E = sorts appris (boutique Magie, attribues dans le Stuff) ; R = sort special gagne apres un boss, perdu en fin de run */
+      '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="z" data-dg-ab="z" title="Sort"><span data-dg-ab-icon="z"></span><span class="dg-ab-cd" data-dg-ab-cd="z"></span></button><span class="dg-ab-key">Z</span></span>' +
+      '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="e" data-dg-ab="e" title="Sort"><span data-dg-ab-icon="e"></span><span class="dg-ab-cd" data-dg-ab-cd="e"></span></button><span class="dg-ab-key">E</span></span>' +
+      '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="r" data-dg-ab="r" title="Sort"><span data-dg-ab-icon="r"></span><span class="dg-ab-cd" data-dg-ab-cd="r"></span></button><span class="dg-ab-key">R</span></span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS crache une boule de feu toutes les 5 s : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou Q / D) · Espace ou A = roulade · Z / E = sorts (recharges en direct) · R = sort spécial de run · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -3006,7 +3144,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Tes <b>sorts appris</b> à la boutique <b>✨ Magie</b> (coûtent de l’XP) se lancent sur <b>Z / E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -3026,6 +3164,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-hub-grid">' +
       '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">La Faille</span><span class="dg-hub-sub">Entrer dans la Faille</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="shop"><span class="dg-hub-icon">🛒</span><span class="dg-hub-name">Boutique</span><span class="dg-hub-sub">Dépenser ton or</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="magic"><span class="dg-hub-icon">✨</span><span class="dg-hub-name">Magie</span><span class="dg-hub-sub">Apprendre des sorts (XP)</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="stuff"><span class="dg-hub-icon">🎒</span><span class="dg-hub-name">Le stuff</span><span class="dg-hub-sub">Équiper ton héros</span></div>' +
 "</div>" +
       res +
@@ -3036,13 +3175,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var tag = ((e.target && e.target.tagName) || "").toLowerCase();
     if (tag === "input" || tag === "textarea") return;
     if (e.key === "ArrowRight" || e.key === "d") dg.keyMoving = 1;
-    else if (e.key === "ArrowLeft" || e.key === "a") dg.keyMoving = -1;
-    else if (e.key === " ") { e.preventDefault(); dungeonRoll(); }
+    else if (e.key === "ArrowLeft" || e.key === "q") dg.keyMoving = -1; /* azerty : Q = gauche (A déclenche la roulade) */
+    else if (e.key === " " || e.key === "a") { e.preventDefault(); dungeonRoll(); } /* Espace ou A = roulade */
+    else if (e.key === "z") { e.preventDefault(); dungeonCast("z"); }
+    else if (e.key === "e") { e.preventDefault(); dungeonCast("e"); }
+    else if (e.key === "r") { e.preventDefault(); dungeonCast("r"); }
     else if (e.key === "f") { e.preventDefault(); dungeonStrike(); }
     else if (e.key === "Escape") dungeonEnd(true);
   });
   document.addEventListener("keyup", function (e) {
-    if (e.key === "ArrowRight" || e.key === "d" || e.key === "ArrowLeft" || e.key === "a") dg.keyMoving = 0;
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "ArrowLeft" || e.key === "q") dg.keyMoving = 0;
   });
   document.addEventListener("mousedown", function (e) {
     if (isTimerWin()) return;
@@ -3151,6 +3293,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
       if (act === "dg-enter") { dungeonStart(); return; }
       if (act === "dg-roll") { dungeonRoll(); return; }
+      if (act === "dg-cast") { dungeonCast(el.getAttribute("data-slot") || "z"); return; }
+      if (act === "learn-spell") {
+        var spL = MAGIC_SPELLS[el.getAttribute("data-spell")];
+        if (spL && state.spells.indexOf(spL.id) === -1) {
+          if (state.xp >= spL.cost) {
+            state.xp -= spL.cost; /* l'XP depense n'enleve jamais de niveau */
+            state.spells.push(spL.id);
+            if (!state.spellSlots) state.spellSlots = { z: null, e: null };
+            if (!state.spellSlots.z) state.spellSlots.z = spL.id; else if (!state.spellSlots.e) state.spellSlots.e = spL.id; /* attribution auto a la premiere touche libre */
+            showToast("✨ Sort appris : " + spL.name + (state.spellSlots.z === spL.id ? " (touche Z)" : state.spellSlots.e === spL.id ? " (touche E)" : " — attribue-le dans le Stuff"));
+            saveState(); renderAll();
+          } else showToast("😶 Pas assez d’XP : il te faut " + spL.cost + " XP (tu en as " + state.xp + ").");
+        }
+        return;
+      }
       if (act === "dg-retreat") { dungeonEnd(true); return; }
       if (act === "dg-power-continue") {
         if (dg.active && dg.phase === "choose") { dg.phase = "fight"; dungeonNextRoom(); }
@@ -3899,6 +4056,15 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   });
   document.addEventListener("change", function (e) {
       if (isTimerWin()) return;
+    if (e.target.getAttribute && e.target.getAttribute("data-spell-slot")) {
+      var ss = e.target.getAttribute("data-spell-slot");
+      if (!state.spellSlots) state.spellSlots = { z: null, e: null };
+      state.spellSlots[ss] = e.target.value || null;
+      saveState();
+      showToast(state.spellSlots[ss] ? "\u2728 Touche " + ss.toUpperCase() + " : " + MAGIC_SPELLS[state.spellSlots[ss]].name : "\u2716 Touche " + ss.toUpperCase() + " : aucun sort");
+      renderAll();
+      return;
+    }
     if (e.target.getAttribute && e.target.getAttribute("data-action") === "upload-attachment") {
       var file = e.target.files && e.target.files[0];
       e.target.value = "";
@@ -4036,7 +4202,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     openTimerWindow: detachTimerWindow,
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
     dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike, roll: dungeonRoll,
-      next: dungeonNextRoom, setup: dungeonSetupRoom, totals: dungeonTotals,
+      next: dungeonNextRoom, setup: dungeonSetupRoom, totals: dungeonTotals, cast: dungeonCast, spell: dungeonSpellDef,
+      spells: function () { return state.spells; }, slots: function () { return state.spellSlots; },
       gear: gearStats, equip: function () { return state.equipment; }, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, monbox: dgMonBox, pxm: dgPxm, check: checkAchievements } };
   var LOGO = [
     "................",
