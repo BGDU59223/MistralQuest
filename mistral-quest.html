@@ -466,6 +466,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
   .dg-hero { position: absolute; transform: translateX(-50%); text-align: center; z-index: 5; }
   .dg-hero.dg-hurt .pixel-sprite { filter: brightness(1.9) saturate(2.2); }
+@keyframes dgrollblink { 50% { opacity: 0.15; } }
+.dg-hero.dg-roll .dg-hero-body { animation: dgrollblink 0.2s steps(1) infinite; }
   .dg-entity.dg-hurt { filter: brightness(2.2); }
   @keyframes dg-hop { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
   .dg-ename { font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -553,23 +555,23 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     { id: "pomme",       name: "Pomme scintillante",  desc: "+8 XP immédiatement · 1x par semaine",  cost: 15,   rarity: "commun",  type: "consumable", xp: 8,  cooldown: "weekly" },
     { id: "potion",      name: "Potion d'XP",         desc: "+15 XP immédiatement · 1x par mois",    cost: 25,   rarity: "commun",  type: "consumable", xp: 15, cooldown: "monthly" },
     { id: "baton",        name: "Bâton en bois",      desc: "Arme de base · +3 attaque · longueur 4",                cost: 25,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 6 · lame marron",         cost: 40,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 6 · lame grise",          cost: 70,  rarity: "commun",  type: "gear", slot: "arme" },
-    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 6 · lame dorée",         cost: 120, rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 6 · lame blanche",        cost: 180, rarity: "rare",    type: "gear", slot: "arme" },
-    { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 7",                cost: 230, rarity: "epique",  type: "gear", slot: "arme" },
-    { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 1 · frappe large",  cost: 280, rarity: "epique",  type: "gear", slot: "arme" },
-    { id: "bouclier",    name: "Bouclier pixel",      desc: "Armure · +4 PV · +1 défense",               cost: 40,   rarity: "commun",  type: "gear", slot: "armure" },
-    { id: "armure-cuir", name: "Armure de cuir",      desc: "Armure · +8 PV · +2 défense",               cost: 90,   rarity: "rare",    type: "gear", slot: "armure" },
-    { id: "dragon",      name: "Insigne dragon",      desc: "Armure · +12 PV · +4 défense",              cost: 140,  rarity: "epique",  type: "gear", slot: "armure" },
-    { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +2 PV · +1 défense",               cost: 70,   rarity: "rare",    type: "gear", slot: "tete" },
-    { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +3 PV · +2 défense",              cost: 120,  rarity: "rare",    type: "gear", slot: "tete" },
-    { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +4 PV · +3 défense",              cost: 190,  rarity: "epique",  type: "gear", slot: "tete" },
-    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +5% vitesse d’attaque",           cost: 35,   rarity: "commun",  type: "gear", slot: "accessoire" },
-    { id: "plume",       name: "Plume du vent",       desc: "Accessoire · +10% vitesse d’attaque",           cost: 60,   rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +15% vitesse d’attaque",          cost: 90,   rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "collier",     name: "Collier du sage",     desc: "Accessoire · +20% vitesse d’attaque",          cost: 130,  rarity: "rare",    type: "gear", slot: "accessoire" },
-    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +25% vitesse d’attaque",          cost: 160,  rarity: "epique",  type: "gear", slot: "accessoire" },
+    { id: "epee-bois",    name: "Épée en bois",       desc: "Arme · +3 attaque · longueur 6 · lame marron",         cost: 200,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-fer",     name: "Épée en fer",        desc: "Arme · +5 attaque · longueur 6 · lame grise",          cost: 500,  rarity: "commun",  type: "gear", slot: "arme" },
+    { id: "epee-or",      name: "Épée en or",         desc: "Arme · +7 attaque · longueur 6 · lame dorée",         cost: 1000, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "epee-diamant", name: "Épée en diamant",    desc: "Arme · +9 attaque · longueur 6 · lame blanche",        cost: 1500, rarity: "rare",    type: "gear", slot: "arme" },
+    { id: "katana",       name: "Katana en fer",       desc: "Arme longue · +7 attaque · longueur 7",                cost: 1500, rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "hache",        name: "Grande hache",        desc: "Arme lourde · +14 attaque · portée 1 · frappe large",  cost: 800, rarity: "epique",  type: "gear", slot: "arme" },
+    { id: "bouclier",    name: "Bouclier en bois",    desc: "Bouclier · +4 PV · +1 défense",             cost: 100,   rarity: "commun",  type: "gear", slot: "armure" },
+    { id: "armure-cuir", name: "Bouclier en cuir",    desc: "Bouclier · +8 PV · +2 défense",             cost: 500,   rarity: "rare",    type: "gear", slot: "armure" },
+    { id: "dragon",      name: "Bouclier en or",      desc: "Bouclier · +12 PV · +4 défense",             cost: 1000,  rarity: "epique",  type: "gear", slot: "armure" },
+    { id: "chapeau",     name: "Casque de bataille",  desc: "Casque · +2 PV · +1 défense",               cost: 100,   rarity: "rare",    type: "gear", slot: "tete" },
+    { id: "casque-fer",  name: "Casque de fer",       desc: "Casque · +3 PV · +2 défense",              cost: 500,  rarity: "rare",    type: "gear", slot: "tete" },
+    { id: "casque-acier",name: "Casque d'acier",      desc: "Casque · +4 PV · +3 défense",              cost: 1000,  rarity: "epique",  type: "gear", slot: "tete" },
+    { id: "bague",       name: "Bague de fortune",    desc: "Accessoire · +5% vitesse d’attaque",           cost: 100,   rarity: "commun",  type: "gear", slot: "accessoire" },
+    { id: "plume",       name: "Plume de vent",       desc: "Accessoire · +10% vitesse d’attaque",           cost: 500,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "amulette",    name: "Amulette solaire",    desc: "Accessoire · +15% vitesse d’attaque",          cost: 750,   rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "collier",     name: "Collier de tissage",  desc: "Accessoire · +20% vitesse d’attaque",          cost: 1000,  rarity: "rare",    type: "gear", slot: "accessoire" },
+    { id: "anneau",      name: "Anneau du vent",      desc: "Accessoire · +25% vitesse d’attaque",          cost: 1500,  rarity: "epique",  type: "gear", slot: "accessoire" },
     { id: "botte",       name: "Bottes de vitesse",   desc: "Pieds · +1 PV · +1 vitesse",                cost: 80,   rarity: "rare",    type: "gear", slot: "pieds" },
     { id: "bottes-vent", name: "Bottes du vent",      desc: "Pieds · +1 PV · +2 vitesse",               cost: 150,  rarity: "epique",  type: "gear", slot: "pieds" }
   ];
@@ -2611,7 +2613,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     ".............."
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
-    entities: [], strikeCd: 0, strikeDur: 1, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
+    entities: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null };
   function dungeonTotals() {
     var g = gearStats();
     return {
@@ -2633,7 +2635,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.hp = dungeonTotals().maxHp;
     dg.rewardGold = 0;
     dg.facing = 1;
-    dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0;
+    dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2769,6 +2771,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     if (hit) { soundHit(); dungeonRender(); }
   }
+  function dungeonRoll() {
+    if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0) return;
+    dg.rollT = 0.5; dg.rollCd = 1; /* roulade : invincible 0,5 s, recharge 1 s */
+    dungeonRender();
+  }
   function dungeonTick(dt) {
     if (!dg.active) return;
     var tot = dungeonTotals();
@@ -2789,6 +2796,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       dg.walkT += dt;
     }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
+    if (dg.rollT > 0) dg.rollT = Math.max(0, dg.rollT - dt);
+    if (dg.rollCd > 0) dg.rollCd = Math.max(0, dg.rollCd - dt);
     var anyAlive = false;
     for (var k = 0; k < dg.entities.length; k++) {
       if (dg.entities[k].hp > 0) { anyAlive = true; break; }
@@ -2805,7 +2814,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         en.x = Math.min(23.8, Math.max(1, en.x - (dist > 0 ? 1 : -1) * en.spd * dt));
       }
       /* attaque au contact : carré du monstre touche le corps du héros */
-      if (Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
+      if (dg.rollT <= 0 && Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
         en.cd = 1.15;
         dg.hp -= Math.max(1, en.dmg - tot.def);
         dg.hurtFlash = 0.25;
@@ -2844,14 +2853,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var wid2 = state.equipment ? state.equipment["arme"] : null;
     var wg2 = wid2 ? DG_GEAR[wid2] : null;
     var bladeCol = swinging ? ((wg2 && wg2.col) || ".") : "."; /* couleur de lame selon le materiau : marron bois, gris fer, or, diamant ; rien a mains nues */
+    /* le héros de la Faille = ton personnage : chauve/cheveux, torse nu, casque, armure, bottes si équipés */
+    var fem = state.hero && state.hero.gender === "femme";
+    if (!fem && !state.equipment.tete) {
+      /* le héros homme est chauve sur le board : il l'est aussi dans la Faille (sauf casque) */
+      hbase = hbase.map(function (row, y) {
+        return (y === 0 || y === 1) ? row.replace(/H/g, "S") : row;
+      });
+    }
     var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol);
-    /* le héros de la Faille = ton personnage : casque, armure, bottes si équipés */
     var dgpal = heroPal();
     if (state.equipment.tete) dgpal.H = PAL.M;
-    if (state.equipment.armure) dgpal.O = PAL.m;
+    if (state.equipment.armure) dgpal.O = PAL.m; else dgpal.O = dgpal.S; /* torse nu si pas de stuff */
     if (state.equipment.pieds) dgpal.k = PAL.B;
     var hx = dg.x * pxm;
-    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
+    html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (dg.rollT > 0 ? " dg-roll" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2) + 'px">' +
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div></div>";
     if (dg.phase === "choose") {
       /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
@@ -2887,7 +2903,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-controls panel">' +
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Clavier : ◀ ▶ (ou A / D) · Échap retraite. Tactile : moitié gauche / droite de la salle.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre — plus elle est longue, plus tu frappes loin. Clavier : ◀ ▶ (ou A / D) · Espace = roulade (invincible 0,5 s) · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -2904,7 +2920,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">⚔️ La Faille</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b>, et après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté : tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — invincible 0,5 s pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b>, et après chaque boss, un pouvoir s’offre à toi (en préparation).<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -2935,7 +2951,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (tag === "input" || tag === "textarea") return;
     if (e.key === "ArrowRight" || e.key === "d") dg.keyMoving = 1;
     else if (e.key === "ArrowLeft" || e.key === "a") dg.keyMoving = -1;
-    else if (e.key === " " || e.key === "f") { e.preventDefault(); dungeonStrike(); }
+    else if (e.key === " ") { e.preventDefault(); dungeonRoll(); }
+    else if (e.key === "f") { e.preventDefault(); dungeonStrike(); }
     else if (e.key === "Escape") dungeonEnd(true);
   });
   document.addEventListener("keyup", function (e) {
@@ -2949,6 +2966,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   document.addEventListener("mouseup", function () { dg.holdMoving = 0; });
   /* — Contrôles tactiles (mobile) : moitié gauche/droite de la salle = déplacement, bouton ⚔️ = coup */
   var dgMoveTouch = null;
+  var dgTouchT0 = 0;
   function dgArenaEl() { return document.querySelector("[data-dg-arena]"); }
   function dgTouchDir(clientX) {
     var vp = dgArenaEl();
@@ -2964,6 +2982,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (tgt && tgt.closest && tgt.closest("[data-dg-arena]")) {
         e.preventDefault();
         dgMoveTouch = t.identifier;
+        dgTouchT0 = Date.now();
         dg.holdMoving = dgTouchDir(t.clientX);
       }
     }
@@ -2981,7 +3000,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (isTimerWin() || !dg.active) return;
     for (var i = 0; i < e.changedTouches.length; i++) {
       var id = e.changedTouches[i].identifier;
-      if (id === dgMoveTouch) { dgMoveTouch = null; dg.holdMoving = 0; }
+      if (id === dgMoveTouch) {
+        if (Date.now() - dgTouchT0 < 250) dungeonRoll(); /* tap court = roulade */
+        dgMoveTouch = null; dg.holdMoving = 0;
+      }
     }
   }
   document.addEventListener("touchend", dgTouchUp, { passive: true });
@@ -3926,7 +3948,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     timerFloatEntity: timerFloatEntity, floatState: function () { return state.timerFloat; },
     openTimerWindow: detachTimerWindow,
     sounds: { playTone: playTone, create: soundQuestCreate, coins: soundCoins },
-    dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike,
+    dungeon: { dg: dg, start: dungeonStart, end: dungeonEnd, tick: dungeonTick, strike: dungeonStrike, roll: dungeonRoll,
       next: dungeonNextRoom, setup: dungeonSetupRoom, totals: dungeonTotals,
       gear: gearStats, equip: function () { return state.equipment; }, dstate: function () { return state.dungeon; }, ach: function () { return state.achievements; }, achievements: ACHIEVEMENTS, monbox: dgMonBox, pxm: dgPxm, check: checkAchievements } };
   var LOGO = [
