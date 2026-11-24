@@ -504,8 +504,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-slow .pixel-sprite { filter: saturate(.35) brightness(.85); } /* Ame visqueuse */
   .spell-recall, .spell-recall-box div { font-size: 15px; margin: 3px 0; color: var(--muted); }
   .dg-penitVuln .pixel-sprite { filter: brightness(1.4) saturate(2) hue-rotate(-30deg); }
-  .dg-twin { position: absolute; transform: translateX(-50%); z-index: 4; }
-  .dg-twin .pixel-sprite { opacity: .55; filter: brightness(1.4) saturate(.4) hue-rotate(175deg) drop-shadow(0 0 6px rgba(88,212,255,.75)); } /* l'ame doublee : double fantome bleute */
+  .dg-twinblade { position: absolute; z-index: 4; filter: drop-shadow(0 0 5px rgba(120,220,255,.85)); } /* l'ame doublee : juste la lame fantome sur l'autre cote */
   .dg-ally .pixel-sprite { filter: hue-rotate(110deg) brightness(1.15); } /* serviteur : teinte spectrale verte */
   .dg-frozen .pixel-sprite { filter: brightness(1.3) saturate(.4) hue-rotate(180deg); } /* gelee par la Prison de glace */
   .dg-thrown { position: absolute; bottom: 64px; font-size: 20px; transform: translateX(-50%); z-index: 3; filter: drop-shadow(0 0 4px rgba(255,214,74,.7)); pointer-events: none; }
@@ -3289,8 +3288,11 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       : dg.raiseNext ? '<div class="dg-roll-badge">👻</div>' : "";
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + (dg.penitVulnT > 0 ? " dg-penitVuln" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2 + flyOff) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + heroBadge + "</div>";
-    if (dg.twinT > 0 && swinging) { /* Delooublement de l'ame VISIBLE : un double fantome frappe du cote oppose pendant la meme frappe */
-      html += '<div class="dg-twin" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2 + flyOff) + 'px"><div class="dg-hero-body' + ((dg.facing || 1) > 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + '</div></div>';
+    if (dg.twinT > 0 && swinging) { /* Dedoublement de l'ame VISIBLE : JUSTE une lame fantome bleutee de l'autre cote du joueur, meme frappe simultanee */
+      var tl5 = ""; for (var tx5 = 0; tx5 < (tot.len || 4); tx5++) tl5 += "G";
+      var twinBlade = ["........" + tl5, "........" + tl5];
+      var tLeft = (dg.facing || 1) > 0 ? (50 - (tot.len || 4) * 5) : 50; /* le cote oppose a la vraie lame */
+      html += '<div class="dg-twinblade" style="left:' + (hx + tLeft) + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML(twinBlade, "5px", { G: "#9be0ff" }) + "</div>";
     }
     if (dg.phase === "choose") {
       /* ecran des pouvoirs, affiche apres chaque boss (liste de pouvoirs a venir — issue #3, ecran prepare) */
