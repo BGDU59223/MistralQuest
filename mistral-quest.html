@@ -475,7 +475,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .castle-actions { text-align: center; padding: 12px; }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
   .dg-entity { position: absolute; transform: translateX(-50%); text-align: center; z-index: 2; animation: dg-hop .55s steps(2, end) infinite; }
-  .dg-hero { position: absolute; transform: translateX(-50%); text-align: center; z-index: 5; }
+  .dg-hero { position: absolute; transform: translateX(-25px); text-align: center; z-index: 5; } /* FIX HITBOX : le CORPS est centr\u00e9 sur dg.x (l'ancre de TOUTE la g\u00e9om\u00e9trie de combat) ; l'ancien translateX(-50%) centrait corps+lame et d\u00e9calait le corps visuel de 2,5 x la longueur d'arme (ex. 15 px avec l'\u00e9p\u00e9e de fer) vers l'arri\u00e8re, d'o\u00f9 les hitboxes "d\u00e9cal\u00e9es" ressenties sur le boss */
   .dg-hero.dg-hurt .pixel-sprite { filter: brightness(1.9) saturate(2.2); }
 .dg-roll-badge { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-size: 16px; pointer-events: none; }
   .dg-fb { position: absolute; width: 13px; height: 13px; border-radius: 50%; transform: translateX(-50%); background: radial-gradient(circle at 40% 40%, #fff3a6 0 25%, #ff9d1c 25% 55%, #d92b18 55%); box-shadow: 0 0 9px 3px rgba(217,54,21,.5); z-index: 3; }
@@ -501,6 +501,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-ab-key { display: block; font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
   .dg-arrow { position: absolute; font-size: 14px; z-index: 4; pointer-events: none; color: #e8e3d0; filter: drop-shadow(0 0 3px rgba(63,167,255,.6)); }
   .dg-stun .pixel-sprite { filter: saturate(.15) brightness(.9); }
+  .dg-cast .pixel-sprite { filter: brightness(1.8) saturate(2.2) drop-shadow(0 0 6px rgba(255,120,30,.9)); } /* annonce de boule de feu : le boss clignote en orange 1 s avant de tirer */
   .dg-slow .pixel-sprite { filter: saturate(.35) brightness(.85); } /* Ame visqueuse */
   .spell-recall, .spell-recall-box div { font-size: 15px; margin: 3px 0; color: var(--muted); }
   .dg-penitVuln .pixel-sprite { filter: brightness(1.4) saturate(2) hue-rotate(-30deg); }
@@ -3235,7 +3236,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var bar = en.hp < en.maxHp ? '<div class="dg-ebar"><i style="width:' + Math.max(0, Math.round(en.hp / en.maxHp * 100)) + '%"></i></div>' : "";
       /* tout ce qui vole : le CENTRE de l'entite est a hauteur de la lame (~81 px au-dessus du sol), comme si l'epee la transpercait */
       var ebot = (mon && mon.fly) ? 67 : 44; /* chauve-souris remontee : centre = 67 + 28/2 = 81 px = 46 (pieds) + milieu de la bande de lame 30-40 ; le boss (hors DG_MONS) reste au sol */
-      html += '<div class="dg-entity' + (en.ally ? " dg-ally" : "") + (en.hurt > 0 ? " dg-hurt" : "") + (en.stunT > 0 ? " dg-stun" : "") + (en.slowT > 0 && en.stunT <= 0 ? " dg-slow" : "") + (en.frozenT > 0 ? " dg-frozen" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px">' +
+      var bossCast = en.boss && dg.phase === "fight" && en.spellCd <= 1 && en.spellCd > 0; /* ANNONCE : le boss clignote pendant la derniere seconde avant sa boule de feu */
+      html += '<div class="dg-entity' + (en.ally ? " dg-ally" : "") + (en.hurt > 0 ? " dg-hurt" : "") + (en.stunT > 0 ? " dg-stun" : "") + (en.slowT > 0 && en.stunT <= 0 ? " dg-slow" : "") + (en.frozenT > 0 ? " dg-frozen" : "") + (bossCast ? " dg-cast" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px' + (bossCast && Math.floor(en.spellCd * 8) % 2 === 0 ? ";opacity:.35" : "") + '">' +
         '<div class="dg-ename">' + (en.ally ? "👻 SERVITEUR" : en.boss ? "💀 BOSS" : esc(mon.name)) + "</div>" + bar +
         spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) + (en.stunT > 0 ? '<div class="dg-roll-badge">⛓️</div>' : "") + (en.slowT > 0 && en.stunT <= 0 ? '<div class="dg-roll-badge">🐌</div>' : "") + (en.ally ? '<div class="dg-roll-badge">👻</div>' : "") + (en.frozenT > 0 ? '<div class="dg-roll-badge">❄️</div>' : "") +
         "</div>";
@@ -3292,7 +3294,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var tl5 = ""; for (var tx5 = 0; tx5 < (tot.len || 4); tx5++) tl5 += "G";
       var twinBlade = [tl5, tl5]; /* UNIQUEMENT les cellules de lame (sans colonnes vides : sinon la lame visible glisse de 40 px sur le corps) */
       /* la lame fantome se met en MIROIR autour du corps : elle suit la vraie lame et frappe le cote oppose (fais a droite -> elle frappe a gauche, et inversement) */
-      var tLeft = (dg.facing || 1) > 0 ? (-25 - 7.5 * (tot.len || 4)) : (25 - 2.5 * (tot.len || 4));
+      var tLeft = (dg.facing || 1) > 0 ? (-25 - 5 * (tot.len || 4)) : 25; /* miroir EXACT de la vraie lame visuelle [25, 25+5L] autour du corps (centre du heros = dg.x depuis l'ancre translateX(-25px)) */
       html += '<div class="dg-twinblade" style="left:' + (hx + tLeft) + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML(twinBlade, "5px", { G: "#9be0ff" }) + "</div>";
     }
     if (dg.phase === "choose") {
@@ -3344,7 +3346,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="z" data-dg-ab="z" title="Sort"><span data-dg-ab-icon="z"></span><span class="dg-ab-cd" data-dg-ab-cd="z"></span></button><span class="dg-ab-key">Z</span></span>' +
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="e" data-dg-ab="e" title="Sort"><span data-dg-ab-icon="e"></span><span class="dg-ab-cd" data-dg-ab-cd="e"></span></button><span class="dg-ab-key">E</span></span>' +
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="r" data-dg-ab="r" title="Sort"><span data-dg-ab-icon="r"></span><span class="dg-ab-cd" data-dg-ab-cd="r"></span></button><span class="dg-ab-key">R</span></span>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS crache une boule de feu toutes les 5 s : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou Q / D) · Espace ou A = roulade · Z / E = sorts (recharges en direct) · R = sort spécial de run · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS CLIGNOTE en orange pendant 1 s avant de cracher sa boule de feu (toutes les 5 s) : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou Q / D) · Espace ou A = roulade · Z / E = sorts (recharges en direct) · R = sort spécial de run · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
@@ -3361,7 +3363,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">🏰 Le Château</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté — <b>il s’ouvre en PLEIN ÉCRAN dans un onglet dédié qui se referme à la fin de la partie</b>. Tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il crache des boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Tes <b>sorts appris</b> à la boutique <b>✨ Magie</b> (coûtent de l’XP) se lancent sur <b>Z / E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté — <b>il s’ouvre en PLEIN ÉCRAN dans un onglet dédié qui se referme à la fin de la partie</b>. Tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il CLIGNOTE 1 s avant de cracher ses boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Tes <b>sorts appris</b> à la boutique <b>✨ Magie</b> (coûtent de l’XP) se lancent sur <b>Z / E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
