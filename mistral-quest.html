@@ -3291,7 +3291,8 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.twinT > 0 && swinging) { /* Dedoublement de l'ame VISIBLE : JUSTE une lame fantome bleutee de l'autre cote du joueur, meme frappe simultanee */
       var tl5 = ""; for (var tx5 = 0; tx5 < (tot.len || 4); tx5++) tl5 += "G";
       var twinBlade = ["........" + tl5, "........" + tl5];
-      var tLeft = (dg.facing || 1) > 0 ? (50 - (tot.len || 4) * 5) : 50; /* le cote oppose a la vraie lame */
+      /* la lame fantome se met en MIROIR autour du corps : elle suit la vraie lame et frappe le cote oppose (fais a droite -> elle frappe a gauche, et inversement) */
+      var tLeft = (dg.facing || 1) > 0 ? (-25 - 7.5 * (tot.len || 4)) : (25 - 2.5 * (tot.len || 4));
       html += '<div class="dg-twinblade" style="left:' + (hx + tLeft) + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML(twinBlade, "5px", { G: "#9be0ff" }) + "</div>";
     }
     if (dg.phase === "choose") {
