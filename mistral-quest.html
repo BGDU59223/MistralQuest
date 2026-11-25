@@ -466,7 +466,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-viewport.dg-hero-hurt { box-shadow: inset 0 0 0 3px rgba(212, 61, 42, .6); }
   /* ---- Onglet plein ecran du Chateau (?castle=1) : l'arene prend tout l'ecran ---- */
   body.castle-win { margin: 0; overflow: hidden; }
-  body.castle-win #castle-main { display: flex; flex-direction: column; height: 100vh; padding: 10px 12px; box-sizing: border-box; max-width: 1400px; margin: 0 auto; }
+  body.castle-win #castle-main { display: flex; flex-direction: column; height: 100vh; padding: 10px 12px; box-sizing: border-box; max-width: 1400px; margin: 0 auto; overflow-y: auto; } /* FIX : l'ecran Choisis ton combo doit pouvoir se deplacer verticalement sinon on ne voit pas toutes les cartes */
   .castle-win .dg-wrap { max-width: none; width: 100%; flex: 1; display: flex; flex-direction: column; }
   .castle-win .dg-hud, .castle-win .dg-controls { flex-shrink: 0; }
   .castle-win .dg-arena { flex: 1; min-height: 240px; }
@@ -502,7 +502,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-arrow { position: absolute; font-size: 14px; z-index: 4; pointer-events: none; color: #e8e3d0; filter: drop-shadow(0 0 3px rgba(63,167,255,.6)); }
   .dg-stun .pixel-sprite { filter: saturate(.15) brightness(.9); }
   .dg-cast .pixel-sprite { filter: brightness(1.8) saturate(2.2) drop-shadow(0 0 6px rgba(255,120,30,.9)); }
-  .dg-blade { position: absolute; z-index: 4; }
+  .dg-blade { position: absolute; z-index: 6; filter: drop-shadow(0 0 4px rgba(255,214,74,.55)); } /* au-dessus du heros (z5) : la lame reste entiere et visible des DEUX cotes, exactement sur la hitbox */
   .dg-ice { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; background: linear-gradient(rgba(140,200,255,.25), rgba(96,170,255,.38)); border-bottom: 3px solid rgba(190,230,255,.75); opacity: 0; transition: opacity .3s; pointer-events: none; }
   .dg-ice.dg-ice-on { opacity: 1; }
   .dg-combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 10px; }
@@ -515,7 +515,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-slow .pixel-sprite { filter: saturate(.35) brightness(.85); } /* Ame visqueuse */
   .spell-recall, .spell-recall-box div { font-size: 15px; margin: 3px 0; color: var(--muted); }
   .dg-penitVuln .pixel-sprite { filter: brightness(1.4) saturate(2) hue-rotate(-30deg); }
-  .dg-twinblade { position: absolute; z-index: 4; filter: drop-shadow(0 0 5px rgba(120,220,255,.85)); } /* l'ame doublee : juste la lame fantome sur l'autre cote */
+  .dg-twinblade { position: absolute; z-index: 6; filter: drop-shadow(0 0 5px rgba(120,220,255,.85)); } /* miroir exact de la vraie lame, meme z */ /* l'ame doublee : juste la lame fantome sur l'autre cote */
   .dg-ally .pixel-sprite { filter: hue-rotate(110deg) brightness(1.15); } /* serviteur : teinte spectrale verte */
   .dg-frozen .pixel-sprite { filter: brightness(1.3) saturate(.4) hue-rotate(180deg); } /* gelee par la Prison de glace */
   .dg-thrown { position: absolute; bottom: 64px; font-size: 20px; transform: translateX(-50%); z-index: 3; filter: drop-shadow(0 0 4px rgba(255,214,74,.7)); pointer-events: none; }
@@ -3398,7 +3398,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + heroBadge + "</div>";
     if (bladeCol !== ".") { /* la VRAIE lame : couche ancree EXACTEMENT sur la hitbox [15 ; 15+5L] px du centre du corps — la meme distance des deux cotes */
       var blen2 = tot.len || 4;
-      var blRow2 = ""; for (var bc2 = 0; bc2 < blen2; bc2++) blRow2 += bladeCol;
+      var blRow2 = ""; for (var bc2 = 0; bc2 < blen2; bc2++) blRow2 += "X"; /* BUG LAME INVISIBLE : les cellules portaient le code materiau (B/M/Y/W) mais la palette ne definissait QUE "X" -> cellules toutes vides */
       var blLeft2 = (dg.facing || 1) > 0 ? hx + 15 : hx - 15 - blen2 * 5;
       html += '<div class="dg-blade" style="left:' + blLeft2 + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML([blRow2, blRow2], "5px", { X: dgpal[bladeCol] || PAL.M }) + "</div>";
     }
