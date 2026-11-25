@@ -501,7 +501,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .dg-ab-key { display: block; font-size: 9px; color: var(--muted); text-align: center; margin-top: 2px; }
   .dg-arrow { position: absolute; font-size: 14px; z-index: 4; pointer-events: none; color: #e8e3d0; filter: drop-shadow(0 0 3px rgba(63,167,255,.6)); }
   .dg-stun .pixel-sprite { filter: saturate(.15) brightness(.9); }
-  .dg-cast .pixel-sprite { filter: brightness(1.8) saturate(2.2) drop-shadow(0 0 6px rgba(255,120,30,.9)); } /* annonce de boule de feu : le boss clignote en orange 1 s avant de tirer */
+  .dg-cast .pixel-sprite { filter: brightness(1.8) saturate(2.2) drop-shadow(0 0 6px rgba(255,120,30,.9)); }
+  .dg-blade { position: absolute; z-index: 4; }
+  .dg-ice { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; background: linear-gradient(rgba(140,200,255,.25), rgba(96,170,255,.38)); border-bottom: 3px solid rgba(190,230,255,.75); opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .dg-ice.dg-ice-on { opacity: 1; }
+  .dg-combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 10px; }
+  .dg-combo-card { cursor: pointer; text-align: center; padding: 16px 10px; transition: transform .15s, box-shadow .15s, border-color .15s; }
+  .dg-combo-card:hover { transform: scale(1.06) translateY(-4px); border-color: #ff7000; box-shadow: 0 10px 24px rgba(0,0,0,.5); }
+  .dg-combo-icon { font-size: 42px; display: block; margin-bottom: 4px; }
+  .dg-combo-name { font-family: 'Press Start 2P', monospace; font-size: 14px; margin-bottom: 8px; }
+  .dg-combo-z, .dg-combo-e { display: block; margin: 3px auto; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,.07); font-size: 13px; max-width: 92%; }
+  .dg-combo-pitch { color: #9a8f80; font-size: 13px; margin: 8px 0 0; } /* annonce de boule de feu : le boss clignote en orange 1 s avant de tirer */
   .dg-slow .pixel-sprite { filter: saturate(.35) brightness(.85); } /* Ame visqueuse */
   .spell-recall, .spell-recall-box div { font-size: 15px; margin: 3px 0; color: var(--muted); }
   .dg-penitVuln .pixel-sprite { filter: brightness(1.4) saturate(2) hue-rotate(-30deg); }
@@ -780,6 +790,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       timerFloat: { hidden: false, minimized: false, x: null, y: null },
       dungeon: { best: 0, kills: 0, runs: 0 },
       spellSlots: { z: null, e: null },
+      combo: "escargot",
       theme: "nuit", view: "board", hero: null, boardMode: "main"
     };
   }
@@ -813,6 +824,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     out.view = ["board", "dungeon", "shop", "stuff", "magic"].indexOf(out.view) !== -1 ? out.view : "board";
     out.spells = (out.spells || []).filter(function (id) { return /^(nova|soin|icare|penit)$/.test(id) === false; }); /* GARANTIE : seuls les sorts SPECIAUX de run (R) sont retires au rechargement — tout sort de Magie appris survit pour TOUJOURS (l'ancien filtre a 4 sorts effacait les nouveaux sorts) */
     out.spellSlots = (s && s.spellSlots) ? { z: s.spellSlots.z || null, e: s.spellSlots.e || null } : { z: null, e: null };
+    out.combo = (s && typeof s.combo === "string") ? s.combo : "escargot"; /* combo selectionne (carte du Chateau) : valide au lancement */
     out.consumableLast = out.consumableLast || {};
     out.timerFloat = (s && s.timerFloat) ? {
       hidden: !!s.timerFloat.hidden,
@@ -1200,9 +1212,27 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     document.body.className = "castle-win";
     document.body.innerHTML = '<main id="castle-main"></main>' +
       '<div class="toast hidden" id="toast"></div>';
-    if (!dg.active) dungeonStart();
+    if (!dg.active) dg.comboPick = true; /* premier ecran : Choisis ton combo */
+    renderCastle();
+  }
+  /* --- Ecran « Choisis ton combo » (facon champion select) : carte = animal, Z actif, E passif, Espace/A roulade. Clic = la partie demarre avec ce combo --- */
+  function dungeonComboPickerHTML() {
+    var cards = Object.keys(COMBOS).map(function (cid) {
+      var combo2 = COMBOS[cid];
+      var sz2 = MAGIC_SPELLS[combo2.z] || {}, se2 = MAGIC_SPELLS[combo2.e] || {};
+      return '<div class="panel dg-combo-card' + (state.combo === cid ? " combo-active" : "") + '" data-action="dg-launch" data-combo="' + cid + '">' +
+        '<span class="dg-combo-icon">' + combo2.icon + "</span>" +
+        '<div class="dg-combo-name">' + esc(combo2.name) + "</div>" +
+        '<span class="dg-combo-z">\u2694\uFE0F Z \u2014 ' + (sz2.icon || "") + " " + esc(sz2.name || "?") + " (" + (sz2.cd || 0) + " s)</span>" +
+        '<span class="dg-combo-e">\uD83D\uDC7B E \u2014 ' + (se2.icon || "") + " " + esc(se2.name || "?") + " (" + (se2.cd || 0) + " s)</span>" +
+        '<p class="dg-combo-pitch">' + esc(combo2.pitch) + "</p></div>";
+    }).join("");
+    return '<h2 class="panel-title">\u2694\uFE0F \u0043HOISIS TON COMBO</h2>' +
+      '<p class="dg-pitch">Chaque carte = un <b>actif sur Z</b> + un <b>passif sur E</b> + la <b>roulade sur Espace / A</b>. Clique ta carte \u2192 la partie d\u00e9marre direct. \u2014 <b>Nouveaux combos \u00e0 gagner en jouant : \u00e0 venir.</b></p>' +
+      '<div class="dg-combo-grid">' + cards + "</div>";
   }
   function dungeonOpen() {
+    if (isCastleWin()) { if (!dg.active) dg.comboPick = true; renderCastle(); return; } /* dans l'onglet plein ecran : ecran combo, pas de nouvel onglet */
     if (dg.active) { state.view = "dungeon"; renderAll(); return; } /* run deja ouverte sur cette page (repli pop-up bloquee) */
     try {
       saveState();
@@ -1215,10 +1245,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         saveState(); renderAll();
         showToast("\u2694\ufe0f Le Ch\u00e2teau s\u2019ouvre en PLEIN \u00c9CRAN dans un nouvel onglet \u2014 \u00e0 la fin de la partie (mort ou retraite), l\u2019onglet se referme tout seul et tu reviens ici.");
       } else {
-        showToast("\u26a0\ufe0f Pop-up bloqu\u00e9e : la partie s\u2019ouvre ici. Autorise les pop-ups pour jouer en plein \u00e9cran.");
-        dungeonStart();
+        showToast("\u26a0\ufe0f Pop-up bloqu\u00e9e : choisis ton combo ici. Autorise les pop-ups pour jouer en plein \u00e9cran.");
+        dg.comboPick = true; renderAll();
       }
-    } catch (eCw3) { dungeonStart(); }
+    } catch (eCw3) { dg.comboPick = true; renderAll(); }
   }
   var tqChan = null;
   try { tqChan = new BroadcastChannel("task-quest-timer"); } catch (e) {}
@@ -1314,11 +1344,19 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     jet:    { id: "jet",    name: "Lancer d\u2019arme", icon: "\u2694\uFE0F", desc: "Ta lame file et transperce chaque ennemi (60 % de tes d\u00e9g\u00e2ts chacun) \u2014 tes coups automatiques continuent", cd: 4, cost: 0 },
     intimidation: { id: "intimidation", name: "Intimidation", icon: "\uD83D\uDC41\uFE0F", desc: "Immobilise TOUS les ennemis de la salle pendant 3 s (un boss fig\u00e9 ne tire plus)", cd: 20, cost: 0 },
     visqueuse: { id: "visqueuse", name: "Lame visqueuse", icon: "\uD83D\uDC0C", desc: "Pendant 5 s, chaque ennemi touch\u00e9 par la lame est ralenti pendant 3 s (vitesse et coups \u00e0 40 %)", cd: 30, cost: 0 },
-    double: { id: "double", name: "D\u00e9doublement de l\u2019\u00e2me", icon: "\uD83E\uDE9E", desc: "Pendant 5 s, ta lame est doubl\u00e9e par magie : tu frappes des deux c\u00f4t\u00e9s \u00e0 la fois", cd: 10, cost: 0 },
-    charge: { id: "charge", name: "Coup charg\u00e9", icon: "\uD83D\uDCA5", desc: "Le prochain coup port\u00e9 \u00e0 un ennemi inflige le DOUBLE de d\u00e9g\u00e2ts", cd: 5, cost: 0 },
-    assass: { id: "assass", name: "Assassinat", icon: "\uD83D\uDDE1\uFE0F", desc: "La prochaine lame qui touche : ennemi \u00e0 10 % de ses PV ou moins = mort sur le coup, sinon le coup manque (aucun d\u00e9g\u00e2t)", cd: 10, cost: 0 },
+    double: { id: "double", name: "D\u00e9doublement de l\u2019\u00e2me", icon: "\uD83E\uDE9E", desc: "Pendant 5 s, ta lame est doubl\u00e9e par magie : tu frappes des deux c\u00f4t\u00e9s \u00e0 la fois", cd: 7, cost: 0 },
+    charge: { id: "charge", name: "Coup charg\u00e9", icon: "\uD83D\uDCA5", desc: "Le prochain coup port\u00e9 \u00e0 un ennemi inflige le DOUBLE de d\u00e9g\u00e2ts", cd: 3, cost: 0 },
+    assass: { id: "assass", name: "Assassinat", icon: "\uD83D\uDDE1\uFE0F", desc: "La prochaine lame qui touche : ennemi \u00e0 10 % de ses PV ou moins = mort sur le coup, sinon le coup manque (aucun d\u00e9g\u00e2t)", cd: 2, cost: 0 },
     serviteur: { id: "serviteur", name: "Serviteur de l\u2019ombre", icon: "\uD83D\uDC7B", desc: "Le prochain monstre que tu tues RENA\u00ceT \u00e0 ton service : il ne t\u2019attaque plus et frappe les autres ennemis pendant 5 s", cd: 20, cost: 0 },
-    glace: { id: "glace", name: "Prison de glace", icon: "\u2744\uFE0F", desc: "Un gla\u00e7on file : 20 % de tes d\u00e9g\u00e2ts au PREMIER ennemi touch\u00e9, gel\u00e9 5 s (immobilis\u00e9) et perd 10 % de ton attaque par seconde", cd: 15, cost: 0 }
+    glace: { id: "glace", name: "Prison de glace", icon: "\u2744\uFE0F", desc: "Un gla\u00e7on file : 20 % de tes d\u00e9g\u00e2ts au PREMIER ennemi touch\u00e9, gel\u00e9 5 s (immobilis\u00e9) et perd 10 % de ton attaque par seconde", cd: 15, cost: 0 },
+    jet2: { id: "jet2", name: "Lancer d\u2019arme renforc\u00e9", icon: "\u2694\uFE0F", desc: "Ta lame file et transperce chaque ennemi \u00e0 100 % de tes d\u00e9g\u00e2ts (l\u2019arme classique fait 60 %) \u2014 tes coups automatiques continuent", cd: 4, cost: 0 },
+    volee: { id: "volee", name: "Vol\u00e9e de lames", icon: "\uD83C\uDF00", desc: "Pendant 3 s, chaque frappe \u00e9jecte une lame magique qui file et traverse TOUT le champ : 50 % de tes d\u00e9g\u00e2ts par ennemi travers\u00e9", cd: 12, cost: 0 },
+    poison: { id: "poison", name: "Poison", icon: "\uD83E\uDDEA", desc: "Pendant 5 s, tes coups de lame empoisonnent : le monstre touch\u00e9 perd 5 % de sa vie max, r\u00e9partis sur 5 s", cd: 10, cost: 0 },
+    devlame: { id: "devlame", name: "D\u00e9veloppement de la lame", icon: "\uD83C\uDF31", desc: "Tu canalises 4 s (immobile) : jusqu\u2019\u00e0 la fin de la salle, ta lame DOUBLE de longueur et inflige +10 % de d\u00e9g\u00e2ts", cd: 25, cost: 0 },
+    peau: { id: "peau", name: "Peau de pierre", icon: "\uD83E\uDEA8", desc: "Tu subis moiti\u00e9 moins de d\u00e9g\u00e2ts pendant 5 s", cd: 10, cost: 0 },
+    aimant: { id: "aimant", name: "Effet aimant", icon: "\uD83E\uDDF2", desc: "Pendant 4 s, tous les ennemis sont attir\u00e9s contre toi (ils s\u2019entassent sur ta lame) mais ils ne peuvent PAS te toucher", cd: 15, cost: 0 },
+    meute: { id: "meute", name: "Meute de l\u2019ombre", icon: "\uD83D\uDC15", desc: "Pendant 30 s, chaque ennemi tu\u00e9 par ton serviteur lui rend +5 s de pr\u00e9sence : il fonce aussit\u00f4t sur le suivant, jamais immobile", cd: 20, cost: 0 },
+    patinoire: { id: "patinoire", name: "Patinoire", icon: "\u26F8\uFE0F", desc: "Le sol g\u00e8le 5 s : les ennemis glissent \u00e0 l\u2019oppos\u00e9 du joueur (ceux de gauche partent \u00e0 gauche, ceux de droite \u00e0 droite)", cd: 15, cost: 0 }
   };
   /* Sorts SPECIAUX de run : gagnes uniquement apres avoir vaincu un boss, perdus a la fin de la partie (touche R). */
   var RUN_SPELLS = {
@@ -1326,6 +1364,19 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     soin: { id: "soin", name: "Souffle vital", icon: "\uD83D\uDC9A", desc: "R\u00e9cup\u00e8re 50 % de tes PV max", cd: 30 },
     icare: { id: "icare", name: "Icare", icon: "\uD83E\uDEB6", desc: "Tu voles pendant 5 s (le contact ne te touche pas) et tu fais pleuvoir une rang\u00e9e de fl\u00e8ches par seconde (30 % de ton attaque chacune)", cd: 60 },
     penit: { id: "penit", name: "Rituel de la P\u00e9nitence", icon: "\uD83D\uDD6F\uFE0F", desc: "Aucun d\u00e9g\u00e2t pendant 10 s, puis tu subis 100 % de d\u00e9g\u00e2ts en PLUS pendant 5 s", cd: 60 }
+  };
+  /* --- COMBOS (remplace l'achat de sorts a l'unite) : chaque combo = 1 ACTIF sur Z + 1 PASSIF sur E + roulade sur Espace/A.
+     Selection finale dans l'ecran « Choisis ton combo » du Chateau (= champion select). Nouveaux combos a GAGNER en jouant (a venir) :
+     pour l'instant, TOUS sont debloques (phase de test). --- */
+  var COMBOS = {
+    escargot: { id: "escargot", name: "Escargot chevalier", icon: "\uD83D\uDC0C", z: "jet2", e: "visqueuse", pitch: "L\u2019arme file transpercer les rangs entiers, et la lame visqueuse enrobe chaque coup de ralentissement." },
+    aigle: { id: "aigle", name: "Aigle temp\u00eate", icon: "\uD83E\uDD85", z: "volee", e: "fureur", pitch: "Fureur (+50 % de vitesse d\u2019attaque) et une vol\u00e9e de lames traversantes \u00e0 chaque frappe, pendant 3 s." },
+    girafe: { id: "girafe", name: "Girafe placide", icon: "\uD83E\uDD92", z: "intimidation", e: "devlame", pitch: "Intimidation fige toute la salle, puis tu canalises une lame qui DOUBLE de longueur jusqu\u2019\u00e0 la fin de la salle (+10 % de d\u00e9g\u00e2ts)." },
+    araignee: { id: "araignee", name: "Araign\u00e9e venimeuse", icon: "\uD83D\uDD77\uFE0F", z: "assass", e: "poison", pitch: "Un assassinat-finisher qui revient toutes les 2 s, et un poison qui ronge 5 % de la vie max des touch\u00e9s." },
+    rhino: { id: "rhino", name: "Rhinoc\u00e9ros blind\u00e9", icon: "\uD83E\uDD8F", z: "charge", e: "peau", pitch: "Coup charg\u00e9 massif toutes les 3 s, et peau de pierre : tu encaisses moiti\u00e9 moins de d\u00e9g\u00e2ts." },
+    mante: { id: "mante", name: "Mante religieuse", icon: "\uD83E\uDD77", z: "double", e: "aimant", pitch: "Deux lames IDENTIQUES frappent des deux c\u00f4t\u00e9s \u00e0 la fois, et l\u2019aimant entasse les ennemis dessus sans qu\u2019ils te touchent." },
+    chien: { id: "chien", name: "Chien de l\u2019ombre", icon: "\uD83D\uDC15", z: "serviteur", e: "meute", pitch: "Ton serviteur de l\u2019ombre traque sans rel\u00e2che : chaque ennemi qu\u2019il abat lui rend +5 s de pr\u00e9sence." },
+    pingouin: { id: "pingouin", name: "Pingouin glaciaire", icon: "\uD83D\uDC27", z: "glace", e: "patinoire", pitch: "Un gla\u00e7on stoppe net le premier ennemi, puis le sol g\u00e8le et toute la salle glisse loin de toi." }
   };
   function gearStats() {
     var g = { atk: 0, hp: 0, def: 0, spd: 0, loot: 0, as: 0, len: 0, wide: 0 };
@@ -1760,25 +1811,20 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }).join("");
     return '<h2 class="panel-title">EXPLOITS (' + state.achievements.length + "/" + ACHIEVEMENTS.length + ')</h2><div class="ach-grid">' + cards + "</div>";
   }
-  /* --- Boutique Magie : apprendre des sorts en depensant de l'XP (le niveau ne baisse jamais) --- */
+  /* --- Galerie des COMBOS debloques (remplace la boutique Magie : les sorts ne s'achetent plus un par un) --- */
   function magicView() {
-    var banner = '<div class="shop-banner"><p>\u2728 La boutique de Magie : tes sorts s\u2019ach\u00e8tent avec de l\u2019XP. XP \u00e0 d\u00e9penser : <b>' + state.xp + '</b> (ton niveau ne baisse jamais \u2014 seul l\u2019XP courant est d\u00e9pens\u00e9).<br>Apr\u00e8s l\u2019apprentissage, attribue tes sorts aux touches <b>Z</b> / <b>E</b> dans le Stuff 🎒 ; la touche <b>R</b> est r\u00e9serv\u00e9e au sort sp\u00e9cial gagn\u00e9 apr\u00e8s un boss (perdu \u00e0 la fin de la partie).</p>' +
+    var banner = '<div class="shop-banner"><p>\uD83C\uDCCF Tes COMBOS : un <b>actif sur Z</b>, un <b>passif sur E</b>, la roulade sur <b>Espace / A</b>. Tu choisis ta carte \u00e0 chaque partie \u2014 \u00e9cran « Choisis ton combo » du Ch\u00e2teau. <b>Nouveaux combos \u00e0 gagner en jouant : \u00e0 venir.</b></p>' +
       '<button class="btn" data-action="switch-tab" data-view="dungeon">\u2190 Retour au Ch\u00e2teau</button>' +
-      '<button class="btn" data-action="switch-tab" data-view="stuff">\U0001F392 Le Stuff (attribuer Z/E)</button></div>';
-    var cards = Object.keys(MAGIC_SPELLS).map(function (mid) {
-      var sp = MAGIC_SPELLS[mid];
-      var learned = state.spells.indexOf(mid) !== -1;
-      var slotUsed = state.spellSlots && (state.spellSlots.z === mid ? "touche Z" : state.spellSlots.e === mid ? "touche E" : "");
-      var action = learned
-        ? '<span class="lootbox-hint">\u2705 Appris \u00b7 recharge ' + sp.cd + " s" + (slotUsed ? " \u00b7 " + slotUsed : " \u00b7 attribue-le dans le Stuff") + "</span>"
-        : '<button class="btn btn-accent" data-action="learn-spell" data-spell="' + mid + '"' + (state.xp < sp.cost ? " disabled" : "") + ">Apprendre (" + sp.cost + " XP)</button>";
-      return '<div class="panel shop-card">' +
-        '<span class="rarity-tag rarity-commun">APPRENTISSAGE</span>' +
-        '<div class="shop-preview"><span style="font-size:34px">' + sp.icon + "</span></div>" +
-        '<div class="shop-item-name">' + esc(sp.name) + "</div>" +
-        '<div class="shop-item-desc">' + esc(sp.desc) + "</div>" +
-        '<div class="dg-stag">\u23f1\ufe0f recharge : ' + sp.cd + " s \u00b7 co\u00fbt : " + sp.cost + " XP</div>" +
-        '<div class="shop-item-meta">' + action + "</div></div>";
+      '<button class="btn" data-action="switch-tab" data-view="stuff">\U0001F392 Le Stuff</button></div>';
+    var cards = Object.keys(COMBOS).map(function (cid) {
+      var combo3 = COMBOS[cid];
+      var sz3 = MAGIC_SPELLS[combo3.z] || {}, se3 = MAGIC_SPELLS[combo3.e] || {};
+      return '<div class="panel shop-card' + (state.combo === cid ? " combo-active" : "") + '">' +
+        '<span class="rarity-tag rarity-commun">' + (state.combo === cid ? "\u00c9QUIP\u00c9" : "COMBO D\u00c9BLOQU\u00c9") + "</span>" +
+        '<div class="shop-preview"><span style="font-size:38px">' + combo3.icon + "</span></div>" +
+        '<div class="shop-item-name">' + esc(combo3.name) + "</div>" +
+        '<div class="dg-stag">\u2694\uFE0F Z \u2014 ' + esc(sz3.name || "?") + " (" + (sz3.cd || 0) + " s) \u00b7 \u2728 E \u2014 " + esc(se3.name || "?") + " (" + (se3.cd || 0) + " s)</div>" +
+        '<div class="shop-item-desc">' + esc(combo3.pitch) + "</div></div>";
     }).join("");
     return banner + '<div class="shop-grid">' + cards + "</div>";
   }
@@ -1809,7 +1855,6 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   }
   function stuffView() {
     var gs = gearStats();
-    var spellPanel = spellAssignPanel();
     var banner = '<div class="shop-banner"><p>🎒 Ton inventaire : ' + state.inventory.length + " objet(s)" +
       ' — bonus XP équipé : +' + Math.round((xpMultiplier() - 1) * 100) + "%" +
       ' — Château : ⚔️ attaque ' + (3 + gs.atk) + " · 📏 longueur " + (gs.len || 4) + " · ⚡ vitesse d’attaque +" + gs.as + "% · ❤️ PV " + (20 + gs.hp) + " · 🛡️ def " + gs.def + " · 👟 spd " + gs.spd + " · 🪙 loot +" + gs.loot + "%</p>" +
@@ -1817,7 +1862,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="btn" data-action="switch-tab" data-view="dungeon">← Retour au Château</button></div>';
     var owned = SHOP_ITEMS.filter(function (it) { return state.inventory.indexOf(it.id) !== -1; });
     if (!owned.length) {
-      return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>' + spellPanel;
+      return banner + '<div class="panel"><p class="lootbox-hint" style="margin:0">Sacoche vide — file dépenser ton or à la boutique 🛒</p></div>';
     }
     var rows = EQUIP_SLOTS.map(function (sl) {
       var items = owned.filter(function (it) { return it.slot === sl[0]; });
@@ -1838,7 +1883,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }).join("");
       return '<h2 class="panel-title">' + sl[1].toUpperCase() + '</h2><div class="shop-grid">' + cards + "</div>";
     }).join("");
-    return banner + rows + spellPanel;
+    return banner + rows;
   }
   function shopView() {
     var banner = '<div class="shop-banner"><p>🪙 or : <span class="gold-text">' + state.gold + '</span> — chaque objet équipé donne des stats de combat pour le Château : ⚔️ attaque · 📏 longueur d’arme · ⚡ vitesse d’attaque · ❤️ PV · 🛡️ défense · 🥾 vitesse · 🪙 loot.</p>' +
@@ -2773,10 +2818,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   ];
   var dg = { active: false, loop: null, x: 3, room: 1, phase: "fight", hp: 0, maxHp: 0, purse: 0, kills: 0,
     entities: [], projectiles: [], strikeCd: 0, strikeDur: 1, rollT: 0, rollCd: 0, rollDir: 0, keyMoving: 0, holdMoving: 0, hurtFlash: 0, walkT: 0, lastResult: null,
-    spellCd: { z: 0, e: 0, r: 0 }, hasteT: 0, slowT: 0, twinT: 0, chargeNext: false, assassNext: false, raiseNext: false, thrown: null, runSpellId: null, pendingRunSpell: null, icareT: 0, icareAcc: 0, penitT: 0, penitVulnT: 0, rain: [] };
+    spellCd: { z: 0, e: 0, r: 0 }, hasteT: 0, slowT: 0, twinT: 0, chargeNext: false, assassNext: false, raiseNext: false, thrown: null, runSpellId: null, pendingRunSpell: null, icareT: 0, icareAcc: 0, penitT: 0, penitVulnT: 0, rain: [], chanT: 0, longBlade: false, peauT: 0, aimantT: 0, patinoireT: 0, volleyT: 0, poisonT: 0, meuteT: 0, comboPick: false };
   function dungeonTotals() {
     var g = gearStats();
-    return {
+    var dgt = {
       atk: 3 + g.atk,
       def: g.def,
       maxHp: 20 + g.hp,
@@ -2786,10 +2831,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       len: g.len || 4,
       wide: g.wide
     };
+    if (dg.longBlade) { /* Developpement de la lame : canalisation reussie -> lame DOUBLE + 10 % de degats, jusqu'a la fin de la salle */
+      dgt.len = (dgt.len || 4) * 2;
+      dgt.atk = Math.max(1, Math.round(dgt.atk * 1.1));
+    }
+    return dgt;
   }
   function dungeonStart() {
     if (dg.active) return;
     dg.active = true;
+    var comboNow = COMBOS[state.combo] || COMBOS.escargot; if (COMBOS[state.combo] === undefined) state.combo = comboNow.id;
+    if (!state.spellSlots) state.spellSlots = { z: null, e: null };
+    state.spellSlots.z = comboNow.z; state.spellSlots.e = comboNow.e; /* le combo UNIQUEMENT : Z = actif, E = passif */
     dg.x = 12.5; dg.room = 1; dg.phase = "fight"; dg.reward = null;
     dg.purse = 0; dg.kills = 0; dg.entities = []; dg.projectiles = [];
     dg.hp = dungeonTotals().maxHp;
@@ -2798,7 +2851,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.strikeCd = 0; dg.keyMoving = 0; dg.holdMoving = 0; dg.hurtFlash = 0; dg.walkT = 0; dg.rollT = 0; dg.rollCd = 0; dg.rollDir = 0;
     dg.spellCd = { z: 0, e: 0, r: 0 }; /* cooldowns de sorts remis a zero au DEMARRAGE de la run uniquement (pas entre les salles) */
     dg.hasteT = 0; dg.thrown = null; dg.runSpellId = null; dg.pendingRunSpell = null;
-    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = []; dg.slowT = 0; dg.twinT = 0; dg.chargeNext = false; dg.assassNext = false; dg.raiseNext = false;
+    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = []; dg.slowT = 0; dg.twinT = 0; dg.chargeNext = false; dg.assassNext = false; dg.raiseNext = false; dg.chanT = 0; dg.longBlade = false; dg.peauT = 0; dg.aimantT = 0; dg.patinoireT = 0; dg.volleyT = 0; dg.poisonT = 0; dg.meuteT = 0;
     dg.lastResult = null;
     state.view = "dungeon";
     soundBoss();
@@ -2841,7 +2894,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     dg.entities = [];
     dg.projectiles = []; /* les boules de feu du boss ne survivent pas a la salle */
     dg.thrown = null; /* la lame lancee ne traverse pas les salles */
-    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = []; dg.slowT = 0; dg.twinT = 0; dg.chargeNext = false; dg.assassNext = false; dg.raiseNext = false; /* les EFFETS de sorts (Icare, Penitence, Ame visqueuse) se reinitialisent au changement de salle — les COOLDOWNS, eux, continuent */
+    dg.icareT = 0; dg.icareAcc = 0; dg.penitT = 0; dg.penitVulnT = 0; dg.rain = []; dg.slowT = 0; dg.twinT = 0; dg.chargeNext = false; dg.assassNext = false; dg.raiseNext = false; dg.chanT = 0; dg.longBlade = false; dg.peauT = 0; dg.aimantT = 0; dg.patinoireT = 0; dg.volleyT = 0; dg.poisonT = 0; dg.meuteT = 0; /* les EFFETS de sorts (Icare, Penitence, Ame visqueuse) se reinitialisent au changement de salle — les COOLDOWNS, eux, continuent */
     if (room % 5 === 0) {
       var hp = 60 + room * 15, dd = 10 + room;
       dg.entities.push({ t: "boss", boss: true, x: 18.5, hp: hp, maxHp: hp, dmg: dd, gold: 60 + room * 10, spd: 1.9, cd: 0, hurt: 0, spellCd: 5 });
@@ -2959,7 +3012,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           } else {
             en.hp -= dmg;
             en.hurt = 0.18;
-            if (dg.slowT > 0) en.slowT = 3; /* interconnexion : Coup charge et Assassinat appliquent aussi les etats ennemis actifs (Lame visqueuse) */
+            if (dg.slowT > 0) en.slowT = 3; if (dg.poisonT > 0) en.poisonT = 5; /* interconnexion : Coup charge et Assassinat appliquent aussi les etats ennemis actifs (Lame visqueuse) */
           }
           hit = true; hitEn = true;
         }
@@ -2979,6 +3032,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     /* armes du "prochain coup" (Coup charge / Assassinat) : consommees des qu'un ennemi est touche */
     if (hitEn) { dg.chargeNext = false; dg.assassNext = false; }
+    if (dg.volleyT > 0) { /* Volee de lames : chaque frappe ejecte une lame magique qui traverse LE CHAMP entier */
+      dg.projectiles.push({ x: dg.x + (dg.facing || 1) * 1.2, dir: dg.facing || 1, spd: 10, hostile: false, volley: true, hitmap: [], dmg: Math.max(1, Math.round(tot.atk * 0.5)) });
+    }
     if (hit) { soundHit(); dungeonRender(); }
   }
   /* --- Sorts : lancement sur Z / E (sorts appris) ou R (sort special de run) --- */
@@ -3034,12 +3090,28 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       dg.raiseNext = true;
     } else if (sp.id === "glace") {
       dg.projectiles.push({ x: dg.x + (dg.facing || 1), dir: dg.facing || 1, spd: 14, hostile: false, ice: true }); /* le glaçon ne traverse pas : il s'arrete au premier ennemi */
+    } else if (sp.id === "jet2") {
+      dg.thrown = { x: dg.x + (dg.facing || 1), dir: dg.facing || 1, spd: 16, hitmap: [], pct: 1 }; /* lame renforcee a 100 % */
+    } else if (sp.id === "volee") {
+      dg.volleyT = 3;
+    } else if (sp.id === "poison") {
+      dg.poisonT = 5;
+    } else if (sp.id === "devlame") {
+      dg.chanT = 4; /* canalisation : 4 s immobile, puis lame doublee jusqu'a la fin de la salle */
+    } else if (sp.id === "peau") {
+      dg.peauT = 5;
+    } else if (sp.id === "aimant") {
+      dg.aimantT = 4;
+    } else if (sp.id === "meute") {
+      dg.meuteT = 30;
+    } else if (sp.id === "patinoire") {
+      dg.patinoireT = 5;
     }
     showToast("\u2728 " + sp.name + " !");
     dungeonRender();
   }
   function dungeonRoll() {
-    if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0) return;
+    if (!dg.active || dg.phase !== "fight" || dg.rollT > 0 || dg.rollCd > 0 || dg.chanT > 0) return;
     dg.rollT = 0.5; dg.rollCd = 2.5; /* roulade : invincible 0,5 s, recharge 2,5 s (retour joueur : 1 s c'etait trop spamme) */
     dg.rollDir = dg.holdMoving || dg.keyMoving || dg.facing || 1; /* dash dans la direction en cours */
     dungeonRender();
@@ -3066,6 +3138,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       }
     }
     var dir = dg.holdMoving || dg.keyMoving || 0;
+    if (dg.chanT > 0) dir = 0; /* Developpement de la lame : canalisation = immobile */
     if (dg.rollT > 0) {
       /* roulade = dash : file dans la direction figee au lancement, traverse les monstres (invincible) */
       dg.facing = dg.rollDir || 1;
@@ -3078,15 +3151,25 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.strikeCd > 0) dg.strikeCd = Math.max(0, dg.strikeCd - dt);
     if (dg.rollT > 0) dg.rollT = Math.max(0, dg.rollT - dt);
     if (dg.rollCd > 0) dg.rollCd = Math.max(0, dg.rollCd - dt);
-    if (dg.hasteT > 0) dg.hasteT = Math.max(0, dg.hasteT - dt); /* Fureur : +50 % de vitesse d'attaque temporaire */
-    if (dg.slowT > 0) dg.slowT = Math.max(0, dg.slowT - dt); /* Lame visqueuse : aura de 5 s — tout ce que tu touches pendant ce temps ralentit 3 s */
-    if (dg.twinT > 0) dg.twinT = Math.max(0, dg.twinT - dt); /* Dedoublement de l'ame : aura de 5 s — la frappe part des deux cotes */
+    if (dg.hasteT > 0) { dg.hasteT -= dt; if (dg.hasteT <= 0.02) dg.hasteT = 0; } /* Fureur : +50 % de vitesse d'attaque temporaire */
+    if (dg.slowT > 0) { dg.slowT -= dt; if (dg.slowT <= 0.02) dg.slowT = 0; } /* Lame visqueuse : aura de 5 s — tout ce que tu touches pendant ce temps ralentit 3 s */
+    if (dg.twinT > 0) { dg.twinT -= dt; if (dg.twinT <= 0.02) dg.twinT = 0; }
+    if (dg.peauT > 0) { dg.peauT -= dt; if (dg.peauT <= 0.02) dg.peauT = 0; } /* Peau de pierre : -50 % de degats subis */
+    if (dg.aimantT > 0) { dg.aimantT -= dt; if (dg.aimantT <= 0.02) dg.aimantT = 0; } /* Effet aimant : assemble les ennemis */
+    if (dg.patinoireT > 0) { dg.patinoireT -= dt; if (dg.patinoireT <= 0.02) dg.patinoireT = 0; } /* Patinoire : sol gele */
+    if (dg.volleyT > 0) { dg.volleyT -= dt; if (dg.volleyT <= 0.02) dg.volleyT = 0; } /* Volee de lames */
+    if (dg.poisonT > 0) { dg.poisonT -= dt; if (dg.poisonT <= 0.02) dg.poisonT = 0; } /* Poison : aura sur tes coups */
+    if (dg.meuteT > 0) { dg.meuteT -= dt; if (dg.meuteT <= 0.02) dg.meuteT = 0; } /* Meute de l'ombre */
+    if (dg.chanT > 0) { /* Developpement de la lame : canalisation = le heros reste immobile */
+      dg.chanT -= dt;
+      if (dg.chanT <= 0.02) { dg.chanT = 0; dg.longBlade = true; showToast("\U0001F331 Canalisation reussie : ta lame DOUBLE de longueur jusqu'a la fin de la salle !"); }
+    } /* Dedoublement de l'ame : aura de 5 s — la frappe part des deux cotes */
     if (dg.icareT > 0) {
       dg.icareT = Math.max(0, dg.icareT - dt); dg.icareAcc += dt;
       if (dg.icareAcc >= 1) { dg.icareAcc = 0; dgIcareVolley(); } /* Icare : une rangee par seconde */
     }
-    if (dg.penitT > 0) { dg.penitT = Math.max(0, dg.penitT - dt); if (dg.penitT === 0) dg.penitVulnT = 5; } /* Penitence : immunité 10 s puis vulnérabilité 5 s */
-    else if (dg.penitVulnT > 0) dg.penitVulnT = Math.max(0, dg.penitVulnT - dt);
+    if (dg.penitT > 0) { dg.penitT -= dt; if (dg.penitT <= 0.02) { dg.penitT = 0; dg.penitVulnT = 5; } } /* Penitence : immunité 10 s puis vulnérabilité 5 s */
+    else if (dg.penitVulnT > 0) { dg.penitVulnT -= dt; if (dg.penitVulnT <= 0.02) dg.penitVulnT = 0; }
     for (var ra = dg.rain.length - 1; ra >= 0; ra--) { dg.rain[ra].y += dt * 300; if (dg.rain[ra].y > 196) dg.rain.splice(ra, 1); }
     for (var sc in dg.spellCd) { if (dg.spellCd[sc] > 0) dg.spellCd[sc] = Math.max(0, dg.spellCd[sc] - dt); } /* les recharges de sorts coulent meme pendant les changements de salle */
     var anyAlive = false;
@@ -3108,7 +3191,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         if (allTgt) {
           if (allDist * dgPxm() > 13) en.x = Math.min(23.8, Math.max(1, en.x + (allTgt.x > en.x ? 1 : -1) * en.spd * dt));
           if (allDist * dgPxm() <= 16 && en.cd <= 0) { allTgt.hp -= Math.max(1, en.dmg); allTgt.hurt = 0.18; en.cd = 1.15; soundHit(); }
-        }
+          if (allTgt.hp <= 0 && dg.meuteT > 0) { en.allyT += 5; showToast("\U0001F415 Meute : le serviteur renforce sa presence (+5 s) !"); } /* Chien de l'ombre : chaque kill du serviteur allonge sa presence */        }
         if (en.allyT <= 0) { dg.entities.splice(i, 1); i--; continue; } /* l'allié se dissipe apres ses 5 s */
         continue;
       }
@@ -3118,6 +3201,10 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (en.frozenT > 0) { /* Prison de glace : 10 % de l'attaque par seconde tant que le gel dure */
         en.frozenT = Math.max(0, en.frozenT - dt); en.iceAcc = (en.iceAcc || 0) + dt;
         while (en.iceAcc >= 1) { en.iceAcc -= 1; en.hp -= Math.max(1, Math.round(tot.atk * 0.1)); en.hurt = 0.15; }
+      }
+      if (en.poisonT > 0) { /* Poison : 5 % de la vie MAX ronges sur 5 s (1 %/s) */
+        en.poisonT = Math.max(0, en.poisonT - dt); en.poisonAcc = (en.poisonAcc || 0) + dt;
+        while (en.poisonAcc >= 1) { en.poisonAcc -= 1; en.hp -= Math.max(1, Math.round(en.maxHp * 0.01)); en.hurt = 0.15; }
       }
       if (en.stunT > 0) { en.stunT = Math.max(0, en.stunT - dt); continue; } /* Intimidation : immobilise (meme un boss fige ne tire plus) */
       var dist = en.x - dg.x;
@@ -3131,12 +3218,18 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           dg.projectiles.push({ x: en.x + fdir * (dgMonBox(en) / 2 + 8) / dgPxm(), dir: fdir, spd: 6, hostile: true, dmg: en.dmg });
         }
       }
-      if (Math.abs(dist) <= 14 && Math.abs(dist) > stopGap) {
+      if (dg.patinoireT > 0) {
+        /* Patinoire : le sol gele — les ennemis glissent a l'OPPOSE du joueur */
+        en.x = Math.min(24.3, Math.max(0.7, en.x - (dist > 0 ? -1 : 1) * 1.6 * dt));
+      } else if (dg.aimantT > 0 && Math.abs(dist) * dgPxm() > dgMonBox(en) / 2 + DG_HERO_HALF + 4) {
+        /* Effet aimant : assemble les ennemis contre le heros (le contact, lui, est bloqué) */
+        en.x = Math.min(23.8, Math.max(1, en.x + (dist > 0 ? -1 : 1) * 2.4 * (en.slowT > 0 ? 0.4 : 1) * dt));
+      } else if (Math.abs(dist) <= 14 && Math.abs(dist) > stopGap) {
         en.x = Math.min(23.8, Math.max(1, en.x - (dist > 0 ? 1 : -1) * en.spd * (en.slowT > 0 ? 0.4 : 1) * dt));
       }
       /* attaque au contact : carré du monstre touche le corps du héros */
-      if (dg.rollT <= 0 && dg.icareT <= 0 && dg.penitT <= 0 && Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
-        var hitD = Math.max(1, en.dmg - tot.def);
+      if (dg.rollT <= 0 && dg.icareT <= 0 && dg.penitT <= 0 && dg.aimantT <= 0 && Math.abs(dist) * dgPxm() < dgMonBox(en) / 2 + DG_HERO_HALF + 1 && en.cd <= 0) {
+        var hitD = Math.max(1, en.dmg - tot.def); if (dg.peauT > 0) hitD = Math.max(1, Math.ceil(hitD / 2)); /* Peau de pierre : moitie moins */
         if (dg.penitVulnT > 0) hitD *= 2; /* Rituel de la Penitence : phase de vulnerabilite */
         en.cd = 1.15;
         dg.hp -= hitD;
@@ -3150,7 +3243,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       if (pj.x < 0.3 || pj.x > 25.7) { dg.projectiles.splice(f, 1); continue; }
       if (pj.hostile) {
         if (dg.rollT <= 0 && dg.icareT <= 0 && dg.penitT <= 0 && Math.abs(pj.x - dg.x) * dgPxm() < DG_HERO_HALF + 4) {
-          var fbD = Math.max(1, pj.dmg - tot.def);
+          var fbD = Math.max(1, pj.dmg - tot.def); if (dg.peauT > 0) fbD = Math.max(1, Math.ceil(fbD / 2)); /* Peau de pierre : moitie moins */
           if (dg.penitVulnT > 0) fbD *= 2;
           dg.hp -= fbD;
           dg.hurtFlash = 0.25;
@@ -3167,6 +3260,17 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
             dg.projectiles.splice(f, 1);
             soundHit();
             break;
+          }
+        }
+      } else if (pj.volley) {
+        /* Volee de lames : la lame magique TRAVERSE tous les ennemis (50 % des degats chacun) */
+        for (var f4 = 0; f4 < dg.entities.length; f4++) {
+          var vk2 = dg.entities[f4];
+          if (vk2.hp > 0 && !vk2.ally && pj.hitmap.indexOf(vk2) === -1 && Math.abs(pj.x - vk2.x) * dgPxm() < dgMonBox(vk2) / 2 + 4) {
+            pj.hitmap.push(vk2);
+            vk2.hp -= pj.dmg;
+            vk2.hurt = 0.18;
+            soundHit();
           }
         }
       } else {
@@ -3186,7 +3290,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     if (dg.thrown) {
       var th = dg.thrown;
       th.x += th.dir * th.spd * dt;
-      var atkT = Math.max(1, Math.round(tot.atk * 0.6));
+      var atkT = Math.max(1, Math.round(tot.atk * (th.pct || 0.6)));
       for (var te = dg.entities.length - 1; te >= 0; te--) {
         var te2 = dg.entities[te];
         if (te2.hp > 0 && !te2.ally && th.hitmap.indexOf(te2) === -1 && Math.abs(th.x - te2.x) * dgPxm() < dgMonBox(te2) / 2 + 2) {
@@ -3194,6 +3298,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
           te2.hp -= atkT;
           te2.hurt = 0.18;
           if (dg.slowT > 0) te2.slowT = 3; /* combo */
+          if (dg.poisonT > 0) te2.poisonT = 5; /* combo poison */
           soundHit();
         }
       }
@@ -3229,6 +3334,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     var pxm = dgPxm();
     var tot = dungeonTotals();
     var html = '<div class="dg-wall dg-wall-l"></div><div class="dg-wall dg-wall-r"></div><div class="dg-floor"></div>';
+    html += '<div class="dg-ice' + (dg.patinoireT > 0 ? " dg-ice-on" : "") + '"></div>'; /* Patinoire : voile bleu quand le sol gele */
     for (var i = 0; i < dg.entities.length; i++) {
       var en = dg.entities[i];
       var ex = en.x * pxm;
@@ -3239,7 +3345,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       var bossCast = en.boss && dg.phase === "fight" && en.spellCd <= 1 && en.spellCd > 0; /* ANNONCE : le boss clignote pendant la derniere seconde avant sa boule de feu */
       html += '<div class="dg-entity' + (en.ally ? " dg-ally" : "") + (en.hurt > 0 ? " dg-hurt" : "") + (en.stunT > 0 ? " dg-stun" : "") + (en.slowT > 0 && en.stunT <= 0 ? " dg-slow" : "") + (en.frozenT > 0 ? " dg-frozen" : "") + (bossCast ? " dg-cast" : "") + '" style="left:' + ex + 'px;bottom:' + ebot + 'px' + (bossCast && Math.floor(en.spellCd * 8) % 2 === 0 ? ";opacity:.35" : "") + '">' +
         '<div class="dg-ename">' + (en.ally ? "👻 SERVITEUR" : en.boss ? "💀 BOSS" : esc(mon.name)) + "</div>" + bar +
-        spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) + (en.stunT > 0 ? '<div class="dg-roll-badge">⛓️</div>' : "") + (en.slowT > 0 && en.stunT <= 0 ? '<div class="dg-roll-badge">🐌</div>' : "") + (en.ally ? '<div class="dg-roll-badge">👻</div>' : "") + (en.frozenT > 0 ? '<div class="dg-roll-badge">❄️</div>' : "") +
+        spriteHTML(DG_SPRITES[en.t], en.boss ? "6px" : mon.cell, PAL) + (en.stunT > 0 ? '<div class="dg-roll-badge">⛓️</div>' : "") + (en.slowT > 0 && en.stunT <= 0 ? '<div class="dg-roll-badge">🐌</div>' : "") + (en.ally ? '<div class="dg-roll-badge">👻</div>' : "") + (en.frozenT > 0 ? '<div class="dg-roll-badge">❄️</div>' : "") + (en.poisonT > 0 ? '<div class="dg-roll-badge">🧪</div>' : "") +
         "</div>";
     }
     var dirNow = dg.holdMoving || dg.keyMoving || 0;
@@ -3261,7 +3367,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         return (y === 0 || y === 1) ? row.replace(/H/g, "S") : row;
       });
     }
-    var hgrid = dgHeroGrid(hbase, tot.len || 4, bladeCol);
+    var hgrid = dgHeroGrid(hbase, 0, "."); /* FIX : la lame n'est plus dans la grille du corps — elle devient une COUCHE ancree EXACTEMENT sur la hitbox (±15 px du centre), symetrique et visible des deux cOTES */
     var dgpal = heroPal();
     if (state.equipment.tete) dgpal.H = PAL.M;
     if (state.equipment.armure) dgpal.O = PAL.m; else dgpal.O = dgpal.S; /* torse nu si pas de stuff */
@@ -3287,14 +3393,21 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       : dg.twinT > 0 ? '<div class="dg-roll-badge">🪞</div>'
       : dg.chargeNext ? '<div class="dg-roll-badge">💥</div>'
       : dg.assassNext ? '<div class="dg-roll-badge">🗡️</div>'
-      : dg.raiseNext ? '<div class="dg-roll-badge">👻</div>' : "";
+      : dg.raiseNext ? '<div class="dg-roll-badge">👻</div>' : dg.chanT > 0 ? '<div class="dg-roll-badge">⏳</div>' : dg.aimantT > 0 ? '<div class="dg-roll-badge">🧲</div>' : dg.patinoireT > 0 ? '<div class="dg-roll-badge">⛸️</div>' : dg.peauT > 0 ? '<div class="dg-roll-badge">🫨</div>' : dg.volleyT > 0 ? '<div class="dg-roll-badge">🌀</div>' : dg.poisonT > 0 ? '<div class="dg-roll-badge">🧪</div>' : dg.meuteT > 0 ? '<div class="dg-roll-badge">🐕</div>' : '';
     html += '<div class="dg-hero' + (dg.hurtFlash > 0 ? " dg-hurt" : "") + (rolling ? " dg-roll" : "") + (dg.penitVulnT > 0 ? " dg-penitVuln" : "") + '" style="left:' + hx + 'px;bottom:' + (46 + hbob * 2 + flyOff) + 'px' + (rollBlink ? ";opacity:.15" : "") + '">' +
       '<div class="dg-hero-body' + ((dg.facing || 1) < 0 ? " dg-face-l" : "") + '">' + spriteHTML(hgrid, "5px", dgpal) + "</div>" + heroBadge + "</div>";
+    if (bladeCol !== ".") { /* la VRAIE lame : couche ancree EXACTEMENT sur la hitbox [15 ; 15+5L] px du centre du corps — la meme distance des deux cotes */
+      var blen2 = tot.len || 4;
+      var blRow2 = ""; for (var bc2 = 0; bc2 < blen2; bc2++) blRow2 += bladeCol;
+      var blLeft2 = (dg.facing || 1) > 0 ? hx + 15 : hx - 15 - blen2 * 5;
+      html += '<div class="dg-blade" style="left:' + blLeft2 + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML([blRow2, blRow2], "5px", { X: dgpal[bladeCol] || PAL.M }) + "</div>";
+    }
+
     if (dg.twinT > 0 && swinging) { /* Dedoublement de l'ame VISIBLE : JUSTE une lame fantome bleutee de l'autre cote du joueur, meme frappe simultanee */
       var tl5 = ""; for (var tx5 = 0; tx5 < (tot.len || 4); tx5++) tl5 += "G";
       var twinBlade = [tl5, tl5]; /* UNIQUEMENT les cellules de lame (sans colonnes vides : sinon la lame visible glisse de 40 px sur le corps) */
       /* la lame fantome se met en MIROIR autour du corps : elle suit la vraie lame et frappe le cote oppose (fais a droite -> elle frappe a gauche, et inversement) */
-      var tLeft = (dg.facing || 1) > 0 ? (-25 - 5 * (tot.len || 4)) : 25; /* miroir EXACT de la vraie lame visuelle [25, 25+5L] autour du corps (centre du heros = dg.x depuis l'ancre translateX(-25px)) */
+      var tLeft = (dg.facing || 1) > 0 ? (-15 - 5 * (tot.len || 4)) : 15; /* miroir EXACT : la vraie lame occupe [±15, ±(15+5L)] px autour du centre (idem hitbox) */
       html += '<div class="dg-twinblade" style="left:' + (hx + tLeft) + 'px;bottom:' + (46 + hbob * 2 + flyOff + 30) + 'px">' + spriteHTML(twinBlade, "5px", { G: "#9be0ff" }) + "</div>";
     }
     if (dg.phase === "choose") {
@@ -3342,15 +3455,16 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<button class="btn btn-big" data-dg-dir="-1" title="Aller à gauche">◀</button>' +
       '<button class="btn btn-big" data-dg-dir="1" title="Aller à droite">▶</button>' +
       '<span><button class="btn dg-ability" data-action="dg-roll" data-dg-roll title="Roulade — dash invincible 0,5 s, recharge 2,5 s (Espace ou A, ou tap court)">🌀<span class="dg-ab-cd" data-dg-roll-cd></span></button><span class="dg-ab-key">ESPACE</span></span>' +
-      /* tuiles de sorts : Z / E = sorts appris (boutique Magie, attribues dans le Stuff) ; R = sort special gagne apres un boss, perdu en fin de run */
+      /* tuiles de sorts : Z = actif / E = passif du combo choisi a l'entree ; R = sort special gagne apres un boss, perdu en fin de run */
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="z" data-dg-ab="z" title="Sort"><span data-dg-ab-icon="z"></span><span class="dg-ab-cd" data-dg-ab-cd="z"></span></button><span class="dg-ab-key">Z</span></span>' +
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="e" data-dg-ab="e" title="Sort"><span data-dg-ab-icon="e"></span><span class="dg-ab-cd" data-dg-ab-cd="e"></span></button><span class="dg-ab-key">E</span></span>' +
       '<span class="dg-ab-wrap" style="display:none"><button class="btn dg-ability" data-action="dg-cast" data-slot="r" data-dg-ab="r" title="Sort"><span data-dg-ab-icon="r"></span><span class="dg-ab-cd" data-dg-ab-cd="r"></span></button><span class="dg-ab-key">R</span></span>' +
-      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS CLIGNOTE en orange pendant 1 s avant de cracher sa boule de feu (toutes les 5 s) : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou Q / D) · Espace ou A = roulade · Z / E = sorts (recharges en direct) · R = sort spécial de run · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
+      '<span class="dg-hint">Ton héros frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace. La lame touche dès qu’elle effleure le carré du monstre (marge de frappe généreuse — plus besoin d’être collé), — plus elle est longue, plus tu frappes loin. Le BOSS CLIGNOTE en orange pendant 1 s avant de cracher sa boule de feu (toutes les 5 s) : frappe-la quand elle entre dans ta lame pour la renvoyer (−20 % de ses PV) — ou esquive-la en roulade. Clavier : ◀ ▶ (ou Q / D) · Espace ou A = roulade · Z = actif / E = passif du combo (recharges en direct) · R = sort spécial de run · F = coup · Échap retraite. Tactile : maintiens la moitié gauche / droite pour courir, tap court = roulade.<br>Le pillage tombe au sol si tu meurs, sauf en retraite 🏠 : l’or de quêtes reste en banque.</span>' +
       "</div></div>";
   }
   function dungeonView() {
     if (dg.active) return dungeonRunHTML();
+    if (dg.comboPick) return dungeonComboPickerHTML();
     var dn = state.dungeon, g = gearStats();
     var res = "";
     if (dg.lastResult || (state.dungeon && state.dungeon.lastResult)) {
@@ -3363,7 +3477,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     }
     return '<div class="panel dg-home">' +
       '<h2 class="panel-title">🏰 Le Château</h2>' +
-      '<p class="dg-pitch">Un roguelite en salles, vu de côté — <b>il s’ouvre en PLEIN ÉCRAN dans un onglet dédié qui se referme à la fin de la partie</b>. Tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il CLIGNOTE 1 s avant de cracher ses boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Tes <b>sorts appris</b> à la boutique <b>✨ Magie</b> (coûtent de l’XP) se lancent sur <b>Z / E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
+      '<p class="dg-pitch">Un roguelite en salles, vu de côté — <b>il s’ouvre en PLEIN ÉCRAN dans un onglet dédié qui se referme à la fin de la partie</b>. Tu apparaîs au milieu de chaque salle, ton héros <b>frappe automatiquement toutes les 1 s (⚡ vitesse d’attaque = coups plus rapides), dans la direction où il se déplace</b>, <b>Espace (ou tap court) = roulade</b> — dash invincible 0,5 s (recharge 2,5 s) pour traverser les monstres, et ça purge la salle, le <b>pillage annoncé tombe</b> et on enchaîne la salle suivante. <b>💀 Boss toutes les 5 salles (5, 10, 15…)</b> — il CLIGNOTE 1 s avant de cracher ses boules de feu : <b>contrées d’un coup d’épée bien timé, elles lui retournent dessus (−20 % PV)</b>. Après chaque boss, un <b>sort spécial de run</b> t’est confié : lance-le sur <b>R</b>, mais il est perdu à la fin de la partie. Ton <b>combo</b> choisi \u00e0 l\u2019entr\u00e9e te donne un <b>actif sur Z</b> et un <b>passif sur E</b> — leurs cooldowns ne se remettent pas à zéro entre les salles.<br>' +
       '<span class="lootbox-hint">Ton stuff de la boutique fait toute la différence (attaque, longueur d\'arme, vitesse d\'attaque, PV, déf, vitesse, loot). Le pillage tombe au sol si tu meurs, mais ton or de quêtes reste en banque et la retraite 🏠 le récupère.</span></p>' +
       '<div class="dg-record">' +
       '<span class="hud-badge">🕳️ Record : ' + dn.best + " salle(s) purgée(s)</span>" +
@@ -3381,9 +3495,9 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
       '<span class="hud-badge">🪙 Loot : +' + g.loot + "%</span>" +
       "</div>" +
       '<div class="dg-hub-grid">' +
-      '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">Le Château</span><span class="dg-hub-sub">Entrer dans le château</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="dg-enter"><span class="dg-hub-icon">⚔️</span><span class="dg-hub-name">Le Château</span><span class="dg-hub-sub">Choisis ton combo</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="shop"><span class="dg-hub-icon">🛒</span><span class="dg-hub-name">Boutique</span><span class="dg-hub-sub">Dépenser ton or</span></div>' +
-      '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="magic"><span class="dg-hub-icon">✨</span><span class="dg-hub-name">Magie</span><span class="dg-hub-sub">Apprendre des sorts (XP)</span></div>' +
+      '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="magic"><span class="dg-hub-icon">🃏</span><span class="dg-hub-name">Combos</span><span class="dg-hub-sub">Les combos débloqués</span></div>' +
       '<div class="panel dg-hub-tile" data-action="switch-tab" data-view="stuff"><span class="dg-hub-icon">🎒</span><span class="dg-hub-name">Le stuff</span><span class="dg-hub-sub">Équiper ton héros</span></div>' +
 "</div>" +
       res +
@@ -3512,6 +3626,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
         saveState(); renderAll(); return;
       }
       if (act === "dg-enter") { dungeonOpen(); return; }
+      if (act === "dg-launch") { var cbL = COMBOS[el.getAttribute("data-combo")] || COMBOS.escargot; state.combo = cbL.id; dg.comboPick = false; saveState(); dungeonStart(); return; }
       if (act === "dg-roll") { dungeonRoll(); return; }
       if (act === "dg-cast") { dungeonCast(el.getAttribute("data-slot") || "z"); return; }
       if (act === "learn-spell") {
