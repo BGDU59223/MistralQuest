@@ -470,7 +470,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
   .castle-win .dg-wrap { max-width: none; width: 100%; flex: 1; display: flex; flex-direction: column; }
   .castle-win .dg-hud, .castle-win .dg-controls { flex-shrink: 0; }
   .castle-win .dg-arena { flex: 1; min-height: 240px; }
-  .castle-win .dg-viewport { height: 100%; }
+  .castle-win .dg-viewport { height: 100%; max-width: 676px; margin: 0 auto; } /* géométrie de combat = celle du réglage (676 px / 26 tuiles), centrée : la lame et les hitbox gardent leurs vraies distances en plein écran */
   .castle-win .dg-hint { display: none; } /* de la place pour le jeu : l'aide reste visible sur la tuile du hub */
   .castle-actions { text-align: center; padding: 12px; }
   .dg-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #0d0a08; border-top: 3px solid #000; box-shadow: inset 0 4px 0 #1e1712; }
@@ -2972,7 +2972,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); }
     return Math.max(cols, g.length) * cell;
   }
   var DG_SWORD_LOW = 30, DG_SWORD_HIGH = 40; /* bande verticale de l\u2019épée au-dessus des pieds (px) */
-  var DG_STRIKE_GRACE = 8, DG_STRIKE_BACK = 6; /* marge de tolérance de la frappe : la lame touche même si elle effleure presque le carré du monstre (retour joueur : "je dois être collé pour toucher") */
+  var DG_STRIKE_GRACE = 14, DG_STRIKE_BACK = 10; /* marge de tolérance de la frappe : le bout de lame qui EFFLEURE le carré du monstre suffit (demande : "le bout de la lame et le bout du pixel du monstre font un dégât" — on a décollé la limite de 14 px devant, 10 px derrière) */
   /* Grille du héros taillée à la longueur d’arme : corps cols 0-8, poignée cols 8-9, lame cols 10-9+len.
      Largeur constante (10+len) sur toutes les frames => le héros ne bouge pas entre marche et coup. */
   function dgHeroGrid(base, len, blade) {
